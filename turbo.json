@@ -7,9 +7,6 @@
     "lint": {
       "outputs": []
     },
-    "@fjord-foundry/contracts#build": {
-      "outputs": ["types/**"]
-    },
     "dev": {
       "cache": false
     },
