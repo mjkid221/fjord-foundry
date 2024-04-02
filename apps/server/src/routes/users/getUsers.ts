@@ -1,4 +1,4 @@
-import { UserModel } from "@scope/lib/database/models";
+import { UserModel } from "@fjord-foundry/lib/database/models";
 import { Request, Response } from "express";
 
 export default async (req: Request, res: Response) => {

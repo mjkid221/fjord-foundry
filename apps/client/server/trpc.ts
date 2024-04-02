@@ -1,4 +1,4 @@
-import { AuthContext, UnauthorizedError } from "@scope/lib";
+import { AuthContext, UnauthorizedError } from "@fjord-foundry/lib";
 import { initTRPC } from "@trpc/server";
 import SuperJSON from "superjson";
 

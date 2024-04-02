@@ -1,4 +1,4 @@
-import { Session, UnauthorizedError } from "@scope/lib";
+import { Session, UnauthorizedError } from "@fjord-foundry/lib";
 
 import { protectedProcedure, router } from "@/server/trpc";
 

@@ -1,4 +1,4 @@
-import { thirdWebService } from "@scope/lib";
+import { thirdWebService } from "@fjord-foundry/lib";
 
 export const { ThirdwebAuthHandler, getUser } = thirdWebService();
 

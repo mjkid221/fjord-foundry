@@ -1,4 +1,4 @@
-import { Session, thirdWebService, AuthContext } from "@scope/lib";
+import { Session, thirdWebService, AuthContext } from "@fjord-foundry/lib";
 import * as trpcNext from "@trpc/server/adapters/next";
 
 /**

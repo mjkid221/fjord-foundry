@@ -13,7 +13,7 @@ import {
   chakra,
   useToast,
 } from "@chakra-ui/react";
-import { useGetExample, usePostExample } from "@scope/lib";
+import { useGetExample, usePostExample } from "@fjord-foundry/lib";
 import { NextPage } from "next";
 import { useState } from "react";
 

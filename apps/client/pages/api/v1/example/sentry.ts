@@ -1,4 +1,4 @@
-import { apiHandler } from "@scope/lib";
+import { apiHandler } from "@fjord-foundry/lib";
 
 export default apiHandler()
   /**

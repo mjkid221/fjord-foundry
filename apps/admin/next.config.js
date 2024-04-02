@@ -1,4 +1,8 @@
 module.exports = {
   reactStrictMode: true,
-  transpilePackages: ["@scope/ui", "@scope/lib", "@scope/contracts"],
+  transpilePackages: [
+    "@fjord-foundry/ui",
+    "@fjord-foundry/lib",
+    "@fjord-foundry/contracts",
+  ],
 };

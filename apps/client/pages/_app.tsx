@@ -1,6 +1,6 @@
 import "@total-typescript/ts-reset";
 import { ChakraProvider } from "@chakra-ui/react";
-import { Navbar, theme, useProviderConfig } from "@scope/ui";
+import { Navbar, theme, useProviderConfig } from "@fjord-foundry/ui";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ThirdwebProvider } from "@thirdweb-dev/react";
 import { Analytics } from "@vercel/analytics/react";

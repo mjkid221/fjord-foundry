@@ -1,4 +1,4 @@
-import { exampleRequestSchema, ExampleResponse } from "@scope/lib";
+import { exampleRequestSchema, ExampleResponse } from "@fjord-foundry/lib";
 
 import { protectedProcedure, publicProcedure, router } from "@/server/trpc";
 
