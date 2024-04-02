@@ -1,0 +1,23 @@
+[toolchain]
+anchor_version = "0.29.0" # `anchor-cli` version to use
+solana_version = "1.17.28" # Solana version to use
+
+[features]
+seeds = true
+skip-lint = false
+
+[programs.localnet]
+fjord_lbp = "86nkh4SxcKQ96MUjnHBAbriktnGMwZ7skQVbjvr52k9J"
+
+[registry]
+url = "https://api.apr.dev"
+
+[provider]
+cluster = "Localnet"
+wallet = "/Users/mjlee/.config/solana/id.json"
+
+[workspace]
+types = "types"
+
+[scripts]
+test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"

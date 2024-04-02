@@ -19,4 +19,12 @@ module.exports = {
       },
     ],
   },
+  overrides: [
+    {
+      files: ["packages/contracts/tests/**/*.ts"],
+      rules: {
+        camelcase: "off",
+      },
+    },
+  ],
 };
