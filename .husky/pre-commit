@@ -1,0 +1,5 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+# if you want this to only run on a specific package, add --filter=<package-name>
+yarn lint-staged

@@ -1,0 +1,39 @@
+{
+  "build": {
+    "simulator-dev-client": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "env": {
+        "bundleIdentifier": "com.xxx.xxx",
+        "icon": "./assets/images/icon.png",
+        "splashImage": "./assets/images/splash.png"
+      },
+      "ios": {
+        "simulator": true
+      }
+    },
+    "development": {
+      "channel": "development",
+      "distribution": "internal",
+      "env": {
+        "bundleIdentifier": "com.xxx.xxx",
+        "icon": "./assets/images/icon.png",
+        "splashImage": "./assets/images/splash.png"
+      }
+    },
+    "production": {
+      "channel": "production",
+      "env": {
+        "bundleIdentifier": "com.xxx.xxx",
+        "icon": "./assets/images/icon.png",
+        "splashImage": "./assets/images/splash.png"
+      }
+    }
+  },
+  "cli": {
+    "version": ">= 3.7.2"
+  },
+  "submit": {
+    "production": {}
+  }
+}

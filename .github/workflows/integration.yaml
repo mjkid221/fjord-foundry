@@ -1,0 +1,26 @@
+name: 🧪 Integration Tests
+on: [push]
+
+jobs:
+  integration:
+    runs-on: ubuntu-latest
+    env:
+      INTEGRATION_TEST_MODE: true
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: 📦 Install Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: "18.x"
+
+      - name: 📦 Install Dependencies
+        run: yarn install
+
+      - name: 🧪 Run Next.js Integration Tests
+        run: yarn test
+        working-directory: apps/client
+
+      - name: 🧪 Run packages/lib Integrations Tests
+        run: yarn test
+        working-directory: packages/lib

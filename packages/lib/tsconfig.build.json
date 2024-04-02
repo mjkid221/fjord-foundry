@@ -1,0 +1,10 @@
+{
+  "extends": "@scope/tsconfig/base.json",
+  "include": ["./"],
+  "exclude": ["node_modules", "dist"],
+  "compilerOptions": {
+    "outDir": "./dist",
+    "rootDir": "./",
+    "noEmit": false
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "name": "@scope/lib",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.ts",
+  "scripts": {
+    "build": "tsc --project tsconfig.build.json",
+    "test": "env INTEGRATION_TEST_MODE=true TS_NODE_COMPILER_OPTIONS='{\"module\": \"commonjs\" }' mocha -r ts-node/register 'tests/**/*.ts'"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@typegoose/typegoose": "^11.3.0",
+    "axios": "^1.4.0",
+    "ethers": "5.7.2",
+    "http-errors": "^2.0.0",
+    "mongoose": "^7.3.1",
+    "next-connect": "0.13.0",
+    "@tanstack/react-query": "^4.32.0",
+    "@thirdweb-dev/auth": "^4.1.3",
+    "@thirdweb-dev/sdk": "^4.0.10",
+    "superjson": "^1.13.1",
+    "zod": "^3.21.4"
+  },
+  "devDependencies": {
+    "@scope/tsconfig": "*",
+    "@types/chai": "^4.3.5",
+    "@types/http-errors": "^2.0.1",
+    "@types/mocha": "^10.0.1",
+    "@types/validator": "^13.7.17",
+    "chai": "^4.3.7",
+    "mocha": "^10.2.0",
+    "mongodb-memory-server": "^8.13.0",
+    "@typegoose/typegoose": "^9.7.1",
+    "typescript": "4.9.5",
+    "validator": "^13.9.0"
+  }
+}

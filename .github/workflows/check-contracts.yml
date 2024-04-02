@@ -1,0 +1,41 @@
+name: Slither Analysis
+on: [push]
+#   pull_request:
+#   push:
+#     branches: [ test ]
+#     paths:
+#       - packages/contracts/contracts/**
+jobs:
+  analyze-contracts:
+    runs-on: ubuntu-latest
+
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+
+    steps:
+      - name: 🏗 Checkout Repo
+        uses: actions/checkout@v2
+
+      - name: 🧶 Install Yarn
+        run: npm install --global yarn
+
+      - name: 🐍 Slither Analysis
+        uses: crytic/slither-action@v0.2.0
+        id: slither
+        with:
+          node-version: 18
+          sarif: packages/contracts/results.sarif
+          target: packages/contracts
+          slither-config: packages/contracts/slither.config.json
+          fail-on: none
+      - name: 📁 Upload Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: sarif-output
+          path: packages/contracts/results.sarif
+#      - name: 📁 Upload SARIF file
+#        uses: github/codeql-action/upload-sarif@v2
+#        with:
+#          sarif_file: ${{ steps.slither.outputs.sarif }}
