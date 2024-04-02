@@ -1,8 +1,7 @@
-.env
+.anchor
+.DS_Store
+target
+**/*.rs.bk
 node_modules
-deployments/localhost
-typechain-types
-cache
-coverage
-coverage.json
-artifacts
+test-ledger
+.yarn

@@ -7,17 +7,19 @@
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "strict": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "resolveJsonModule": true
   },
   "include": [
-    "./contracts",
+    "./programs",
     "./constants",
-    "utils",
+    "./helpers",
     "./scripts",
-    "./test",
-    "./deploy"
+    "./tests",
+    "./types",
+    "./migrations"
   ],
-  "files": ["./hardhat.config.ts"],
+  "files": [],
   "exclude": ["node_modules", "dist"],
-  "typeRoots": ["./typechain/**", "@types", "../../node_modules/@types"]
+  "typeRoots": ["./types/**", "@types", "../../node_modules/@types"]
 }
