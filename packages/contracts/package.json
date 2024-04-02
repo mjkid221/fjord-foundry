@@ -6,9 +6,10 @@
   "scripts": {
     "lint:fix": "prettier */*.js \"*/**/*{.js,.ts}\" -w",
     "lint": "prettier */*.js \"*/**/*{.js,.ts}\" --check",
-    "dev": "solana-test-validator --reset",
-    "build": "anchor build",
-    "test": "anchor test"
+    "local-node": "solana-test-validator --reset",
+    "compile": "anchor build",
+    "test": "anchor test",
+    "deploy": "anchor deploy"
   },
   "dependencies": {
     "@coral-xyz/anchor": "^0.29.0",
