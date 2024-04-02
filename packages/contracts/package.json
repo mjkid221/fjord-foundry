@@ -4,10 +4,11 @@
   "license": "MIT",
   "main": "index.ts",
   "scripts": {
-    "lint:fix": "prettier */*.js \"*/**/*{.js,.ts}\" -w",
-    "lint": "prettier */*.js \"*/**/*{.js,.ts}\" --check",
+    "format": "prettier --check \"**/*.{ts,js}\"",
+    "format:fix": "prettier --write \"**/*.{ts,js}\"",
     "local-node": "solana-test-validator --reset",
     "compile": "anchor build",
+    "clean": "anchor clean",
     "test": "anchor test",
     "deploy": "anchor deploy"
   },
