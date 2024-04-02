@@ -1,7 +1,6 @@
-import { NEXT_CLIENT_ENV, getBaseUrl } from "@scope/lib";
+import { NEXT_CLIENT_ENV, getBaseUrl } from "@fjord-foundry/lib";
 import {
   coinbaseWallet,
-  magicLink,
   metamaskWallet,
   rainbowWallet,
   safeWallet,
@@ -12,7 +11,6 @@ import { DAppMetaData } from "@thirdweb-dev/wallets";
 
 export const useProviderConfig = () => {
   const {
-    NEXT_PUBLIC_MAGIC_API_KEY,
     NEXT_PUBLIC_THIRDWEB_CLIENT_ID,
     NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID,
   } = NEXT_CLIENT_ENV();
@@ -33,7 +31,6 @@ export const useProviderConfig = () => {
   };
 
   const supportedWallets = [
-    magicLink({ apiKey: NEXT_PUBLIC_MAGIC_API_KEY, type: "connect" }),
     metamaskWallet({ projectId }),
     walletConnect({ projectId }),
     coinbaseWallet(),

@@ -1,5 +1,5 @@
 {
-  "extends": "@scope/tsconfig/base.json",
+  "extends": "@fjord-foundry/tsconfig/base.json",
   "include": ["src"],
   "exclude": ["node_modules", "dist"],
   "compilerOptions": {

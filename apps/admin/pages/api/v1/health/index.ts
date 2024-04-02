@@ -1,4 +1,4 @@
-import { HealthCheckResponse, apiHandler } from "@scope/lib";
+import { HealthCheckResponse, apiHandler } from "@fjord-foundry/lib";
 import { NextApiResponse } from "next/types";
 
 export default apiHandler()

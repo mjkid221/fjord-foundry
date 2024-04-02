@@ -1,5 +1,5 @@
 {
-  "name": "@scope/contracts",
+  "name": "@fjord-foundry/contracts",
   "version": "1.0.0",
   "main": "index.ts",
   "license": "MIT",
@@ -27,7 +27,7 @@
     "@openzeppelin/contracts": "^4.9.2",
     "@openzeppelin/contracts-upgradeable": "^4.9.2",
     "@openzeppelin/upgrades-core": "^1.24.0",
-    "@scope/tsconfig": "*",
+    "@fjord-foundry/tsconfig": "*",
     "@typechain/ethers-v5": "^10.1.0",
     "@typechain/hardhat": "^6.1.5",
     "@types/bn.js": "^5.1.1",

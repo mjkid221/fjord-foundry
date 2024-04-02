@@ -1,5 +1,5 @@
 {
-  "extends": "@scope/tsconfig/base.json",
+  "extends": "@fjord-foundry/tsconfig/base.json",
   "compilerOptions": {
     "outDir": "./dist",
     "target": "es2020",

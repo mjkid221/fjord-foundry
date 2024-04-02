@@ -1,5 +1,5 @@
 import "@total-typescript/ts-reset";
-import { connect } from "@scope/lib/database/utils";
+import { connect } from "@fjord-foundry/lib/database/utils";
 import compression from "compression";
 import cors from "cors";
 import express from "express";

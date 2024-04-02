@@ -1,5 +1,5 @@
 {
-  "name": "@scope/lib",
+  "name": "@fjord-foundry/lib",
   "version": "1.0.0",
   "description": "",
   "main": "index.ts",
@@ -23,7 +23,7 @@
     "zod": "^3.21.4"
   },
   "devDependencies": {
-    "@scope/tsconfig": "*",
+    "@fjord-foundry/tsconfig": "*",
     "@types/chai": "^4.3.5",
     "@types/http-errors": "^2.0.1",
     "@types/mocha": "^10.0.1",

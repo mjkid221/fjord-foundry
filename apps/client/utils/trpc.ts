@@ -1,4 +1,4 @@
-import { getBaseUrl } from "@scope/lib/utils";
+import { getBaseUrl } from "@fjord-foundry/lib/utils";
 import { httpBatchLink } from "@trpc/client";
 import { createTRPCNext } from "@trpc/next";
 import SuperJSON from "superjson";

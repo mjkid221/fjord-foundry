@@ -1,4 +1,3 @@
-import { getBaseUrl } from "@scope/lib/utils";
 import { createTRPCReact } from "@trpc/react-query";
 
 import type { AppRouter } from "@/server/router/_app";

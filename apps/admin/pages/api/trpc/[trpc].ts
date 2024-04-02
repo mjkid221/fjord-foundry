@@ -1,4 +1,4 @@
-import { apiHandler } from "@scope/lib/api";
+import { apiHandler } from "@fjord-foundry/lib/api";
 import { createNextApiHandler } from "@trpc/server/adapters/next";
 
 import { appRouter } from "@/server/router/_app";

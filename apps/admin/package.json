@@ -1,5 +1,5 @@
 {
-  "name": "@scope/admin",
+  "name": "@fjord-foundry/admin",
   "description": "Nextjs admin site for repo",
   "version": "0.0.0",
   "private": true,
@@ -16,9 +16,9 @@
     "@chakra-ui/react": "^2.7.1",
     "@emotion/react": "^11.11.1",
     "@emotion/styled": "^11.11.0",
-    "@scope/contracts": "*",
-    "@scope/lib": "*",
-    "@scope/ui": "*",
+    "@fjord-foundry/contracts": "*",
+    "@fjord-foundry/lib": "*",
+    "@fjord-foundry/ui": "*",
     "@trpc/client": "^10.43.0",
     "@trpc/next": "^10.43.0",
     "@trpc/react-query": "^10.43.0",
@@ -33,7 +33,7 @@
     "zustand": "^4.3.9"
   },
   "devDependencies": {
-    "@scope/tsconfig": "*",
+    "@fjord-foundry/tsconfig": "*",
     "@types/chai": "^4.3.5",
     "@types/mocha": "^10.0.1",
     "@types/node": "^18.11.18",
