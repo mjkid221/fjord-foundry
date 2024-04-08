@@ -6,16 +6,41 @@ solana_version = "1.17.28" # Solana version to use
 seeds = true
 skip-lint = false
 
+# Production ----------------------------------------------------------------
+# [programs.mainnet]
+# fjord_lbp = "fjorR4ubuG42xkRUF6SrA1hKkb1T4LqgfupE1mPLK4K"
+# ---------------------------------------------------------------------------
+
+# Dev -----------------------------------------------------------------------
+# [programs.devnet]
+# fjord_lbp = "fjorR4ubuG42xkRUF6SrA1hKkb1T4LqgfupE1mPLK4K"
+# ---------------------------------------------------------------------------
+
+# Local ---------------------------------------------------------------------
 [programs.localnet]
 fjord_lbp = "fjorR4ubuG42xkRUF6SrA1hKkb1T4LqgfupE1mPLK4K"
+# ---------------------------------------------------------------------------
 
 [registry]
 url = "https://api.apr.dev"
 
 [provider]
+# Path to the wallet keypair to use for deployments/upgrades
+
+# Production ----------------------------------------------------------------
+# wallet = "./deployment-keypair/production/id.json" 
+# cluster = "Mainnet"
+# ---------------------------------------------------------------------------
+
+# Dev -----------------------------------------------------------------------
+# wallet = "./deployment-keypair/development/id.json"
+# cluster = "Devnet"
+# ---------------------------------------------------------------------------
+
+# Local ---------------------------------------------------------------------
+wallet = "./deployment-keypair/local/id.json"
 cluster = "Localnet"
-# Originally: wallet = "/Users/<USER>/.config/solana/id.json"
-wallet = "./deployment-keypair/id.json" # Path to the wallet keypair to use for deployments/upgrades
+# ---------------------------------------------------------------------------
 
 [workspace]
 types = "types"
