@@ -231,30 +231,6 @@ export type FjordLbp = {
           }
         ];
       };
-    },
-    {
-      name: "userPosition";
-      type: {
-        kind: "struct";
-        fields: [
-          {
-            name: "user";
-            type: "publicKey";
-          },
-          {
-            name: "pool";
-            type: "publicKey";
-          },
-          {
-            name: "shareTokenAmount";
-            type: "u64";
-          },
-          {
-            name: "assetTokenAmount";
-            type: "u64";
-          }
-        ];
-      };
     }
   ];
   types: [
@@ -546,30 +522,6 @@ export const IDL: FjordLbp = {
             type: {
               array: ["u8", 32],
             },
-          },
-        ],
-      },
-    },
-    {
-      name: "userPosition",
-      type: {
-        kind: "struct",
-        fields: [
-          {
-            name: "user",
-            type: "publicKey",
-          },
-          {
-            name: "pool",
-            type: "publicKey",
-          },
-          {
-            name: "shareTokenAmount",
-            type: "u64",
-          },
-          {
-            name: "assetTokenAmount",
-            type: "u64",
           },
         ],
       },

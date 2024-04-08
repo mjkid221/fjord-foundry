@@ -5,6 +5,7 @@ import { getAssociatedTokenAddress } from "@solana/spl-token";
 import { Keypair, PublicKey } from "@solana/web3.js";
 import chai, { expect } from "chai";
 import chaiAsPromised from "chai-as-promised";
+import { addHours } from "date-fns";
 
 import { BN, BigNumber, testMerkleWhitelistedAddresses } from "../../constants";
 import { createMockpoolConfig, generateMerkleRoot, setup } from "../../helpers";
@@ -213,44 +214,15 @@ describe("Fjord LBP - Initialization", () => {
     const sharesAmount = initialProjectTokenBalanceCreator;
     const assetsAmount = initialCollateralTokenBalanceCreator;
 
-    const {
-      virtualAssets,
-      virtualShares,
-      maxSharePrice,
-      maxSharesOut,
-      maxAssetsIn,
-      startWeightBasisPoints,
-      endWeightBasisPoints,
-      saleStartTime,
-      saleEndTime,
-      vestCliff,
-      vestEnd,
-      whitelistMerkleRoot,
-      sellingAllowed,
-    } = createMockpoolConfig({
+    const poolParams = createMockpoolConfig({
       shares: sharesAmount,
       assets: assetsAmount,
       whitelistMerkleRoot: generateMerkleRoot(testMerkleWhitelistedAddresses),
     });
 
+    const formattedPoolParams = Object.values(poolParams) as any;
     await program.methods
-      .initializePool(
-        assetsAmount,
-        sharesAmount,
-        virtualAssets,
-        virtualShares,
-        maxSharePrice,
-        maxSharesOut,
-        maxAssetsIn,
-        startWeightBasisPoints,
-        endWeightBasisPoints,
-        saleStartTime,
-        saleEndTime,
-        vestCliff,
-        vestEnd,
-        whitelistMerkleRoot,
-        sellingAllowed
-      )
+      .initializePool(...formattedPoolParams)
       .accounts({
         creator: creator.publicKey,
         shareTokenMint,
@@ -265,23 +237,7 @@ describe("Fjord LBP - Initialization", () => {
     // Initialize again. It should fail with a program error 0x0 which is a native check in the program
     await expect(
       program.methods
-        .initializePool(
-          assetsAmount,
-          sharesAmount,
-          virtualAssets,
-          virtualShares,
-          maxSharePrice,
-          maxSharesOut,
-          maxAssetsIn,
-          startWeightBasisPoints,
-          endWeightBasisPoints,
-          saleStartTime,
-          saleEndTime,
-          vestCliff,
-          vestEnd,
-          whitelistMerkleRoot,
-          sellingAllowed
-        )
+        .initializePool(...formattedPoolParams)
         .accounts({
           creator: creator.publicKey,
           shareTokenMint,
@@ -294,4 +250,99 @@ describe("Fjord LBP - Initialization", () => {
         .rpc()
     ).to.be.rejectedWith("custom program error: 0x0");
   });
+  it("Should not be able to deploy the pool with same project and collateral token", async () => {
+    const sharesAmount = initialProjectTokenBalanceCreator;
+
+    const poolParams = createMockpoolConfig({
+      shares: sharesAmount,
+      assets: sharesAmount,
+    });
+
+    const formattedPoolParams = Object.values(poolParams) as any;
+
+    // Deploy the pool
+    await expect(
+      program.methods
+        .initializePool(...formattedPoolParams)
+        .accounts({
+          creator: creator.publicKey,
+          shareTokenMint: assetTokenMint,
+          assetTokenMint,
+          poolShareTokenAccount: poolAssetTokenAccount,
+          poolAssetTokenAccount,
+          creatorShareTokenAccount: creatorAssetTokenAccount,
+          creatorAssetTokenAccount,
+        })
+        .rpc()
+    ).to.be.rejected;
+  });
+
+  it("Should not be able to deploy the pool with sale end time within one day of current time", async () => {
+    const sharesAmount = initialProjectTokenBalanceCreator;
+    const assetsAmount = initialCollateralTokenBalanceCreator;
+
+    // Sale end time is 23 hours from now
+    const invalidTime = addHours(new Date(), 23).getTime() / 1000;
+    const poolParams = createMockpoolConfig({
+      shares: sharesAmount,
+      assets: assetsAmount,
+      saleEndTime: BN(invalidTime),
+    });
+
+    const formattedPoolParams = Object.values(poolParams) as any;
+
+    // Deploy the pool
+    await expect(
+      program.methods
+        .initializePool(...formattedPoolParams)
+        .accounts({
+          creator: creator.publicKey,
+          shareTokenMint,
+          assetTokenMint,
+          poolShareTokenAccount,
+          poolAssetTokenAccount,
+          creatorShareTokenAccount,
+          creatorAssetTokenAccount,
+        })
+        .rpc()
+    ).to.be.rejectedWith("SalePeriodLow");
+  });
+
+  it("Should not be able to deploy the pool if the sale period between start and end time is less than a day", async () => {
+    throw Error("Not implemented");
+  });
+
+  it("Should not be able to deploy the pool if the sale end time is before the vesting end time", async () => {
+    throw Error("Not implemented");
+  });
+
+  it("Should not be able to deploy the pool if the sale end time is after the vesting cliff time", async () => {
+    throw Error("Not implemented");
+  });
+
+  it("Should not be able to deploy the pool if the vesting cliff time is after or during the vesting end time", async () => {
+    throw Error("Not implemented");
+  });
+
+  it("Should not be able to deploy the pool if the start weight is smaller than 1%", async () => {
+    throw Error("Not implemented");
+  });
+
+  it("Should not be able to deploy the pool if the start weight is greater than 99%", async () => {
+    throw Error("Not implemented");
+  });
+
+  it("Should not be able to deploy the pool if the end weight is smaller than 1%", async () => {
+    throw Error("Not implemented");
+  });
+
+  it("Should not be able to deploy the pool if the end weight is greater than 99%", async () => {
+    throw Error("Not implemented");
+  });
+
+  it("Should not be able to deploy the pool if deposited collateral tokens (asset token) is 0 and virtual assets is also 0 ", async () => {
+    throw Error("Not implemented");
+  });
+
+  // Add more tests here if needed.
 });

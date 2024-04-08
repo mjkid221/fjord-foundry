@@ -23,8 +23,8 @@ import { IDL, FjordLbp } from "../../target/types/fjord_lbp";
 export const createMockpoolConfig = (
   requestField?: Partial<FjordLbpStruct<"initializePool">>
 ): FjordLbpStruct<"initializePool"> => ({
-  assets: requestField?.assets || new BN(0),
-  shares: requestField?.shares || new BN(0),
+  assets: requestField?.assets || new BN(0), // Collateral token
+  shares: requestField?.shares || new BN(0), // Project token
   virtualAssets: requestField?.virtualAssets || new BN(0),
   virtualShares: requestField?.virtualShares || new BN(0),
   maxSharePrice: requestField?.maxSharePrice || new BN(0),
