@@ -7,14 +7,15 @@ seeds = true
 skip-lint = false
 
 [programs.localnet]
-fjord_lbp = "86nkh4SxcKQ96MUjnHBAbriktnGMwZ7skQVbjvr52k9J"
+fjord_lbp = "fjorR4ubuG42xkRUF6SrA1hKkb1T4LqgfupE1mPLK4K"
 
 [registry]
 url = "https://api.apr.dev"
 
 [provider]
 cluster = "Localnet"
-wallet = "/Users/mjlee/.config/solana/id.json"
+# Originally: wallet = "/Users/<USER>/.config/solana/id.json"
+wallet = "./deployment-keypair/id.json" # Path to the wallet keypair to use for deployments/upgrades
 
 [workspace]
 types = "types"
