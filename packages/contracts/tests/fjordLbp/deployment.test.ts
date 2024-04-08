@@ -858,6 +858,64 @@ describe("Fjord LBP - Initialization", () => {
     ).to.be.rejectedWith("InvalidAssetValue");
   });
 
+  it("Should not be able to deploy the pool if the deposited collateral tokens (asset token) is a negative value", async () => {
+    const sharesAmount = initialProjectTokenBalanceCreator;
+
+    // Create pool with invalid asset token and valid virtual assets
+    const poolParams = createMockpoolConfig({
+      shares: sharesAmount,
+      assets: BN(-100000000),
+      virtualAssets: BN(0),
+    });
+
+    const formattedPoolParams = Object.values(poolParams) as any;
+
+    // Deploy the pool
+    await expect(
+      program.methods
+        .initializePool(...formattedPoolParams)
+        .accounts({
+          creator: creator.publicKey,
+          shareTokenMint,
+          assetTokenMint,
+          poolShareTokenAccount,
+          poolAssetTokenAccount,
+          creatorShareTokenAccount,
+          creatorAssetTokenAccount,
+        })
+        .rpc()
+    ).to.be.rejectedWith("InvalidAssetValue");
+  });
+
+  it("Should not be able to deploy the pool if the deposited collateral tokens (asset token) 0 and the virtual assets are a negative value", async () => {
+    const sharesAmount = initialProjectTokenBalanceCreator;
+
+    // Create pool with invalid asset token and valid virtual assets
+    const poolParams = createMockpoolConfig({
+      shares: sharesAmount,
+      assets: BN(0),
+      virtualAssets: BN(-100000000),
+    });
+
+    const formattedPoolParams = Object.values(poolParams) as any;
+
+    // Deploy the pool
+    await expect(
+      program.methods
+        .initializePool(...formattedPoolParams)
+        .accounts({
+          creator: creator.publicKey,
+          shareTokenMint,
+          assetTokenMint,
+          poolShareTokenAccount,
+          poolAssetTokenAccount,
+          creatorShareTokenAccount,
+          creatorAssetTokenAccount,
+        })
+        .rpc()
+    ).to.be.rejectedWith("InvalidAssetValue");
+  });
+
   it("Should deploy the pool if the deposited collateral tokens (asset token) is 0 and virtual assets is not 0 ", async () => {
     const sharesAmount = initialProjectTokenBalanceCreator;
 
@@ -915,6 +973,64 @@ describe("Fjord LBP - Initialization", () => {
     ).to.be.rejectedWith("InvalidSharesValue");
   });
 
+  it("Should not be able to deploy the pool if the deposited project tokens (share token) is a negative value", async () => {
+    const assetsAmount = initialCollateralTokenBalanceCreator;
+
+    // Create pool with invalid share token and valid virtual shares
+    const poolParams = createMockpoolConfig({
+      shares: BN(-100000000),
+      assets: assetsAmount,
+      virtualShares: BN(0),
+    });
+
+    const formattedPoolParams = Object.values(poolParams) as any;
+
+    // Deploy the pool
+    await expect(
+      program.methods
+        .initializePool(...formattedPoolParams)
+        .accounts({
+          creator: creator.publicKey,
+          shareTokenMint,
+          assetTokenMint,
+          poolShareTokenAccount,
+          poolAssetTokenAccount,
+          creatorShareTokenAccount,
+          creatorAssetTokenAccount,
+        })
+        .rpc()
+    ).to.be.rejectedWith("InvalidSharesValue");
+  });
+
+  it("Should not be able to deploy the pool if the deposited project tokens (share token) 0 and the virtual shares are a negative value", async () => {
+    const assetsAmount = initialCollateralTokenBalanceCreator;
+
+    // Create pool with valid share token and invalid virtual shares
+    const poolParams = createMockpoolConfig({
+      shares: BN(0),
+      assets: assetsAmount,
+      virtualShares: BN(-100000000),
+    });
+
+    const formattedPoolParams = Object.values(poolParams) as any;
+
+    // Deploy the pool
+    await expect(
+      program.methods
+        .initializePool(...formattedPoolParams)
+        .accounts({
+          creator: creator.publicKey,
+          shareTokenMint,
+          assetTokenMint,
+          poolShareTokenAccount,
+          poolAssetTokenAccount,
+          creatorShareTokenAccount,
+          creatorAssetTokenAccount,
+        })
+        .rpc()
+    ).to.be.rejectedWith("InvalidSharesValue");
+  });
+
   it("Should deploy the pool if the deposited project tokens (share token) is 0 and virtual shares is not 0 ", async () => {
     const assetsAmount = initialCollateralTokenBalanceCreator;
 
@@ -942,5 +1058,487 @@ describe("Fjord LBP - Initialization", () => {
         })
         .rpc()
     ).to.be.fulfilled;
+  });
+
+  it("Should not be able to deploy the pool if the share token mint is undefined", async () => {
+    const sharesAmount = initialProjectTokenBalanceCreator;
+    const assetsAmount = initialCollateralTokenBalanceCreator;
+
+    // Create pool with undefined share token mint
+    const poolParams = createMockpoolConfig({
+      shares: sharesAmount,
+      assets: assetsAmount,
+    });
+
+    const formattedPoolParams = Object.values(poolParams) as any;
+
+    // Deploy the pool
+    await expect(
+      program.methods
+        .initializePool(...formattedPoolParams)
+        .accounts({
+          creator: creator.publicKey,
+          shareTokenMint: undefined,
+          assetTokenMint,
+          poolShareTokenAccount,
+          poolAssetTokenAccount,
+          creatorShareTokenAccount,
+          creatorAssetTokenAccount,
+        })
+        .rpc()
+    ).to.be.rejectedWith("Invalid arguments: pool not provided.");
+  });
+
+  it("Should not be able to deploy the pool if the asset token mint is undefined", async () => {
+    const sharesAmount = initialProjectTokenBalanceCreator;
+    const assetsAmount = initialCollateralTokenBalanceCreator;
+
+    // Create pool with undefined asset token mint
+    const poolParams = createMockpoolConfig({
+      shares: sharesAmount,
+      assets: assetsAmount,
+    });
+
+    const formattedPoolParams = Object.values(poolParams) as any;
+
+    // Deploy the pool
+    await expect(
+      program.methods
+        .initializePool(...formattedPoolParams)
+        .accounts({
+          creator: creator.publicKey,
+          shareTokenMint,
+          assetTokenMint: undefined,
+          poolShareTokenAccount,
+          poolAssetTokenAccount,
+          creatorShareTokenAccount,
+          creatorAssetTokenAccount,
+        })
+        .rpc()
+    ).to.be.rejectedWith("Invalid arguments: pool not provided.");
+  });
+
+  it("Should not be able to deploy the pool if the pool share token account is undefined", async () => {
+    const sharesAmount = initialProjectTokenBalanceCreator;
+    const assetsAmount = initialCollateralTokenBalanceCreator;
+
+    // Create pool with undefined pool share token account
+    const poolParams = createMockpoolConfig({
+      shares: sharesAmount,
+      assets: assetsAmount,
+    });
+
+    const formattedPoolParams = Object.values(poolParams) as any;
+
+    // Deploy the pool
+    await expect(
+      program.methods
+        .initializePool(...formattedPoolParams)
+        .accounts({
+          creator: creator.publicKey,
+          shareTokenMint,
+          assetTokenMint,
+          poolShareTokenAccount: undefined,
+          poolAssetTokenAccount,
+          creatorShareTokenAccount,
+          creatorAssetTokenAccount,
+        })
+        .rpc()
+    ).to.be.rejectedWith(
+      "Invalid arguments: poolShareTokenAccount not provided."
+    );
+  });
+
+  it("Should not be able to deploy the pool if the pool asset token account is undefined", async () => {
+    const sharesAmount = initialProjectTokenBalanceCreator;
+    const assetsAmount = initialCollateralTokenBalanceCreator;
+
+    // Create pool with undefined pool asset token account
+    const poolParams = createMockpoolConfig({
+      shares: sharesAmount,
+      assets: assetsAmount,
+    });
+
+    const formattedPoolParams = Object.values(poolParams) as any;
+
+    // Deploy the pool
+    await expect(
+      program.methods
+        .initializePool(...formattedPoolParams)
+        .accounts({
+          creator: creator.publicKey,
+          shareTokenMint,
+          assetTokenMint,
+          poolShareTokenAccount,
+          poolAssetTokenAccount: undefined,
+          creatorShareTokenAccount,
+          creatorAssetTokenAccount,
+        })
+        .rpc()
+    ).to.be.rejectedWith(
+      "Invalid arguments: poolAssetTokenAccount not provided."
+    );
+  });
+
+  it("Should not be able to deploy the pool if the creator share token account is undefined", async () => {
+    const sharesAmount = initialProjectTokenBalanceCreator;
+    const assetsAmount = initialCollateralTokenBalanceCreator;
+
+    // Create pool with undefined creator share token account
+    const poolParams = createMockpoolConfig({
+      shares: sharesAmount,
+      assets: assetsAmount,
+    });
+
+    const formattedPoolParams = Object.values(poolParams) as any;
+
+    // Deploy the pool
+    await expect(
+      program.methods
+        .initializePool(...formattedPoolParams)
+        .accounts({
+          creator: creator.publicKey,
+          shareTokenMint,
+          assetTokenMint,
+          poolShareTokenAccount,
+          poolAssetTokenAccount,
+          creatorShareTokenAccount: undefined,
+          creatorAssetTokenAccount,
+        })
+        .rpc()
+    ).to.be.rejectedWith(
+      "Invalid arguments: creatorShareTokenAccount not provided."
+    );
+  });
+
+  it("Should not be able to deploy the pool if the creator asset token account is undefined", async () => {
+    const sharesAmount = initialProjectTokenBalanceCreator;
+    const assetsAmount = initialCollateralTokenBalanceCreator;
+
+    // Create pool with undefined creator asset token account
+    const poolParams = createMockpoolConfig({
+      shares: sharesAmount,
+      assets: assetsAmount,
+    });
+
+    const formattedPoolParams = Object.values(poolParams) as any;
+
+    // Deploy the pool
+    await expect(
+      program.methods
+        .initializePool(...formattedPoolParams)
+        .accounts({
+          creator: creator.publicKey,
+          shareTokenMint,
+          assetTokenMint,
+          poolShareTokenAccount,
+          poolAssetTokenAccount,
+          creatorShareTokenAccount,
+          creatorAssetTokenAccount: undefined,
+        })
+        .rpc()
+    ).to.be.rejectedWith(
+      "Invalid arguments: creatorAssetTokenAccount not provided."
+    );
+  });
+
+  it("Should not be able to deploy the pool if max share price is 0", async () => {
+    const sharesAmount = initialProjectTokenBalanceCreator;
+    const assetsAmount = initialCollateralTokenBalanceCreator;
+
+    // Create pool with invalid max share price
+    const poolParams = createMockpoolConfig({
+      shares: sharesAmount,
+      assets: assetsAmount,
+      maxSharePrice: BN(0),
+    });
+
+    const formattedPoolParams = Object.values(poolParams) as any;
+
+    // Deploy the pool
+    await expect(
+      program.methods
+        .initializePool(...formattedPoolParams)
+        .accounts({
+          creator: creator.publicKey,
+          shareTokenMint,
+          assetTokenMint,
+          poolShareTokenAccount,
+          poolAssetTokenAccount,
+          creatorShareTokenAccount,
+          creatorAssetTokenAccount,
+        })
+        .rpc()
+    ).to.be.rejected;
+  });
+
+  it("Should not be able to deploy the pool if max share price is a negative value", async () => {
+    const sharesAmount = initialProjectTokenBalanceCreator;
+    const assetsAmount = initialCollateralTokenBalanceCreator;
+
+    // Create pool with invalid max share price
+    const poolParams = createMockpoolConfig({
+      shares: sharesAmount,
+      assets: assetsAmount,
+      maxSharePrice: BN(-100000000),
+    });
+
+    const formattedPoolParams = Object.values(poolParams) as any;
+
+    // Deploy the pool
+    await expect(
+      program.methods
+        .initializePool(...formattedPoolParams)
+        .accounts({
+          creator: creator.publicKey,
+          shareTokenMint,
+          assetTokenMint,
+          poolShareTokenAccount,
+          poolAssetTokenAccount,
+          creatorShareTokenAccount,
+          creatorAssetTokenAccount,
+        })
+        .rpc()
+    ).to.be.rejected;
+  });
+
+  it("Should deploy the pool if max share price is not 0", async () => {
+    const sharesAmount = initialProjectTokenBalanceCreator;
+    const assetsAmount = initialCollateralTokenBalanceCreator;
+
+    // Create pool with valid max share price
+    const poolParams = createMockpoolConfig({
+      shares: sharesAmount,
+      assets: assetsAmount,
+      maxSharePrice: BN(1000000000000),
+    });
+
+    const formattedPoolParams = Object.values(poolParams) as any;
+
+    // Deploy the pool
+    await expect(
+      program.methods
+        .initializePool(...formattedPoolParams)
+        .accounts({
+          creator: creator.publicKey,
+          shareTokenMint,
+          assetTokenMint,
+          poolShareTokenAccount,
+          poolAssetTokenAccount,
+          creatorShareTokenAccount,
+          creatorAssetTokenAccount,
+        })
+        .rpc()
+    ).to.be.fulfilled;
+  });
+
+  it("Should not deploy if the maxSharesOut is 0", async () => {
+    const sharesAmount = initialProjectTokenBalanceCreator;
+    const assetsAmount = initialCollateralTokenBalanceCreator;
+
+    // Create pool with invalid max share price
+    const poolParams = createMockpoolConfig({
+      shares: sharesAmount,
+      assets: assetsAmount,
+      maxSharesOut: BN(0),
+    });
+
+    const formattedPoolParams = Object.values(poolParams) as any;
+
+    // Deploy the pool
+    await expect(
+      program.methods
+        .initializePool(...formattedPoolParams)
+        .accounts({
+          creator: creator.publicKey,
+          shareTokenMint,
+          assetTokenMint,
+          poolShareTokenAccount,
+          poolAssetTokenAccount,
+          creatorShareTokenAccount,
+          creatorAssetTokenAccount,
+        })
+        .rpc()
+    ).to.be.rejected;
+  });
+
+  it("Should not deploy if the maxSharesOut is a negative number", async () => {
+    const sharesAmount = initialProjectTokenBalanceCreator;
+    const assetsAmount = initialCollateralTokenBalanceCreator;
+
+    // Create pool with invalid max share price
+    const poolParams = createMockpoolConfig({
+      shares: sharesAmount,
+      assets: assetsAmount,
+      maxSharesOut: BN(-3000000000),
+    });
+
+    const formattedPoolParams = Object.values(poolParams) as any;
+
+    // Deploy the pool
+    await expect(
+      program.methods
+        .initializePool(...formattedPoolParams)
+        .accounts({
+          creator: creator.publicKey,
+          shareTokenMint,
+          assetTokenMint,
+          poolShareTokenAccount,
+          poolAssetTokenAccount,
+          creatorShareTokenAccount,
+          creatorAssetTokenAccount,
+        })
+        .rpc()
+    ).to.be.rejected;
+  });
+
+  it("Should deploy if the maxSharesOut is not 0", async () => {
+    const sharesAmount = initialProjectTokenBalanceCreator;
+    const assetsAmount = initialCollateralTokenBalanceCreator;
+
+    // Create pool with valid max share price
+    const poolParams = createMockpoolConfig({
+      shares: sharesAmount,
+      assets: assetsAmount,
+      maxSharesOut: BN(1000000000),
+    });
+
+    const formattedPoolParams = Object.values(poolParams) as any;
+
+    // Deploy the pool
+    await expect(
+      program.methods
+        .initializePool(...formattedPoolParams)
+        .accounts({
+          creator: creator.publicKey,
+          shareTokenMint,
+          assetTokenMint,
+          poolShareTokenAccount,
+          poolAssetTokenAccount,
+          creatorShareTokenAccount,
+          creatorAssetTokenAccount,
+        })
+        .rpc()
+    ).to.be.fulfilled;
+  });
+
+  it("Should not deploy if maxAssetsIn is 0", async () => {
+    const sharesAmount = initialProjectTokenBalanceCreator;
+    const assetsAmount = initialCollateralTokenBalanceCreator;
+
+    // Create pool with invalid max share price
+    const poolParams = createMockpoolConfig({
+      shares: sharesAmount,
+      assets: assetsAmount,
+      maxAssetsIn: BN(0),
+    });
+
+    const formattedPoolParams = Object.values(poolParams) as any;
+
+    // Deploy the pool
+    await expect(
+      program.methods
+        .initializePool(...formattedPoolParams)
+        .accounts({
+          creator: creator.publicKey,
+          shareTokenMint,
+          assetTokenMint,
+          poolShareTokenAccount,
+          poolAssetTokenAccount,
+          creatorShareTokenAccount,
+          creatorAssetTokenAccount,
+        })
+        .rpc()
+    ).to.be.rejected;
+  });
+
+  it("Should not deploy if maxAssetsIn is a negative number", async () => {
+    const sharesAmount = initialProjectTokenBalanceCreator;
+    const assetsAmount = initialCollateralTokenBalanceCreator;
+
+    // Create pool with invalid max share price
+    const poolParams = createMockpoolConfig({
+      shares: sharesAmount,
+      assets: assetsAmount,
+      maxAssetsIn: BN(-4000000000),
+    });
+
+    const formattedPoolParams = Object.values(poolParams) as any;
+
+    // Deploy the pool
+    await expect(
+      program.methods
+        .initializePool(...formattedPoolParams)
+        .accounts({
+          creator: creator.publicKey,
+          shareTokenMint,
+          assetTokenMint,
+          poolShareTokenAccount,
+          poolAssetTokenAccount,
+          creatorShareTokenAccount,
+          creatorAssetTokenAccount,
+        })
+        .rpc()
+    ).to.be.rejected;
+  });
+
+  it("Should deploy if the maxAssetsIn is not 0", async () => {
+    const sharesAmount = initialProjectTokenBalanceCreator;
+    const assetsAmount = initialCollateralTokenBalanceCreator;
+
+    // Create pool with valid max share price
+    const poolParams = createMockpoolConfig({
+      shares: sharesAmount,
+      assets: assetsAmount,
+      maxAssetsIn: BN(1000000000),
+    });
+
+    const formattedPoolParams = Object.values(poolParams) as any;
+
+    // Deploy the pool
+    await expect(
+      program.methods
+        .initializePool(...formattedPoolParams)
+        .accounts({
+          creator: creator.publicKey,
+          shareTokenMint,
+          assetTokenMint,
+          poolShareTokenAccount,
+          poolAssetTokenAccount,
+          creatorShareTokenAccount,
+          creatorAssetTokenAccount,
+        })
+        .rpc()
+    ).to.be.fulfilled;
+  });
+
+  it("Should not deploy if sellingAllowed is not a boolean", async () => {
+    const sharesAmount = initialProjectTokenBalanceCreator;
+    const assetsAmount = initialCollateralTokenBalanceCreator;
+
+    // Create pool with invalid max share price
+    const poolParams = createMockpoolConfig({
+      shares: sharesAmount,
+      assets: assetsAmount,
+      sellingAllowed: "Hello World" as any,
+    });
+
+    const formattedPoolParams = Object.values(poolParams) as any;
+
+    // Deploy the pool
+    await expect(
+      program.methods
+        .initializePool(...formattedPoolParams)
+        .accounts({
+          creator: creator.publicKey,
+          shareTokenMint,
+          assetTokenMint,
+          poolShareTokenAccount,
+          poolAssetTokenAccount,
+          creatorShareTokenAccount,
+          creatorAssetTokenAccount,
+        })
+        .rpc()
+    ).to.be.rejected;
   });
 });
