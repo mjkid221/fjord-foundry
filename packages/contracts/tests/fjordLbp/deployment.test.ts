@@ -7,7 +7,12 @@ import chai, { expect } from "chai";
 import chaiAsPromised from "chai-as-promised";
 import { addHours } from "date-fns";
 
-import { BN, BigNumber, testMerkleWhitelistedAddresses } from "../../constants";
+import {
+  BN,
+  BigNumber,
+  PERCENTAGE_BASIS_POINTS,
+  testMerkleWhitelistedAddresses,
+} from "../../constants";
 import { createMockpoolConfig, generateMerkleRoot, setup } from "../../helpers";
 import { FjordLbp } from "../../target/types/fjord_lbp";
 
@@ -309,40 +314,633 @@ describe("Fjord LBP - Initialization", () => {
   });
 
   it("Should not be able to deploy the pool if the sale period between start and end time is less than a day", async () => {
-    throw Error("Not implemented");
+    const sharesAmount = initialProjectTokenBalanceCreator;
+    const assetsAmount = initialCollateralTokenBalanceCreator;
+
+    const validStartTime = addHours(new Date(), 240).getTime() / 1000; // 10 days from now
+    const invalidEndTime = addHours(new Date(), 240 + 23).getTime() / 1000; // 10 days and 23 hours from now
+
+    // Create pool with sale period less than a day
+    const poolParams = createMockpoolConfig({
+      shares: sharesAmount,
+      assets: assetsAmount,
+      saleStartTime: BN(validStartTime),
+      saleEndTime: BN(invalidEndTime),
+    });
+
+    const formattedPoolParams = Object.values(poolParams) as any;
+
+    // Deploy the pool
+    await expect(
+      program.methods
+        .initializePool(...formattedPoolParams)
+        .accounts({
+          creator: creator.publicKey,
+          shareTokenMint,
+          assetTokenMint,
+          poolShareTokenAccount,
+          poolAssetTokenAccount,
+          creatorShareTokenAccount,
+          creatorAssetTokenAccount,
+        })
+        .rpc()
+    ).to.be.rejectedWith("SalePeriodLow");
   });
 
   it("Should not be able to deploy the pool if the sale end time is before the vesting end time", async () => {
-    throw Error("Not implemented");
+    const sharesAmount = initialProjectTokenBalanceCreator;
+    const assetsAmount = initialCollateralTokenBalanceCreator;
+
+    const validStartTime = addHours(new Date(), 240).getTime() / 1000; // 10 days from now
+    const validEndTime = addHours(new Date(), 240 + 48).getTime() / 1000; // 10 days and 48 hours from now
+    const invalidVestEndTime = addHours(new Date(), 240 + 49).getTime() / 1000; // 10 days and 47 hours from now
+    const validVestCliffTime = addHours(new Date(), 240 + 50).getTime() / 1000; // 10 days and 47 hours from now
+
+    // Create pool with invalid vesting end time
+    const poolParams = createMockpoolConfig({
+      shares: sharesAmount,
+      assets: assetsAmount,
+      saleStartTime: BN(validStartTime),
+      saleEndTime: BN(validEndTime),
+      vestEnd: BN(invalidVestEndTime),
+      vestCliff: BN(validVestCliffTime),
+    });
+
+    const formattedPoolParams = Object.values(poolParams) as any;
+
+    // Deploy the pool
+    await expect(
+      program.methods
+        .initializePool(...formattedPoolParams)
+        .accounts({
+          creator: creator.publicKey,
+          shareTokenMint,
+          assetTokenMint,
+          poolShareTokenAccount,
+          poolAssetTokenAccount,
+          creatorShareTokenAccount,
+          creatorAssetTokenAccount,
+        })
+        .rpc()
+    ).to.be.rejectedWith("InvalidVestEnd");
   });
 
   it("Should not be able to deploy the pool if the sale end time is after the vesting cliff time", async () => {
-    throw Error("Not implemented");
+    const sharesAmount = initialProjectTokenBalanceCreator;
+    const assetsAmount = initialCollateralTokenBalanceCreator;
+
+    const validStartTime = addHours(new Date(), 240).getTime() / 1000; // 10 days from now
+    const validEndTime = addHours(new Date(), 240 + 48).getTime() / 1000; // 10 days and 48 hours from now
+    const invalidVestCliffTime =
+      addHours(new Date(), 240 + 47).getTime() / 1000; // 10 days and 47 hours from now
+    const validVestEndTime = addHours(new Date(), 240 + 46).getTime() / 1000; // 10 days and 47 hours from now
+
+    // Create pool with sale period less than a day
+    const poolParams = createMockpoolConfig({
+      shares: sharesAmount,
+      assets: assetsAmount,
+      saleStartTime: BN(validStartTime),
+      saleEndTime: BN(validEndTime),
+      vestCliff: BN(invalidVestCliffTime),
+      vestEnd: BN(validVestEndTime),
+    });
+
+    const formattedPoolParams = Object.values(poolParams) as any;
+
+    // Deploy the pool
+    await expect(
+      program.methods
+        .initializePool(...formattedPoolParams)
+        .accounts({
+          creator: creator.publicKey,
+          shareTokenMint,
+          assetTokenMint,
+          poolShareTokenAccount,
+          poolAssetTokenAccount,
+          creatorShareTokenAccount,
+          creatorAssetTokenAccount,
+        })
+        .rpc()
+    ).to.be.rejectedWith("InvalidVestCliff");
+  });
+
+  it("Should not be able to deploy the pool if the sale end time is after the vesting cliff time", async () => {
+    const sharesAmount = initialProjectTokenBalanceCreator;
+    const assetsAmount = initialCollateralTokenBalanceCreator;
+
+    const validStartTime = addHours(new Date(), 240).getTime() / 1000; // 10 days from now
+    const validEndTime = addHours(new Date(), 240 + 48).getTime() / 1000; // 10 days and 48 hours from now
+    const invalidVestCliffTime =
+      addHours(new Date(), 240 + 47).getTime() / 1000; // 10 days and 47 hours from now
+    const invalidVestEndTime = addHours(new Date(), 240 + 49).getTime() / 1000; // 10 days and 47 hours from now
+
+    // Create pool invalid vesting cliff and end time
+    const poolParams = createMockpoolConfig({
+      shares: sharesAmount,
+      assets: assetsAmount,
+      saleStartTime: BN(validStartTime),
+      saleEndTime: BN(validEndTime),
+      vestCliff: BN(invalidVestCliffTime),
+      vestEnd: BN(invalidVestEndTime),
+    });
+
+    const formattedPoolParams = Object.values(poolParams) as any;
+
+    // Deploy the pool
+    await expect(
+      program.methods
+        .initializePool(...formattedPoolParams)
+        .accounts({
+          creator: creator.publicKey,
+          shareTokenMint,
+          assetTokenMint,
+          poolShareTokenAccount,
+          poolAssetTokenAccount,
+          creatorShareTokenAccount,
+          creatorAssetTokenAccount,
+        })
+        .rpc()
+    ).to.be.rejectedWith("InvalidVestCliff");
   });
 
   it("Should not be able to deploy the pool if the vesting cliff time is after or during the vesting end time", async () => {
-    throw Error("Not implemented");
+    const sharesAmount = initialProjectTokenBalanceCreator;
+    const assetsAmount = initialCollateralTokenBalanceCreator;
+
+    const validStartTime = addHours(new Date(), 240).getTime() / 1000; // 10 days from now
+    const validEndTime = addHours(new Date(), 240 + 48).getTime() / 1000; // 10 days and 48 hours from now
+    const invalidVestCliffTime =
+      addHours(new Date(), 240 + 50).getTime() / 1000; // 10 days and 47 hours from now
+    const validVestEndTime = addHours(new Date(), 240 + 49).getTime() / 1000; // 10 days and 47 hours from now
+
+    // Create pool with invalid vesting cliff after vesting end time
+    const poolParams = createMockpoolConfig({
+      shares: sharesAmount,
+      assets: assetsAmount,
+      saleStartTime: BN(validStartTime),
+      saleEndTime: BN(validEndTime),
+      vestCliff: BN(invalidVestCliffTime),
+      vestEnd: BN(validVestEndTime),
+    });
+
+    // Create pool with vesting cliff at the same time as vesting end time
+    const poolParams2 = createMockpoolConfig({
+      shares: sharesAmount,
+      assets: assetsAmount,
+      saleStartTime: BN(validStartTime),
+      saleEndTime: BN(validEndTime),
+      vestCliff: BN(validVestEndTime),
+      vestEnd: BN(validVestEndTime),
+    });
+
+    const formattedPoolParams = Object.values(poolParams) as any;
+    const formattedPoolParams2 = Object.values(poolParams2) as any;
+
+    // Deploy the pool with invalid vesting cliff time after vesting end time
+    await expect(
+      program.methods
+        .initializePool(...formattedPoolParams)
+        .accounts({
+          creator: creator.publicKey,
+          shareTokenMint,
+          assetTokenMint,
+          poolShareTokenAccount,
+          poolAssetTokenAccount,
+          creatorShareTokenAccount,
+          creatorAssetTokenAccount,
+        })
+        .rpc()
+    ).to.be.rejectedWith("InvalidVestEnd");
+
+    // Deploy the pool with vesting cliff time at the same time as vesting end time
+    await expect(
+      program.methods
+        .initializePool(...formattedPoolParams2)
+        .accounts({
+          creator: creator.publicKey,
+          shareTokenMint,
+          assetTokenMint,
+          poolShareTokenAccount,
+          poolAssetTokenAccount,
+          creatorShareTokenAccount,
+          creatorAssetTokenAccount,
+        })
+        .rpc()
+    ).to.be.rejectedWith("InvalidVestEnd");
   });
 
   it("Should not be able to deploy the pool if the start weight is smaller than 1%", async () => {
-    throw Error("Not implemented");
+    const sharesAmount = initialProjectTokenBalanceCreator;
+    const assetsAmount = initialCollateralTokenBalanceCreator;
+
+    // Create pool with invalid start weight
+    const poolParams = createMockpoolConfig({
+      shares: sharesAmount,
+      assets: assetsAmount,
+      startWeightBasisPoints: 0.99 * PERCENTAGE_BASIS_POINTS, // 0.99%
+    });
+
+    const formattedPoolParams = Object.values(poolParams) as any;
+
+    // Deploy the pool
+    await expect(
+      program.methods
+        .initializePool(...formattedPoolParams)
+        .accounts({
+          creator: creator.publicKey,
+          shareTokenMint,
+          assetTokenMint,
+          poolShareTokenAccount,
+          poolAssetTokenAccount,
+          creatorShareTokenAccount,
+          creatorAssetTokenAccount,
+        })
+        .rpc()
+    ).to.be.rejectedWith("InvalidWeightConfig");
+  });
+
+  it("Should deploy the pool if the start weight is 1%", async () => {
+    const sharesAmount = initialProjectTokenBalanceCreator;
+    const assetsAmount = initialCollateralTokenBalanceCreator;
+
+    // Create pool with valid start weight
+    const poolParams = createMockpoolConfig({
+      shares: sharesAmount,
+      assets: assetsAmount,
+      startWeightBasisPoints: 1 * PERCENTAGE_BASIS_POINTS, // 1%
+    });
+
+    const formattedPoolParams = Object.values(poolParams) as any;
+
+    // Deploy the pool
+    await expect(
+      program.methods
+        .initializePool(...formattedPoolParams)
+        .accounts({
+          creator: creator.publicKey,
+          shareTokenMint,
+          assetTokenMint,
+          poolShareTokenAccount,
+          poolAssetTokenAccount,
+          creatorShareTokenAccount,
+          creatorAssetTokenAccount,
+        })
+        .rpc()
+    ).to.be.fulfilled;
+  });
+
+  it("Should not be able to deploy the pool if the start weight is a negative percentage", async () => {
+    const sharesAmount = initialProjectTokenBalanceCreator;
+    const assetsAmount = initialCollateralTokenBalanceCreator;
+
+    // Create pool with invalid start weight
+    const poolParams = createMockpoolConfig({
+      shares: sharesAmount,
+      assets: assetsAmount,
+      startWeightBasisPoints: -1 * PERCENTAGE_BASIS_POINTS, // -1%
+    });
+
+    const formattedPoolParams = Object.values(poolParams) as any;
+
+    // Deploy the pool
+    await expect(
+      program.methods
+        .initializePool(...formattedPoolParams)
+        .accounts({
+          creator: creator.publicKey,
+          shareTokenMint,
+          assetTokenMint,
+          poolShareTokenAccount,
+          poolAssetTokenAccount,
+          creatorShareTokenAccount,
+          creatorAssetTokenAccount,
+        })
+        .rpc()
+    ).to.be.rejectedWith(/out of range/i);
   });
 
   it("Should not be able to deploy the pool if the start weight is greater than 99%", async () => {
-    throw Error("Not implemented");
+    const sharesAmount = initialProjectTokenBalanceCreator;
+    const assetsAmount = initialCollateralTokenBalanceCreator;
+
+    // Create pool with invalid start weight
+    const poolParams = createMockpoolConfig({
+      shares: sharesAmount,
+      assets: assetsAmount,
+      startWeightBasisPoints: 99.01 * PERCENTAGE_BASIS_POINTS, // 99.01%
+    });
+
+    const formattedPoolParams = Object.values(poolParams) as any;
+
+    // Deploy the pool
+    await expect(
+      program.methods
+        .initializePool(...formattedPoolParams)
+        .accounts({
+          creator: creator.publicKey,
+          shareTokenMint,
+          assetTokenMint,
+          poolShareTokenAccount,
+          poolAssetTokenAccount,
+          creatorShareTokenAccount,
+          creatorAssetTokenAccount,
+        })
+        .rpc()
+    ).to.be.rejectedWith("InvalidWeightConfig");
+  });
+
+  it("Should deploy the pool if the start weight is 99%", async () => {
+    const sharesAmount = initialProjectTokenBalanceCreator;
+    const assetsAmount = initialCollateralTokenBalanceCreator;
+
+    // Create pool with valid start weight of 99%
+    const poolParams = createMockpoolConfig({
+      shares: sharesAmount,
+      assets: assetsAmount,
+      startWeightBasisPoints: 99 * PERCENTAGE_BASIS_POINTS, // 99%
+    });
+
+    const formattedPoolParams = Object.values(poolParams) as any;
+
+    // Deploy the pools
+    await expect(
+      program.methods
+        .initializePool(...formattedPoolParams)
+        .accounts({
+          creator: creator.publicKey,
+          shareTokenMint,
+          assetTokenMint,
+          poolShareTokenAccount,
+          poolAssetTokenAccount,
+          creatorShareTokenAccount,
+          creatorAssetTokenAccount,
+        })
+        .rpc()
+    ).to.be.fulfilled;
   });
 
   it("Should not be able to deploy the pool if the end weight is smaller than 1%", async () => {
-    throw Error("Not implemented");
+    const sharesAmount = initialProjectTokenBalanceCreator;
+    const assetsAmount = initialCollateralTokenBalanceCreator;
+
+    // Create pool with invalid end weight
+    const poolParams = createMockpoolConfig({
+      shares: sharesAmount,
+      assets: assetsAmount,
+      endWeightBasisPoints: 0.05 * PERCENTAGE_BASIS_POINTS, // 0.05%
+    });
+
+    const formattedPoolParams = Object.values(poolParams) as any;
+
+    // Deploy the pool
+    await expect(
+      program.methods
+        .initializePool(...formattedPoolParams)
+        .accounts({
+          creator: creator.publicKey,
+          shareTokenMint,
+          assetTokenMint,
+          poolShareTokenAccount,
+          poolAssetTokenAccount,
+          creatorShareTokenAccount,
+          creatorAssetTokenAccount,
+        })
+        .rpc()
+    ).to.be.rejectedWith("InvalidWeightConfig");
+  });
+
+  it("Should not be able to deploy the pool if the end weight is a negative percentage", async () => {
+    const sharesAmount = initialProjectTokenBalanceCreator;
+    const assetsAmount = initialCollateralTokenBalanceCreator;
+
+    // Create pool with invalid end weight
+    const poolParams = createMockpoolConfig({
+      shares: sharesAmount,
+      assets: assetsAmount,
+      endWeightBasisPoints: -1 * PERCENTAGE_BASIS_POINTS, // -1%
+    });
+
+    const formattedPoolParams = Object.values(poolParams) as any;
+
+    // Deploy the pool
+    await expect(
+      program.methods
+        .initializePool(...formattedPoolParams)
+        .accounts({
+          creator: creator.publicKey,
+          shareTokenMint,
+          assetTokenMint,
+          poolShareTokenAccount,
+          poolAssetTokenAccount,
+          creatorShareTokenAccount,
+          creatorAssetTokenAccount,
+        })
+        .rpc()
+    ).to.be.rejectedWith(/out of range/i);
+  });
+
+  it("Should deploy the pool if the end weight is 1%", async () => {
+    const sharesAmount = initialProjectTokenBalanceCreator;
+    const assetsAmount = initialCollateralTokenBalanceCreator;
+
+    // Create pool with valid end weight
+    const poolParams = createMockpoolConfig({
+      shares: sharesAmount,
+      assets: assetsAmount,
+      endWeightBasisPoints: 1 * PERCENTAGE_BASIS_POINTS, // 1%
+    });
+
+    const formattedPoolParams = Object.values(poolParams) as any;
+
+    // Deploy the pool
+    await expect(
+      program.methods
+        .initializePool(...formattedPoolParams)
+        .accounts({
+          creator: creator.publicKey,
+          shareTokenMint,
+          assetTokenMint,
+          poolShareTokenAccount,
+          poolAssetTokenAccount,
+          creatorShareTokenAccount,
+          creatorAssetTokenAccount,
+        })
+        .rpc()
+    ).to.be.fulfilled;
   });
 
   it("Should not be able to deploy the pool if the end weight is greater than 99%", async () => {
-    throw Error("Not implemented");
+    const sharesAmount = initialProjectTokenBalanceCreator;
+    const assetsAmount = initialCollateralTokenBalanceCreator;
+
+    // Create pool with invalid end weight
+    const poolParams = createMockpoolConfig({
+      shares: sharesAmount,
+      assets: assetsAmount,
+      endWeightBasisPoints: 99.01 * PERCENTAGE_BASIS_POINTS, // 99.01%
+    });
+
+    const formattedPoolParams = Object.values(poolParams) as any;
+
+    // Deploy the pool
+    await expect(
+      program.methods
+        .initializePool(...formattedPoolParams)
+        .accounts({
+          creator: creator.publicKey,
+          shareTokenMint,
+          assetTokenMint,
+          poolShareTokenAccount,
+          poolAssetTokenAccount,
+          creatorShareTokenAccount,
+          creatorAssetTokenAccount,
+        })
+        .rpc()
+    ).to.be.rejectedWith("InvalidWeightConfig");
+  });
+
+  it("Should deploy the pool if the end weight is 99%", async () => {
+    const sharesAmount = initialProjectTokenBalanceCreator;
+    const assetsAmount = initialCollateralTokenBalanceCreator;
+
+    // Create pool with valid end weight of 99%
+    const poolParams = createMockpoolConfig({
+      shares: sharesAmount,
+      assets: assetsAmount,
+      endWeightBasisPoints: 99 * PERCENTAGE_BASIS_POINTS, // 99%
+    });
+
+    const formattedPoolParams = Object.values(poolParams) as any;
+
+    // Deploy the pool
+    await expect(
+      program.methods
+        .initializePool(...formattedPoolParams)
+        .accounts({
+          creator: creator.publicKey,
+          shareTokenMint,
+          assetTokenMint,
+          poolShareTokenAccount,
+          poolAssetTokenAccount,
+          creatorShareTokenAccount,
+          creatorAssetTokenAccount,
+        })
+        .rpc()
+    ).to.be.fulfilled;
   });
 
   it("Should not be able to deploy the pool if deposited collateral tokens (asset token) is 0 and virtual assets is also 0 ", async () => {
-    throw Error("Not implemented");
+    const sharesAmount = initialProjectTokenBalanceCreator;
+
+    // Create pool with invalid asset token and virtual assets
+    const poolParams = createMockpoolConfig({
+      shares: sharesAmount,
+      assets: BN(0),
+      virtualAssets: BN(0),
+    });
+
+    const formattedPoolParams = Object.values(poolParams) as any;
+
+    // Deploy the pool
+    await expect(
+      program.methods
+        .initializePool(...formattedPoolParams)
+        .accounts({
+          creator: creator.publicKey,
+          shareTokenMint,
+          assetTokenMint,
+          poolShareTokenAccount,
+          poolAssetTokenAccount,
+          creatorShareTokenAccount,
+          creatorAssetTokenAccount,
+        })
+        .rpc()
+    ).to.be.rejectedWith("InvalidAssetValue");
   });
 
-  // Add more tests here if needed.
+  it("Should deploy the pool if the deposited collateral tokens (asset token) is 0 and virtual assets is not 0 ", async () => {
+    const sharesAmount = initialProjectTokenBalanceCreator;
+
+    // Create pool with valid asset token and virtual assets
+    const poolParams = createMockpoolConfig({
+      shares: sharesAmount,
+      assets: BN(0),
+      virtualAssets: BN(1000000000000),
+    });
+
+    const formattedPoolParams = Object.values(poolParams) as any;
+
+    // Deploy the pool
+    await expect(
+      program.methods
+        .initializePool(...formattedPoolParams)
+        .accounts({
+          creator: creator.publicKey,
+          shareTokenMint,
+          assetTokenMint,
+          poolShareTokenAccount,
+          poolAssetTokenAccount,
+          creatorShareTokenAccount,
+          creatorAssetTokenAccount,
+        })
+        .rpc()
+    ).to.be.fulfilled;
+  });
+
+  it("Should not be able to deploy the pool if deposited project tokens (share token) is 0 and virtual shares is also 0 ", async () => {
+    const assetsAmount = initialCollateralTokenBalanceCreator;
+    // Create pool with invalid share token and virtual shares
+    const poolParams = createMockpoolConfig({
+      shares: BN(0),
+      assets: assetsAmount,
+      virtualShares: BN(0),
+    });
+
+    const formattedPoolParams = Object.values(poolParams) as any;
+
+    // Deploy the pool
+    await expect(
+      program.methods
+        .initializePool(...formattedPoolParams)
+        .accounts({
+          creator: creator.publicKey,
+          shareTokenMint,
+          assetTokenMint,
+          poolShareTokenAccount,
+          poolAssetTokenAccount,
+          creatorShareTokenAccount,
+          creatorAssetTokenAccount,
+        })
+        .rpc()
+    ).to.be.rejectedWith("InvalidSharesValue");
+  });
+
+  it("Should deploy the pool if the deposited project tokens (share token) is 0 and virtual shares is not 0 ", async () => {
+    const assetsAmount = initialCollateralTokenBalanceCreator;
+
+    // Create pool with valid share token and virtual shares
+    const poolParams = createMockpoolConfig({
+      shares: BN(0),
+      assets: assetsAmount,
+      virtualShares: BN(1000000000000),
+    });
+
+    const formattedPoolParams = Object.values(poolParams) as any;
+
+    // Deploy the pool
+    await expect(
+      program.methods
+        .initializePool(...formattedPoolParams)
+        .accounts({
+          creator: creator.publicKey,
+          shareTokenMint,
+          assetTokenMint,
+          poolShareTokenAccount,
+          poolAssetTokenAccount,
+          creatorShareTokenAccount,
+          creatorAssetTokenAccount,
+        })
+        .rpc()
+    ).to.be.fulfilled;
+  });
 });
