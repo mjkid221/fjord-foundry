@@ -61,7 +61,7 @@ pub fn create_pool(
   vest_cliff: i64,
   vest_end: i64,
   whitelist_merkle_root: [u8; 32],
-  selling_allowed: Option<bool>
+  selling_allowed: bool
 ) -> Result<()> {
   let pool = &mut ctx.accounts.pool;
 
@@ -74,7 +74,7 @@ pub fn create_pool(
       return err!(PoolError::SalePeriodLow);
   }
 
-  if sale_end_time < vest_end {
+  if vest_end != 0 && sale_end_time <= vest_end {
       if sale_end_time > vest_cliff {
           return err!(PoolError::InvalidVestCliff);
       }
@@ -83,12 +83,20 @@ pub fn create_pool(
       }
   }
 
+  if vest_end != 0 && sale_end_time > vest_end {
+      return err!(PoolError::InvalidVestEnd);
+  }
+
   if start_weight_basis_points < 100 ||  start_weight_basis_points > 9900 || end_weight_basis_points > 9900 || end_weight_basis_points < 100 {
       return err!(PoolError::InvalidWeightConfig);
   }
 
   if assets == 0 && virtual_assets == 0 {
       return err!(PoolError::InvalidAssetValue);
+  }
+
+  if shares == 0 && virtual_shares == 0 {
+      return err!(PoolError::InvalidShareValue);
   }
 
   pool.asset_token = ctx.accounts.asset_token_mint.key();
@@ -109,7 +117,7 @@ pub fn create_pool(
   pool.vest_cliff = vest_cliff;
   pool.vest_end = vest_end;
 
-  pool.selling_allowed = selling_allowed.unwrap_or(false);
+  pool.selling_allowed = selling_allowed;
   pool.whitelist_merkle_root = whitelist_merkle_root;
 
   // Transfer the tokens to the pool

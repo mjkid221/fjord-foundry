@@ -15,10 +15,14 @@ pub enum PoolError {
     InvalidWeightConfig,
     #[msg("Asset value cannot be 0")]
     InvalidAssetValue,
+    #[msg("Invalid selling allowed value")]
+    InvalidSellingAllowed,
+    #[msg("Share value cannot be 0")]
+    InvalidShareValue,
 }
 
 #[error_code]
-pub enum AccessControlError{
+pub enum AccessControlError {
     #[msg("Caller is not owner.")]
     NowOwner,
 }

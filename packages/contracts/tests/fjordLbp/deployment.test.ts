@@ -5,7 +5,6 @@ import { getAssociatedTokenAddress } from "@solana/spl-token";
 import { Keypair, PublicKey } from "@solana/web3.js";
 import chai, { expect } from "chai";
 import chaiAsPromised from "chai-as-promised";
-import { addHours } from "date-fns";
 
 import {
   BN,
@@ -13,7 +12,14 @@ import {
   PERCENTAGE_BASIS_POINTS,
   testMerkleWhitelistedAddresses,
 } from "../../constants";
-import { createMockpoolConfig, generateMerkleRoot, setup } from "../../helpers";
+import {
+  Accounts,
+  createMockpoolConfig,
+  formatPoolParams,
+  generateMerkleRoot,
+  generateTimestamp,
+  setup,
+} from "../../helpers";
 import { FjordLbp } from "../../target/types/fjord_lbp";
 
 chai.use(chaiAsPromised);
@@ -42,6 +48,8 @@ describe("Fjord LBP - Initialization", () => {
 
   let initialProjectTokenBalanceCreator: BigNumber;
   let initialCollateralTokenBalanceCreator: BigNumber;
+
+  let accounts: Accounts;
 
   const program = anchor.workspace.FjordLbp as Program<FjordLbp>;
   const { connection } = program.provider;
@@ -97,6 +105,16 @@ describe("Fjord LBP - Initialization", () => {
       assetTokenMint,
       creator.publicKey
     );
+
+    accounts = {
+      creator: creator.publicKey,
+      shareTokenMint,
+      assetTokenMint,
+      poolShareTokenAccount,
+      poolAssetTokenAccount,
+      creatorShareTokenAccount,
+      creatorAssetTokenAccount,
+    };
   });
 
   it("Is initialized!", async () => {
@@ -150,15 +168,7 @@ describe("Fjord LBP - Initialization", () => {
         whitelistMerkleRoot,
         sellingAllowed
       )
-      .accounts({
-        creator: creator.publicKey,
-        shareTokenMint,
-        assetTokenMint,
-        poolShareTokenAccount,
-        poolAssetTokenAccount,
-        creatorShareTokenAccount,
-        creatorAssetTokenAccount,
-      })
+      .accounts(accounts)
       .rpc();
 
     const pool = await program.account.liquidityBootstrappingPool.fetch(
@@ -225,36 +235,21 @@ describe("Fjord LBP - Initialization", () => {
       whitelistMerkleRoot: generateMerkleRoot(testMerkleWhitelistedAddresses),
     });
 
-    const formattedPoolParams = Object.values(poolParams) as any;
+    const formattedPoolParams = formatPoolParams(poolParams);
     await program.methods
       .initializePool(...formattedPoolParams)
-      .accounts({
-        creator: creator.publicKey,
-        shareTokenMint,
-        assetTokenMint,
-        poolShareTokenAccount,
-        poolAssetTokenAccount,
-        creatorShareTokenAccount,
-        creatorAssetTokenAccount,
-      })
+      .accounts(accounts)
       .rpc();
 
     // Initialize again. It should fail with a program error 0x0 which is a native check in the program
     await expect(
       program.methods
         .initializePool(...formattedPoolParams)
-        .accounts({
-          creator: creator.publicKey,
-          shareTokenMint,
-          assetTokenMint,
-          poolShareTokenAccount,
-          poolAssetTokenAccount,
-          creatorShareTokenAccount,
-          creatorAssetTokenAccount,
-        })
+        .accounts(accounts)
         .rpc()
     ).to.be.rejectedWith("custom program error: 0x0");
   });
+
   it("Should not be able to deploy the pool with same project and collateral token", async () => {
     const sharesAmount = initialProjectTokenBalanceCreator;
 
@@ -263,20 +258,16 @@ describe("Fjord LBP - Initialization", () => {
       assets: sharesAmount,
     });
 
-    const formattedPoolParams = Object.values(poolParams) as any;
-
+    const formattedPoolParams = formatPoolParams(poolParams);
     // Deploy the pool
     await expect(
       program.methods
         .initializePool(...formattedPoolParams)
         .accounts({
-          creator: creator.publicKey,
+          ...accounts,
           shareTokenMint: assetTokenMint,
-          assetTokenMint,
           poolShareTokenAccount: poolAssetTokenAccount,
-          poolAssetTokenAccount,
           creatorShareTokenAccount: creatorAssetTokenAccount,
-          creatorAssetTokenAccount,
         })
         .rpc()
     ).to.be.rejected;
@@ -287,28 +278,20 @@ describe("Fjord LBP - Initialization", () => {
     const assetsAmount = initialCollateralTokenBalanceCreator;
 
     // Sale end time is 23 hours from now
-    const invalidTime = addHours(new Date(), 23).getTime() / 1000;
+    const invalidTime = generateTimestamp(23);
     const poolParams = createMockpoolConfig({
       shares: sharesAmount,
       assets: assetsAmount,
       saleEndTime: BN(invalidTime),
     });
 
-    const formattedPoolParams = Object.values(poolParams) as any;
+    const formattedPoolParams = formatPoolParams(poolParams);
 
     // Deploy the pool
     await expect(
       program.methods
         .initializePool(...formattedPoolParams)
-        .accounts({
-          creator: creator.publicKey,
-          shareTokenMint,
-          assetTokenMint,
-          poolShareTokenAccount,
-          poolAssetTokenAccount,
-          creatorShareTokenAccount,
-          creatorAssetTokenAccount,
-        })
+        .accounts(accounts)
         .rpc()
     ).to.be.rejectedWith("SalePeriodLow");
   });
@@ -317,8 +300,8 @@ describe("Fjord LBP - Initialization", () => {
     const sharesAmount = initialProjectTokenBalanceCreator;
     const assetsAmount = initialCollateralTokenBalanceCreator;
 
-    const validStartTime = addHours(new Date(), 240).getTime() / 1000; // 10 days from now
-    const invalidEndTime = addHours(new Date(), 240 + 23).getTime() / 1000; // 10 days and 23 hours from now
+    const validStartTime = generateTimestamp(240); // 10 days from now
+    const invalidEndTime = generateTimestamp(240 + 23); // 10 days and 23 hours from now
 
     // Create pool with sale period less than a day
     const poolParams = createMockpoolConfig({
@@ -328,33 +311,25 @@ describe("Fjord LBP - Initialization", () => {
       saleEndTime: BN(invalidEndTime),
     });
 
-    const formattedPoolParams = Object.values(poolParams) as any;
+    const formattedPoolParams = formatPoolParams(poolParams);
 
     // Deploy the pool
     await expect(
       program.methods
         .initializePool(...formattedPoolParams)
-        .accounts({
-          creator: creator.publicKey,
-          shareTokenMint,
-          assetTokenMint,
-          poolShareTokenAccount,
-          poolAssetTokenAccount,
-          creatorShareTokenAccount,
-          creatorAssetTokenAccount,
-        })
+        .accounts(accounts)
         .rpc()
     ).to.be.rejectedWith("SalePeriodLow");
   });
 
-  it("Should not be able to deploy the pool if the sale end time is before the vesting end time", async () => {
+  it("Should not be able to deploy the pool if the sale end time is after the vesting end time", async () => {
     const sharesAmount = initialProjectTokenBalanceCreator;
     const assetsAmount = initialCollateralTokenBalanceCreator;
 
-    const validStartTime = addHours(new Date(), 240).getTime() / 1000; // 10 days from now
-    const validEndTime = addHours(new Date(), 240 + 48).getTime() / 1000; // 10 days and 48 hours from now
-    const invalidVestEndTime = addHours(new Date(), 240 + 49).getTime() / 1000; // 10 days and 47 hours from now
-    const validVestCliffTime = addHours(new Date(), 240 + 50).getTime() / 1000; // 10 days and 47 hours from now
+    const validStartTime = generateTimestamp(240); // 10 days from now
+    const validEndTime = generateTimestamp(240 + 48); // 10 days and 48 hours from now
+    const invalidVestEndTime = generateTimestamp(240 + 47); // 10 days and 47 hours from now
+    const validVestCliffTime = generateTimestamp(240 + 50); // 10 days and 50 hours from now
 
     // Create pool with invalid vesting end time
     const poolParams = createMockpoolConfig({
@@ -366,21 +341,13 @@ describe("Fjord LBP - Initialization", () => {
       vestCliff: BN(validVestCliffTime),
     });
 
-    const formattedPoolParams = Object.values(poolParams) as any;
+    const formattedPoolParams = formatPoolParams(poolParams);
 
     // Deploy the pool
     await expect(
       program.methods
         .initializePool(...formattedPoolParams)
-        .accounts({
-          creator: creator.publicKey,
-          shareTokenMint,
-          assetTokenMint,
-          poolShareTokenAccount,
-          poolAssetTokenAccount,
-          creatorShareTokenAccount,
-          creatorAssetTokenAccount,
-        })
+        .accounts(accounts)
         .rpc()
     ).to.be.rejectedWith("InvalidVestEnd");
   });
@@ -389,11 +356,10 @@ describe("Fjord LBP - Initialization", () => {
     const sharesAmount = initialProjectTokenBalanceCreator;
     const assetsAmount = initialCollateralTokenBalanceCreator;
 
-    const validStartTime = addHours(new Date(), 240).getTime() / 1000; // 10 days from now
-    const validEndTime = addHours(new Date(), 240 + 48).getTime() / 1000; // 10 days and 48 hours from now
-    const invalidVestCliffTime =
-      addHours(new Date(), 240 + 47).getTime() / 1000; // 10 days and 47 hours from now
-    const validVestEndTime = addHours(new Date(), 240 + 46).getTime() / 1000; // 10 days and 47 hours from now
+    const validStartTime = generateTimestamp(240); // 10 days from now
+    const validEndTime = generateTimestamp(240 + 48); // 10 days and 48 hours from now
+    const invalidVestCliffTime = generateTimestamp(240 + 47); // 10 days and 47 hours from now
+    const validVestEndTime = generateTimestamp(240 + 49); // 10 days and 49 hours from now
 
     // Create pool with sale period less than a day
     const poolParams = createMockpoolConfig({
@@ -405,60 +371,13 @@ describe("Fjord LBP - Initialization", () => {
       vestEnd: BN(validVestEndTime),
     });
 
-    const formattedPoolParams = Object.values(poolParams) as any;
+    const formattedPoolParams = formatPoolParams(poolParams);
 
     // Deploy the pool
     await expect(
       program.methods
         .initializePool(...formattedPoolParams)
-        .accounts({
-          creator: creator.publicKey,
-          shareTokenMint,
-          assetTokenMint,
-          poolShareTokenAccount,
-          poolAssetTokenAccount,
-          creatorShareTokenAccount,
-          creatorAssetTokenAccount,
-        })
-        .rpc()
-    ).to.be.rejectedWith("InvalidVestCliff");
-  });
-
-  it("Should not be able to deploy the pool if the sale end time is after the vesting cliff time", async () => {
-    const sharesAmount = initialProjectTokenBalanceCreator;
-    const assetsAmount = initialCollateralTokenBalanceCreator;
-
-    const validStartTime = addHours(new Date(), 240).getTime() / 1000; // 10 days from now
-    const validEndTime = addHours(new Date(), 240 + 48).getTime() / 1000; // 10 days and 48 hours from now
-    const invalidVestCliffTime =
-      addHours(new Date(), 240 + 47).getTime() / 1000; // 10 days and 47 hours from now
-    const invalidVestEndTime = addHours(new Date(), 240 + 49).getTime() / 1000; // 10 days and 47 hours from now
-
-    // Create pool invalid vesting cliff and end time
-    const poolParams = createMockpoolConfig({
-      shares: sharesAmount,
-      assets: assetsAmount,
-      saleStartTime: BN(validStartTime),
-      saleEndTime: BN(validEndTime),
-      vestCliff: BN(invalidVestCliffTime),
-      vestEnd: BN(invalidVestEndTime),
-    });
-
-    const formattedPoolParams = Object.values(poolParams) as any;
-
-    // Deploy the pool
-    await expect(
-      program.methods
-        .initializePool(...formattedPoolParams)
-        .accounts({
-          creator: creator.publicKey,
-          shareTokenMint,
-          assetTokenMint,
-          poolShareTokenAccount,
-          poolAssetTokenAccount,
-          creatorShareTokenAccount,
-          creatorAssetTokenAccount,
-        })
+        .accounts(accounts)
         .rpc()
     ).to.be.rejectedWith("InvalidVestCliff");
   });
@@ -467,11 +386,10 @@ describe("Fjord LBP - Initialization", () => {
     const sharesAmount = initialProjectTokenBalanceCreator;
     const assetsAmount = initialCollateralTokenBalanceCreator;
 
-    const validStartTime = addHours(new Date(), 240).getTime() / 1000; // 10 days from now
-    const validEndTime = addHours(new Date(), 240 + 48).getTime() / 1000; // 10 days and 48 hours from now
-    const invalidVestCliffTime =
-      addHours(new Date(), 240 + 50).getTime() / 1000; // 10 days and 47 hours from now
-    const validVestEndTime = addHours(new Date(), 240 + 49).getTime() / 1000; // 10 days and 47 hours from now
+    const validStartTime = generateTimestamp(240); // 10 days from now
+    const validEndTime = generateTimestamp(240 + 48); // 10 days and 48 hours from now
+    const invalidVestCliffTime = generateTimestamp(240 + 50); // 10 days and 50 hours from now
+    const validVestEndTime = generateTimestamp(240 + 49); // 10 days and 49 hours from now
 
     // Create pool with invalid vesting cliff after vesting end time
     const poolParams = createMockpoolConfig({
@@ -493,22 +411,14 @@ describe("Fjord LBP - Initialization", () => {
       vestEnd: BN(validVestEndTime),
     });
 
-    const formattedPoolParams = Object.values(poolParams) as any;
-    const formattedPoolParams2 = Object.values(poolParams2) as any;
+    const formattedPoolParams = formatPoolParams(poolParams);
+    const formattedPoolParams2 = formatPoolParams(poolParams2);
 
     // Deploy the pool with invalid vesting cliff time after vesting end time
     await expect(
       program.methods
         .initializePool(...formattedPoolParams)
-        .accounts({
-          creator: creator.publicKey,
-          shareTokenMint,
-          assetTokenMint,
-          poolShareTokenAccount,
-          poolAssetTokenAccount,
-          creatorShareTokenAccount,
-          creatorAssetTokenAccount,
-        })
+        .accounts(accounts)
         .rpc()
     ).to.be.rejectedWith("InvalidVestEnd");
 
@@ -516,15 +426,7 @@ describe("Fjord LBP - Initialization", () => {
     await expect(
       program.methods
         .initializePool(...formattedPoolParams2)
-        .accounts({
-          creator: creator.publicKey,
-          shareTokenMint,
-          assetTokenMint,
-          poolShareTokenAccount,
-          poolAssetTokenAccount,
-          creatorShareTokenAccount,
-          creatorAssetTokenAccount,
-        })
+        .accounts(accounts)
         .rpc()
     ).to.be.rejectedWith("InvalidVestEnd");
   });
@@ -540,21 +442,13 @@ describe("Fjord LBP - Initialization", () => {
       startWeightBasisPoints: 0.99 * PERCENTAGE_BASIS_POINTS, // 0.99%
     });
 
-    const formattedPoolParams = Object.values(poolParams) as any;
+    const formattedPoolParams = formatPoolParams(poolParams);
 
     // Deploy the pool
     await expect(
       program.methods
         .initializePool(...formattedPoolParams)
-        .accounts({
-          creator: creator.publicKey,
-          shareTokenMint,
-          assetTokenMint,
-          poolShareTokenAccount,
-          poolAssetTokenAccount,
-          creatorShareTokenAccount,
-          creatorAssetTokenAccount,
-        })
+        .accounts(accounts)
         .rpc()
     ).to.be.rejectedWith("InvalidWeightConfig");
   });
@@ -570,7 +464,7 @@ describe("Fjord LBP - Initialization", () => {
       startWeightBasisPoints: 1 * PERCENTAGE_BASIS_POINTS, // 1%
     });
 
-    const formattedPoolParams = Object.values(poolParams) as any;
+    const formattedPoolParams = formatPoolParams(poolParams);
 
     // Deploy the pool
     await expect(
@@ -600,21 +494,13 @@ describe("Fjord LBP - Initialization", () => {
       startWeightBasisPoints: -1 * PERCENTAGE_BASIS_POINTS, // -1%
     });
 
-    const formattedPoolParams = Object.values(poolParams) as any;
+    const formattedPoolParams = formatPoolParams(poolParams);
 
     // Deploy the pool
     await expect(
       program.methods
         .initializePool(...formattedPoolParams)
-        .accounts({
-          creator: creator.publicKey,
-          shareTokenMint,
-          assetTokenMint,
-          poolShareTokenAccount,
-          poolAssetTokenAccount,
-          creatorShareTokenAccount,
-          creatorAssetTokenAccount,
-        })
+        .accounts(accounts)
         .rpc()
     ).to.be.rejectedWith(/out of range/i);
   });
@@ -630,21 +516,13 @@ describe("Fjord LBP - Initialization", () => {
       startWeightBasisPoints: 99.01 * PERCENTAGE_BASIS_POINTS, // 99.01%
     });
 
-    const formattedPoolParams = Object.values(poolParams) as any;
+    const formattedPoolParams = formatPoolParams(poolParams);
 
     // Deploy the pool
     await expect(
       program.methods
         .initializePool(...formattedPoolParams)
-        .accounts({
-          creator: creator.publicKey,
-          shareTokenMint,
-          assetTokenMint,
-          poolShareTokenAccount,
-          poolAssetTokenAccount,
-          creatorShareTokenAccount,
-          creatorAssetTokenAccount,
-        })
+        .accounts(accounts)
         .rpc()
     ).to.be.rejectedWith("InvalidWeightConfig");
   });
@@ -660,21 +538,13 @@ describe("Fjord LBP - Initialization", () => {
       startWeightBasisPoints: 99 * PERCENTAGE_BASIS_POINTS, // 99%
     });
 
-    const formattedPoolParams = Object.values(poolParams) as any;
+    const formattedPoolParams = formatPoolParams(poolParams);
 
     // Deploy the pools
     await expect(
       program.methods
         .initializePool(...formattedPoolParams)
-        .accounts({
-          creator: creator.publicKey,
-          shareTokenMint,
-          assetTokenMint,
-          poolShareTokenAccount,
-          poolAssetTokenAccount,
-          creatorShareTokenAccount,
-          creatorAssetTokenAccount,
-        })
+        .accounts(accounts)
         .rpc()
     ).to.be.fulfilled;
   });
@@ -690,21 +560,13 @@ describe("Fjord LBP - Initialization", () => {
       endWeightBasisPoints: 0.05 * PERCENTAGE_BASIS_POINTS, // 0.05%
     });
 
-    const formattedPoolParams = Object.values(poolParams) as any;
+    const formattedPoolParams = formatPoolParams(poolParams);
 
     // Deploy the pool
     await expect(
       program.methods
         .initializePool(...formattedPoolParams)
-        .accounts({
-          creator: creator.publicKey,
-          shareTokenMint,
-          assetTokenMint,
-          poolShareTokenAccount,
-          poolAssetTokenAccount,
-          creatorShareTokenAccount,
-          creatorAssetTokenAccount,
-        })
+        .accounts(accounts)
         .rpc()
     ).to.be.rejectedWith("InvalidWeightConfig");
   });
@@ -720,21 +582,13 @@ describe("Fjord LBP - Initialization", () => {
       endWeightBasisPoints: -1 * PERCENTAGE_BASIS_POINTS, // -1%
     });
 
-    const formattedPoolParams = Object.values(poolParams) as any;
+    const formattedPoolParams = formatPoolParams(poolParams);
 
     // Deploy the pool
     await expect(
       program.methods
         .initializePool(...formattedPoolParams)
-        .accounts({
-          creator: creator.publicKey,
-          shareTokenMint,
-          assetTokenMint,
-          poolShareTokenAccount,
-          poolAssetTokenAccount,
-          creatorShareTokenAccount,
-          creatorAssetTokenAccount,
-        })
+        .accounts(accounts)
         .rpc()
     ).to.be.rejectedWith(/out of range/i);
   });
@@ -750,21 +604,13 @@ describe("Fjord LBP - Initialization", () => {
       endWeightBasisPoints: 1 * PERCENTAGE_BASIS_POINTS, // 1%
     });
 
-    const formattedPoolParams = Object.values(poolParams) as any;
+    const formattedPoolParams = formatPoolParams(poolParams);
 
     // Deploy the pool
     await expect(
       program.methods
         .initializePool(...formattedPoolParams)
-        .accounts({
-          creator: creator.publicKey,
-          shareTokenMint,
-          assetTokenMint,
-          poolShareTokenAccount,
-          poolAssetTokenAccount,
-          creatorShareTokenAccount,
-          creatorAssetTokenAccount,
-        })
+        .accounts(accounts)
         .rpc()
     ).to.be.fulfilled;
   });
@@ -780,21 +626,12 @@ describe("Fjord LBP - Initialization", () => {
       endWeightBasisPoints: 99.01 * PERCENTAGE_BASIS_POINTS, // 99.01%
     });
 
-    const formattedPoolParams = Object.values(poolParams) as any;
-
+    const formattedPoolParams = formatPoolParams(poolParams);
     // Deploy the pool
     await expect(
       program.methods
         .initializePool(...formattedPoolParams)
-        .accounts({
-          creator: creator.publicKey,
-          shareTokenMint,
-          assetTokenMint,
-          poolShareTokenAccount,
-          poolAssetTokenAccount,
-          creatorShareTokenAccount,
-          creatorAssetTokenAccount,
-        })
+        .accounts(accounts)
         .rpc()
     ).to.be.rejectedWith("InvalidWeightConfig");
   });
@@ -810,21 +647,13 @@ describe("Fjord LBP - Initialization", () => {
       endWeightBasisPoints: 99 * PERCENTAGE_BASIS_POINTS, // 99%
     });
 
-    const formattedPoolParams = Object.values(poolParams) as any;
+    const formattedPoolParams = formatPoolParams(poolParams);
 
     // Deploy the pool
     await expect(
       program.methods
         .initializePool(...formattedPoolParams)
-        .accounts({
-          creator: creator.publicKey,
-          shareTokenMint,
-          assetTokenMint,
-          poolShareTokenAccount,
-          poolAssetTokenAccount,
-          creatorShareTokenAccount,
-          creatorAssetTokenAccount,
-        })
+        .accounts(accounts)
         .rpc()
     ).to.be.fulfilled;
   });
@@ -839,21 +668,13 @@ describe("Fjord LBP - Initialization", () => {
       virtualAssets: BN(0),
     });
 
-    const formattedPoolParams = Object.values(poolParams) as any;
+    const formattedPoolParams = formatPoolParams(poolParams);
 
     // Deploy the pool
     await expect(
       program.methods
         .initializePool(...formattedPoolParams)
-        .accounts({
-          creator: creator.publicKey,
-          shareTokenMint,
-          assetTokenMint,
-          poolShareTokenAccount,
-          poolAssetTokenAccount,
-          creatorShareTokenAccount,
-          creatorAssetTokenAccount,
-        })
+        .accounts(accounts)
         .rpc()
     ).to.be.rejectedWith("InvalidAssetValue");
   });
@@ -868,21 +689,13 @@ describe("Fjord LBP - Initialization", () => {
       virtualAssets: BN(0),
     });
 
-    const formattedPoolParams = Object.values(poolParams) as any;
+    const formattedPoolParams = formatPoolParams(poolParams);
 
     // Deploy the pool
     await expect(
       program.methods
         .initializePool(...formattedPoolParams)
-        .accounts({
-          creator: creator.publicKey,
-          shareTokenMint,
-          assetTokenMint,
-          poolShareTokenAccount,
-          poolAssetTokenAccount,
-          creatorShareTokenAccount,
-          creatorAssetTokenAccount,
-        })
+        .accounts(accounts)
         .rpc()
     ).to.be.rejectedWith("InvalidAssetValue");
   });
@@ -897,21 +710,13 @@ describe("Fjord LBP - Initialization", () => {
       virtualAssets: BN(-100000000),
     });
 
-    const formattedPoolParams = Object.values(poolParams) as any;
+    const formattedPoolParams = formatPoolParams(poolParams);
 
     // Deploy the pool
     await expect(
       program.methods
         .initializePool(...formattedPoolParams)
-        .accounts({
-          creator: creator.publicKey,
-          shareTokenMint,
-          assetTokenMint,
-          poolShareTokenAccount,
-          poolAssetTokenAccount,
-          creatorShareTokenAccount,
-          creatorAssetTokenAccount,
-        })
+        .accounts(accounts)
         .rpc()
     ).to.be.rejectedWith("InvalidAssetValue");
   });
@@ -926,21 +731,13 @@ describe("Fjord LBP - Initialization", () => {
       virtualAssets: BN(1000000000000),
     });
 
-    const formattedPoolParams = Object.values(poolParams) as any;
+    const formattedPoolParams = formatPoolParams(poolParams);
 
     // Deploy the pool
     await expect(
       program.methods
         .initializePool(...formattedPoolParams)
-        .accounts({
-          creator: creator.publicKey,
-          shareTokenMint,
-          assetTokenMint,
-          poolShareTokenAccount,
-          poolAssetTokenAccount,
-          creatorShareTokenAccount,
-          creatorAssetTokenAccount,
-        })
+        .accounts(accounts)
         .rpc()
     ).to.be.fulfilled;
   });
@@ -954,23 +751,15 @@ describe("Fjord LBP - Initialization", () => {
       virtualShares: BN(0),
     });
 
-    const formattedPoolParams = Object.values(poolParams) as any;
+    const formattedPoolParams = formatPoolParams(poolParams);
 
     // Deploy the pool
     await expect(
       program.methods
         .initializePool(...formattedPoolParams)
-        .accounts({
-          creator: creator.publicKey,
-          shareTokenMint,
-          assetTokenMint,
-          poolShareTokenAccount,
-          poolAssetTokenAccount,
-          creatorShareTokenAccount,
-          creatorAssetTokenAccount,
-        })
+        .accounts(accounts)
         .rpc()
-    ).to.be.rejectedWith("InvalidSharesValue");
+    ).to.be.rejectedWith("InvalidShareValue");
   });
 
   it("Should not be able to deploy the pool if the deposited project tokens (share token) is a negative value", async () => {
@@ -983,21 +772,13 @@ describe("Fjord LBP - Initialization", () => {
       virtualShares: BN(0),
     });
 
-    const formattedPoolParams = Object.values(poolParams) as any;
+    const formattedPoolParams = formatPoolParams(poolParams);
 
     // Deploy the pool
     await expect(
       program.methods
         .initializePool(...formattedPoolParams)
-        .accounts({
-          creator: creator.publicKey,
-          shareTokenMint,
-          assetTokenMint,
-          poolShareTokenAccount,
-          poolAssetTokenAccount,
-          creatorShareTokenAccount,
-          creatorAssetTokenAccount,
-        })
+        .accounts(accounts)
         .rpc()
     ).to.be.rejectedWith("InvalidSharesValue");
   });
@@ -1012,21 +793,13 @@ describe("Fjord LBP - Initialization", () => {
       virtualShares: BN(-100000000),
     });
 
-    const formattedPoolParams = Object.values(poolParams) as any;
+    const formattedPoolParams = formatPoolParams(poolParams);
 
     // Deploy the pool
     await expect(
       program.methods
         .initializePool(...formattedPoolParams)
-        .accounts({
-          creator: creator.publicKey,
-          shareTokenMint,
-          assetTokenMint,
-          poolShareTokenAccount,
-          poolAssetTokenAccount,
-          creatorShareTokenAccount,
-          creatorAssetTokenAccount,
-        })
+        .accounts(accounts)
         .rpc()
     ).to.be.rejectedWith("InvalidSharesValue");
   });
@@ -1041,21 +814,13 @@ describe("Fjord LBP - Initialization", () => {
       virtualShares: BN(1000000000000),
     });
 
-    const formattedPoolParams = Object.values(poolParams) as any;
+    const formattedPoolParams = formatPoolParams(poolParams);
 
     // Deploy the pool
     await expect(
       program.methods
         .initializePool(...formattedPoolParams)
-        .accounts({
-          creator: creator.publicKey,
-          shareTokenMint,
-          assetTokenMint,
-          poolShareTokenAccount,
-          poolAssetTokenAccount,
-          creatorShareTokenAccount,
-          creatorAssetTokenAccount,
-        })
+        .accounts(accounts)
         .rpc()
     ).to.be.fulfilled;
   });
@@ -1070,21 +835,13 @@ describe("Fjord LBP - Initialization", () => {
       assets: assetsAmount,
     });
 
-    const formattedPoolParams = Object.values(poolParams) as any;
+    const formattedPoolParams = formatPoolParams(poolParams);
 
     // Deploy the pool
     await expect(
       program.methods
         .initializePool(...formattedPoolParams)
-        .accounts({
-          creator: creator.publicKey,
-          shareTokenMint: undefined,
-          assetTokenMint,
-          poolShareTokenAccount,
-          poolAssetTokenAccount,
-          creatorShareTokenAccount,
-          creatorAssetTokenAccount,
-        })
+        .accounts({ ...accounts, shareTokenMint: undefined })
         .rpc()
     ).to.be.rejectedWith("Invalid arguments: pool not provided.");
   });
@@ -1099,20 +856,15 @@ describe("Fjord LBP - Initialization", () => {
       assets: assetsAmount,
     });
 
-    const formattedPoolParams = Object.values(poolParams) as any;
+    const formattedPoolParams = formatPoolParams(poolParams);
 
     // Deploy the pool
     await expect(
       program.methods
         .initializePool(...formattedPoolParams)
         .accounts({
-          creator: creator.publicKey,
-          shareTokenMint,
+          ...accounts,
           assetTokenMint: undefined,
-          poolShareTokenAccount,
-          poolAssetTokenAccount,
-          creatorShareTokenAccount,
-          creatorAssetTokenAccount,
         })
         .rpc()
     ).to.be.rejectedWith("Invalid arguments: pool not provided.");
@@ -1128,21 +880,13 @@ describe("Fjord LBP - Initialization", () => {
       assets: assetsAmount,
     });
 
-    const formattedPoolParams = Object.values(poolParams) as any;
+    const formattedPoolParams = formatPoolParams(poolParams);
 
     // Deploy the pool
     await expect(
       program.methods
         .initializePool(...formattedPoolParams)
-        .accounts({
-          creator: creator.publicKey,
-          shareTokenMint,
-          assetTokenMint,
-          poolShareTokenAccount: undefined,
-          poolAssetTokenAccount,
-          creatorShareTokenAccount,
-          creatorAssetTokenAccount,
-        })
+        .accounts({ ...accounts, poolShareTokenAccount: undefined })
         .rpc()
     ).to.be.rejectedWith(
       "Invalid arguments: poolShareTokenAccount not provided."
@@ -1159,20 +903,15 @@ describe("Fjord LBP - Initialization", () => {
       assets: assetsAmount,
     });
 
-    const formattedPoolParams = Object.values(poolParams) as any;
+    const formattedPoolParams = formatPoolParams(poolParams);
 
     // Deploy the pool
     await expect(
       program.methods
         .initializePool(...formattedPoolParams)
         .accounts({
-          creator: creator.publicKey,
-          shareTokenMint,
-          assetTokenMint,
-          poolShareTokenAccount,
+          ...accounts,
           poolAssetTokenAccount: undefined,
-          creatorShareTokenAccount,
-          creatorAssetTokenAccount,
         })
         .rpc()
     ).to.be.rejectedWith(
@@ -1190,20 +929,15 @@ describe("Fjord LBP - Initialization", () => {
       assets: assetsAmount,
     });
 
-    const formattedPoolParams = Object.values(poolParams) as any;
+    const formattedPoolParams = formatPoolParams(poolParams);
 
     // Deploy the pool
     await expect(
       program.methods
         .initializePool(...formattedPoolParams)
         .accounts({
-          creator: creator.publicKey,
-          shareTokenMint,
-          assetTokenMint,
-          poolShareTokenAccount,
-          poolAssetTokenAccount,
+          ...accounts,
           creatorShareTokenAccount: undefined,
-          creatorAssetTokenAccount,
         })
         .rpc()
     ).to.be.rejectedWith(
@@ -1221,19 +955,14 @@ describe("Fjord LBP - Initialization", () => {
       assets: assetsAmount,
     });
 
-    const formattedPoolParams = Object.values(poolParams) as any;
+    const formattedPoolParams = formatPoolParams(poolParams);
 
     // Deploy the pool
     await expect(
       program.methods
         .initializePool(...formattedPoolParams)
         .accounts({
-          creator: creator.publicKey,
-          shareTokenMint,
-          assetTokenMint,
-          poolShareTokenAccount,
-          poolAssetTokenAccount,
-          creatorShareTokenAccount,
+          ...accounts,
           creatorAssetTokenAccount: undefined,
         })
         .rpc()
@@ -1253,21 +982,13 @@ describe("Fjord LBP - Initialization", () => {
       maxSharePrice: BN(0),
     });
 
-    const formattedPoolParams = Object.values(poolParams) as any;
+    const formattedPoolParams = formatPoolParams(poolParams);
 
     // Deploy the pool
     await expect(
       program.methods
         .initializePool(...formattedPoolParams)
-        .accounts({
-          creator: creator.publicKey,
-          shareTokenMint,
-          assetTokenMint,
-          poolShareTokenAccount,
-          poolAssetTokenAccount,
-          creatorShareTokenAccount,
-          creatorAssetTokenAccount,
-        })
+        .accounts(accounts)
         .rpc()
     ).to.be.rejected;
   });
@@ -1283,21 +1004,13 @@ describe("Fjord LBP - Initialization", () => {
       maxSharePrice: BN(-100000000),
     });
 
-    const formattedPoolParams = Object.values(poolParams) as any;
+    const formattedPoolParams = formatPoolParams(poolParams);
 
     // Deploy the pool
     await expect(
       program.methods
         .initializePool(...formattedPoolParams)
-        .accounts({
-          creator: creator.publicKey,
-          shareTokenMint,
-          assetTokenMint,
-          poolShareTokenAccount,
-          poolAssetTokenAccount,
-          creatorShareTokenAccount,
-          creatorAssetTokenAccount,
-        })
+        .accounts(accounts)
         .rpc()
     ).to.be.rejected;
   });
@@ -1313,21 +1026,12 @@ describe("Fjord LBP - Initialization", () => {
       maxSharePrice: BN(1000000000000),
     });
 
-    const formattedPoolParams = Object.values(poolParams) as any;
-
+    const formattedPoolParams = formatPoolParams(poolParams);
     // Deploy the pool
     await expect(
       program.methods
         .initializePool(...formattedPoolParams)
-        .accounts({
-          creator: creator.publicKey,
-          shareTokenMint,
-          assetTokenMint,
-          poolShareTokenAccount,
-          poolAssetTokenAccount,
-          creatorShareTokenAccount,
-          creatorAssetTokenAccount,
-        })
+        .accounts(accounts)
         .rpc()
     ).to.be.fulfilled;
   });
@@ -1343,21 +1047,13 @@ describe("Fjord LBP - Initialization", () => {
       maxSharesOut: BN(0),
     });
 
-    const formattedPoolParams = Object.values(poolParams) as any;
+    const formattedPoolParams = formatPoolParams(poolParams);
 
     // Deploy the pool
     await expect(
       program.methods
         .initializePool(...formattedPoolParams)
-        .accounts({
-          creator: creator.publicKey,
-          shareTokenMint,
-          assetTokenMint,
-          poolShareTokenAccount,
-          poolAssetTokenAccount,
-          creatorShareTokenAccount,
-          creatorAssetTokenAccount,
-        })
+        .accounts(accounts)
         .rpc()
     ).to.be.rejected;
   });
@@ -1373,21 +1069,13 @@ describe("Fjord LBP - Initialization", () => {
       maxSharesOut: BN(-3000000000),
     });
 
-    const formattedPoolParams = Object.values(poolParams) as any;
+    const formattedPoolParams = formatPoolParams(poolParams);
 
     // Deploy the pool
     await expect(
       program.methods
         .initializePool(...formattedPoolParams)
-        .accounts({
-          creator: creator.publicKey,
-          shareTokenMint,
-          assetTokenMint,
-          poolShareTokenAccount,
-          poolAssetTokenAccount,
-          creatorShareTokenAccount,
-          creatorAssetTokenAccount,
-        })
+        .accounts(accounts)
         .rpc()
     ).to.be.rejected;
   });
@@ -1403,21 +1091,13 @@ describe("Fjord LBP - Initialization", () => {
       maxSharesOut: BN(1000000000),
     });
 
-    const formattedPoolParams = Object.values(poolParams) as any;
+    const formattedPoolParams = formatPoolParams(poolParams);
 
     // Deploy the pool
     await expect(
       program.methods
         .initializePool(...formattedPoolParams)
-        .accounts({
-          creator: creator.publicKey,
-          shareTokenMint,
-          assetTokenMint,
-          poolShareTokenAccount,
-          poolAssetTokenAccount,
-          creatorShareTokenAccount,
-          creatorAssetTokenAccount,
-        })
+        .accounts(accounts)
         .rpc()
     ).to.be.fulfilled;
   });
@@ -1433,21 +1113,13 @@ describe("Fjord LBP - Initialization", () => {
       maxAssetsIn: BN(0),
     });
 
-    const formattedPoolParams = Object.values(poolParams) as any;
+    const formattedPoolParams = formatPoolParams(poolParams);
 
     // Deploy the pool
     await expect(
       program.methods
         .initializePool(...formattedPoolParams)
-        .accounts({
-          creator: creator.publicKey,
-          shareTokenMint,
-          assetTokenMint,
-          poolShareTokenAccount,
-          poolAssetTokenAccount,
-          creatorShareTokenAccount,
-          creatorAssetTokenAccount,
-        })
+        .accounts(accounts)
         .rpc()
     ).to.be.rejected;
   });
@@ -1463,21 +1135,13 @@ describe("Fjord LBP - Initialization", () => {
       maxAssetsIn: BN(-4000000000),
     });
 
-    const formattedPoolParams = Object.values(poolParams) as any;
+    const formattedPoolParams = formatPoolParams(poolParams);
 
     // Deploy the pool
     await expect(
       program.methods
         .initializePool(...formattedPoolParams)
-        .accounts({
-          creator: creator.publicKey,
-          shareTokenMint,
-          assetTokenMint,
-          poolShareTokenAccount,
-          poolAssetTokenAccount,
-          creatorShareTokenAccount,
-          creatorAssetTokenAccount,
-        })
+        .accounts(accounts)
         .rpc()
     ).to.be.rejected;
   });
@@ -1493,52 +1157,14 @@ describe("Fjord LBP - Initialization", () => {
       maxAssetsIn: BN(1000000000),
     });
 
-    const formattedPoolParams = Object.values(poolParams) as any;
+    const formattedPoolParams = formatPoolParams(poolParams);
 
     // Deploy the pool
     await expect(
       program.methods
         .initializePool(...formattedPoolParams)
-        .accounts({
-          creator: creator.publicKey,
-          shareTokenMint,
-          assetTokenMint,
-          poolShareTokenAccount,
-          poolAssetTokenAccount,
-          creatorShareTokenAccount,
-          creatorAssetTokenAccount,
-        })
+        .accounts(accounts)
         .rpc()
     ).to.be.fulfilled;
-  });
-
-  it("Should not deploy if sellingAllowed is not a boolean", async () => {
-    const sharesAmount = initialProjectTokenBalanceCreator;
-    const assetsAmount = initialCollateralTokenBalanceCreator;
-
-    // Create pool with invalid max share price
-    const poolParams = createMockpoolConfig({
-      shares: sharesAmount,
-      assets: assetsAmount,
-      sellingAllowed: "Hello World" as any,
-    });
-
-    const formattedPoolParams = Object.values(poolParams) as any;
-
-    // Deploy the pool
-    await expect(
-      program.methods
-        .initializePool(...formattedPoolParams)
-        .accounts({
-          creator: creator.publicKey,
-          shareTokenMint,
-          assetTokenMint,
-          poolShareTokenAccount,
-          poolAssetTokenAccount,
-          creatorShareTokenAccount,
-          creatorAssetTokenAccount,
-        })
-        .rpc()
-    ).to.be.rejected;
   });
 });

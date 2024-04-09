@@ -150,9 +150,7 @@ export type FjordLbp = {
         },
         {
           name: "sellingAllowed";
-          type: {
-            option: "bool";
-          };
+          type: "bool";
         }
       ];
     }
@@ -288,6 +286,16 @@ export type FjordLbp = {
       code: 6005;
       name: "InvalidAssetValue";
       msg: "Asset value cannot be 0";
+    },
+    {
+      code: 6006;
+      name: "InvalidSellingAllowed";
+      msg: "Invalid selling allowed value";
+    },
+    {
+      code: 6007;
+      name: "InvalidShareValue";
+      msg: "Share value cannot be 0";
     }
   ];
 };
@@ -444,9 +452,7 @@ export const IDL: FjordLbp = {
         },
         {
           name: "sellingAllowed",
-          type: {
-            option: "bool",
-          },
+          type: "bool",
         },
       ],
     },
@@ -582,6 +588,16 @@ export const IDL: FjordLbp = {
       code: 6005,
       name: "InvalidAssetValue",
       msg: "Asset value cannot be 0",
+    },
+    {
+      code: 6006,
+      name: "InvalidSellingAllowed",
+      msg: "Invalid selling allowed value",
+    },
+    {
+      code: 6007,
+      name: "InvalidShareValue",
+      msg: "Share value cannot be 0",
     },
   ],
 };
