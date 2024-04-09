@@ -296,6 +296,21 @@ export type FjordLbp = {
       code: 6007;
       name: "InvalidShareValue";
       msg: "Share value cannot be 0";
+    },
+    {
+      code: 6008;
+      name: "InvalidSharePrice";
+      msg: "Invalid share price";
+    },
+    {
+      code: 6009;
+      name: "InvalidMaxSharesOut";
+      msg: "Max shares out cannot be 0";
+    },
+    {
+      code: 6010;
+      name: "InvalidMaxAssetsIn";
+      msg: "Max assets in cannot be 0";
     }
   ];
 };
@@ -598,6 +613,21 @@ export const IDL: FjordLbp = {
       code: 6007,
       name: "InvalidShareValue",
       msg: "Share value cannot be 0",
+    },
+    {
+      code: 6008,
+      name: "InvalidSharePrice",
+      msg: "Invalid share price",
+    },
+    {
+      code: 6009,
+      name: "InvalidMaxSharesOut",
+      msg: "Max shares out cannot be 0",
+    },
+    {
+      code: 6010,
+      name: "InvalidMaxAssetsIn",
+      msg: "Max assets in cannot be 0",
     },
   ],
 };

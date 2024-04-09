@@ -96,8 +96,20 @@ pub fn create_pool(
       return err!(PoolError::InvalidAssetValue);
   }
 
-  if shares == 0 && virtual_shares == 0 {
+  if shares <= 0 && virtual_shares <= 0 {
       return err!(PoolError::InvalidShareValue);
+  }
+
+  if max_share_price <= 0 {
+      return err!(PoolError::InvalidSharePrice);
+  }
+
+  if max_shares_out <= 0 {
+      return err!(PoolError::InvalidMaxSharesOut);
+  }
+
+  if max_assets_in <= 0 {
+      return err!(PoolError::InvalidMaxAssetsIn);
   }
   
 

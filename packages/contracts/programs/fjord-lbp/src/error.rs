@@ -19,6 +19,12 @@ pub enum PoolError {
     InvalidSellingAllowed,
     #[msg("Share value cannot be 0")]
     InvalidShareValue,
+    #[msg("Invalid share price")]
+    InvalidSharePrice,
+    #[msg("Max shares out cannot be 0")]
+    InvalidMaxSharesOut,
+    #[msg("Max assets in cannot be 0")]
+    InvalidMaxAssetsIn,
 }
 
 #[error_code]

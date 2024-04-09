@@ -1014,10 +1014,10 @@ describe("Fjord LBP - Initialization", () => {
         .initializePool(...formattedPoolParams)
         .accounts(accounts)
         .rpc()
-    ).to.be.rejected;
+    ).to.be.rejectedWith("InvalidSharePrice");
   });
 
-  it("Should not be able to deploy the pool if max share price is a negative value", async () => {
+  it("Should be able to deploy the pool with a positive max share price value if max share price is a negative value", async () => {
     const sharesAmount = initialProjectTokenBalanceCreator;
     const assetsAmount = initialCollateralTokenBalanceCreator;
 
@@ -1036,7 +1036,13 @@ describe("Fjord LBP - Initialization", () => {
         .initializePool(...formattedPoolParams)
         .accounts(accounts)
         .rpc()
-    ).to.be.rejected;
+    ).to.be.fulfilled;
+
+    const pool = await program.account.liquidityBootstrappingPool.fetch(
+      poolPda
+    );
+
+    expect(Number(pool.maxSharePrice)).to.eq(100000000);
   });
 
   it("Should deploy the pool if max share price is not 0", async () => {
@@ -1079,10 +1085,10 @@ describe("Fjord LBP - Initialization", () => {
         .initializePool(...formattedPoolParams)
         .accounts(accounts)
         .rpc()
-    ).to.be.rejected;
+    ).to.be.rejectedWith("InvalidMaxSharesOut");
   });
 
-  it("Should not deploy if the maxSharesOut is a negative number", async () => {
+  it("Should deploy with a positive maxSharesOut value if the maxSharesOut is a negative number", async () => {
     const sharesAmount = initialProjectTokenBalanceCreator;
     const assetsAmount = initialCollateralTokenBalanceCreator;
 
@@ -1101,7 +1107,13 @@ describe("Fjord LBP - Initialization", () => {
         .initializePool(...formattedPoolParams)
         .accounts(accounts)
         .rpc()
-    ).to.be.rejected;
+    ).to.be.fulfilled;
+
+    const pool = await program.account.liquidityBootstrappingPool.fetch(
+      poolPda
+    );
+
+    expect(Number(pool.maxSharesOut)).to.eq(3000000000);
   });
 
   it("Should deploy if the maxSharesOut is not 0", async () => {
@@ -1148,7 +1160,7 @@ describe("Fjord LBP - Initialization", () => {
     ).to.be.rejected;
   });
 
-  it("Should not deploy if maxAssetsIn is a negative number", async () => {
+  it("Should deploy with a positive value for maxAssetsIn if maxAssetsIn is a negative number", async () => {
     const sharesAmount = initialProjectTokenBalanceCreator;
     const assetsAmount = initialCollateralTokenBalanceCreator;
 
@@ -1167,7 +1179,13 @@ describe("Fjord LBP - Initialization", () => {
         .initializePool(...formattedPoolParams)
         .accounts(accounts)
         .rpc()
-    ).to.be.rejected;
+    ).to.be.fulfilled;
+
+    const pool = await program.account.liquidityBootstrappingPool.fetch(
+      poolPda
+    );
+
+    expect(Number(pool.maxAssetsIn)).to.eq(4000000000);
   });
 
   it("Should deploy if the maxAssetsIn is not 0", async () => {

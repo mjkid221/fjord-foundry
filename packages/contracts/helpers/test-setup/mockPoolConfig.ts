@@ -28,9 +28,9 @@ export const createMockpoolConfig = (
   shares: requestField?.shares || new BN(0), // Project token
   virtualAssets: requestField?.virtualAssets || new BN(0),
   virtualShares: requestField?.virtualShares || new BN(0),
-  maxSharePrice: requestField?.maxSharePrice || new BN(0),
-  maxSharesOut: requestField?.maxSharesOut || new BN(0),
-  maxAssetsIn: requestField?.maxAssetsIn || new BN(0),
+  maxSharePrice: requestField?.maxSharePrice || new BN(10000000),
+  maxSharesOut: requestField?.maxSharesOut || new BN(10000000),
+  maxAssetsIn: requestField?.maxAssetsIn || new BN(10000000),
   startWeightBasisPoints:
     requestField?.startWeightBasisPoints || 50 * PERCENTAGE_BASIS_POINTS, // Default: 50%
   endWeightBasisPoints:
