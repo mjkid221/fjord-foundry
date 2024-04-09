@@ -25,6 +25,10 @@ pub enum PoolError {
     InvalidMaxSharesOut,
     #[msg("Max assets in cannot be 0")]
     InvalidMaxAssetsIn,
+    #[msg("There are insuffcient shares to transfer in your account")]
+    InsufficientShares,
+    #[msg("There are insuffcient assets to transfer in your account")]
+    InsufficientAssets,
 }
 
 #[error_code]

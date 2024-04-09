@@ -1209,4 +1209,83 @@ describe("Fjord LBP - Initialization", () => {
         .rpc()
     ).to.be.fulfilled;
   });
+
+  it("Should deploy with edge case values for the pool", async () => {
+    // Create pool with edge case values
+    const poolParams = createMockpoolConfig({
+      shares: BN(1),
+      assets: BN(1),
+      maxSharePrice: BN(1),
+      maxSharesOut: BN(1),
+      maxAssetsIn: BN(1),
+      startWeightBasisPoints: 1 * PERCENTAGE_BASIS_POINTS, // 1%
+      endWeightBasisPoints: 99 * PERCENTAGE_BASIS_POINTS, // 99%
+      saleStartTime: BN(generateTimestamp(240)), // 10 days from now
+      saleEndTime: BN(generateTimestamp(240 + 48)), // 10 days and 48 hours from now
+      vestCliff: BN(generateTimestamp(240 + 50)), // 10 days and 50 hours from now
+      vestEnd: BN(generateTimestamp(240 + 51)), // 10 days and 51 hours from now
+      whitelistMerkleRoot: generateMerkleRoot(testMerkleWhitelistedAddresses),
+      sellingAllowed: true,
+    });
+
+    const formattedPoolParams = formatPoolParams(poolParams);
+
+    // Deploy the pool
+    await expect(
+      program.methods
+        .initializePool(...formattedPoolParams)
+        .accounts(accounts)
+        .rpc()
+    ).to.be.fulfilled;
+
+    const pool = await program.account.liquidityBootstrappingPool.fetch(
+      poolPda
+    );
+
+    // Assertions to confirm pool creation with edge case parameters
+    expect(pool.virtualAssets.toString()).to.eq("0");
+    expect(pool.virtualShares.toString()).to.eq("0");
+    expect(pool.maxSharePrice.toString()).to.eq("1");
+    expect(pool.maxSharesOut.toString()).to.eq("1");
+    expect(pool.maxAssetsIn.toString()).to.eq("1");
+    expect(pool.startWeightBasisPoints).to.eq(100);
+    expect(pool.endWeightBasisPoints).to.eq(9900);
+  });
+
+  it("Fails to create a pool without sufficient shares token balance", async () => {
+    const assetsAmount = initialCollateralTokenBalanceCreator;
+
+    // Assuming this config tries to create a pool with more assets and shares than the creator has
+    const poolParams = createMockpoolConfig({
+      assets: assetsAmount,
+      shares: BN(1000000000000001),
+    }); // Large amounts assuming insufficient balance
+
+    const formattedPoolParams = formatPoolParams(poolParams);
+
+    await expect(
+      program.methods
+        .initializePool(...formattedPoolParams)
+        .accounts(accounts)
+        .rpc()
+    ).to.be.rejectedWith("InsufficientShares");
+  });
+
+  it("Fails to create a pool without sufficient asset token balance", async () => {
+    const sharesAmount = initialProjectTokenBalanceCreator;
+    // Assuming this config tries to create a pool with more assets and shares than the creator has
+    const poolParams = createMockpoolConfig({
+      assets: BN(1000000000000001),
+      shares: sharesAmount,
+    }); // Large amounts assuming insufficient balance
+
+    const formattedPoolParams = formatPoolParams(poolParams);
+
+    await expect(
+      program.methods
+        .initializePool(...formattedPoolParams)
+        .accounts(accounts)
+        .rpc()
+    ).to.be.rejectedWith("InsufficientAssets");
+  });
 });

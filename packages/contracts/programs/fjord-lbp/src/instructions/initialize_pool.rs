@@ -111,6 +111,16 @@ pub fn create_pool(
   if max_assets_in <= 0 {
       return err!(PoolError::InvalidMaxAssetsIn);
   }
+
+      // Check for sufficient share token balance
+  if ctx.accounts.creator_share_token_account.amount < shares {
+      return err!(PoolError::InsufficientShares);
+  }
+
+          // Check for sufficient asset token balance
+  if ctx.accounts.creator_asset_token_account.amount < assets {
+      return err!(PoolError::InsufficientAssets);
+  }
   
 
   pool.asset_token = ctx.accounts.asset_token_mint.key();

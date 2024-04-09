@@ -311,6 +311,16 @@ export type FjordLbp = {
       code: 6010;
       name: "InvalidMaxAssetsIn";
       msg: "Max assets in cannot be 0";
+    },
+    {
+      code: 6011;
+      name: "InsufficientShares";
+      msg: "There are insuffcient shares to transfer in your account";
+    },
+    {
+      code: 6012;
+      name: "InsufficientAssets";
+      msg: "There are insuffcient assets to transfer in your account";
     }
   ];
 };
@@ -628,6 +638,16 @@ export const IDL: FjordLbp = {
       code: 6010,
       name: "InvalidMaxAssetsIn",
       msg: "Max assets in cannot be 0",
+    },
+    {
+      code: 6011,
+      name: "InsufficientShares",
+      msg: "There are insuffcient shares to transfer in your account",
+    },
+    {
+      code: 6012,
+      name: "InsufficientAssets",
+      msg: "There are insuffcient assets to transfer in your account",
     },
   ],
 };
