@@ -2,6 +2,7 @@ use anchor_lang::prelude::*;
 use anchor_spl::token::{self, Mint, Token, TokenAccount, Transfer};
 use anchor_spl::associated_token::AssociatedToken;
 use std::mem::size_of;
+use std::fmt::Debug;
 
 use crate::{LiquidityBootstrappingPool, PoolCreatedEvent, PoolError, ONE_DAY_SECONDS};
 
@@ -91,13 +92,14 @@ pub fn create_pool(
       return err!(PoolError::InvalidWeightConfig);
   }
 
-  if assets == 0 && virtual_assets == 0 {
+  if assets <= 0 && virtual_assets == 0 {
       return err!(PoolError::InvalidAssetValue);
   }
 
   if shares == 0 && virtual_shares == 0 {
       return err!(PoolError::InvalidShareValue);
   }
+  
 
   pool.asset_token = ctx.accounts.asset_token_mint.key();
   pool.share_token = ctx.accounts.share_token_mint.key();

@@ -679,13 +679,13 @@ describe("Fjord LBP - Initialization", () => {
     ).to.be.rejectedWith("InvalidAssetValue");
   });
 
-  it("Should not be able to deploy the pool if the deposited collateral tokens (asset token) is a negative value", async () => {
+  it("Should deploy the pool with a positive value for the assetToken if the deposited collateral tokens (asset token) is a negative value", async () => {
     const sharesAmount = initialProjectTokenBalanceCreator;
 
     // Create pool with invalid asset token and valid virtual assets
     const poolParams = createMockpoolConfig({
       shares: sharesAmount,
-      assets: BN(-100000000),
+      assets: BN(-20000000000000),
       virtualAssets: BN(0),
     });
 
@@ -697,17 +697,23 @@ describe("Fjord LBP - Initialization", () => {
         .initializePool(...formattedPoolParams)
         .accounts(accounts)
         .rpc()
-    ).to.be.rejectedWith("InvalidAssetValue");
+    ).to.be.fulfilled;
+
+    const {
+      value: { amount: assetTokenBalancePool },
+    } = await connection.getTokenAccountBalance(poolAssetTokenAccount);
+
+    expect(assetTokenBalancePool).to.eq("20000000000000");
   });
 
-  it("Should not be able to deploy the pool if the deposited collateral tokens (asset token) 0 and the virtual assets are a negative value", async () => {
+  it("Should be able to deploy the pool with a positive virtual assets number if the deposited collateral tokens (asset token) 0 and the virtual assets are a negative value", async () => {
     const sharesAmount = initialProjectTokenBalanceCreator;
 
     // Create pool with invalid asset token and valid virtual assets
     const poolParams = createMockpoolConfig({
       shares: sharesAmount,
       assets: BN(0),
-      virtualAssets: BN(-100000000),
+      virtualAssets: BN(-20000000000000),
     });
 
     const formattedPoolParams = formatPoolParams(poolParams);
@@ -718,7 +724,13 @@ describe("Fjord LBP - Initialization", () => {
         .initializePool(...formattedPoolParams)
         .accounts(accounts)
         .rpc()
-    ).to.be.rejectedWith("InvalidAssetValue");
+    ).to.be.fulfilled;
+
+    const pool = await program.account.liquidityBootstrappingPool.fetch(
+      poolPda
+    );
+
+    expect(Number(pool.virtualAssets)).to.eq(20000000000000);
   });
 
   it("Should deploy the pool if the deposited collateral tokens (asset token) is 0 and virtual assets is not 0 ", async () => {
@@ -762,7 +774,7 @@ describe("Fjord LBP - Initialization", () => {
     ).to.be.rejectedWith("InvalidShareValue");
   });
 
-  it("Should not be able to deploy the pool if the deposited project tokens (share token) is a negative value", async () => {
+  it("Should be able to deploy the pool with a positive shareToken value if the deposited project tokens (share token) is a negative value", async () => {
     const assetsAmount = initialCollateralTokenBalanceCreator;
 
     // Create pool with invalid share token and valid virtual shares
@@ -780,10 +792,16 @@ describe("Fjord LBP - Initialization", () => {
         .initializePool(...formattedPoolParams)
         .accounts(accounts)
         .rpc()
-    ).to.be.rejectedWith("InvalidSharesValue");
+    ).to.be.fulfilled;
+
+    const {
+      value: { amount: shareTokenBalancePool },
+    } = await connection.getTokenAccountBalance(poolShareTokenAccount);
+
+    expect(shareTokenBalancePool).to.eq("100000000");
   });
 
-  it("Should not be able to deploy the pool if the deposited project tokens (share token) 0 and the virtual shares are a negative value", async () => {
+  it("Should be able to deploy the pool with a positive virtual shares value if the deposited project tokens (share token) 0 and the virtual shares are a negative value", async () => {
     const assetsAmount = initialCollateralTokenBalanceCreator;
 
     // Create pool with valid share token and invalid virtual shares
@@ -801,7 +819,13 @@ describe("Fjord LBP - Initialization", () => {
         .initializePool(...formattedPoolParams)
         .accounts(accounts)
         .rpc()
-    ).to.be.rejectedWith("InvalidSharesValue");
+    ).to.be.fulfilled;
+
+    const pool = await program.account.liquidityBootstrappingPool.fetch(
+      poolPda
+    );
+
+    expect(Number(pool.virtualShares)).to.eq(100000000);
   });
 
   it("Should deploy the pool if the deposited project tokens (share token) is 0 and virtual shares is not 0 ", async () => {
