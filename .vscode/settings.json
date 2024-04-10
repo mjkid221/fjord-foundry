@@ -11,5 +11,7 @@
   "editor.defaultFormatter": "esbenp.prettier-vscode",
   "typescript.tsdk": "node_modules/typescript/lib",
   "thunder-client.saveToWorkspace": true,
-  "thunder-client.workspaceRelativePath": ".vscode"
+  "thunder-client.workspaceRelativePath": ".vscode",
+  "rust-analyzer.linkedProjects": ["packages/contracts/Cargo.toml"],
+  "rust-analyzer.showUnlinkedFileNotification": false
 }
