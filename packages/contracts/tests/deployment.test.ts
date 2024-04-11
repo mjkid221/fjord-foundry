@@ -7,9 +7,9 @@ import chai, { expect } from "chai";
 import chaiAsPromised from "chai-as-promised";
 import { addHours } from "date-fns";
 
-import { BN, BigNumber, testMerkleWhitelistedAddresses } from "../../constants";
-import { createMockpoolConfig, generateMerkleRoot, setup } from "../../helpers";
-import { FjordLbp } from "../../target/types/fjord_lbp";
+import { BN, BigNumber, testMerkleWhitelistedAddresses } from "../constants";
+import { createMockpoolConfig, generateMerkleRoot, setup } from "../helpers";
+import { FjordLbp } from "../target/types/fjord_lbp";
 
 chai.use(chaiAsPromised);
 

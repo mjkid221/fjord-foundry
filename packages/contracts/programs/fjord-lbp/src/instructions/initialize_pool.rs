@@ -83,7 +83,7 @@ pub fn create_pool(
       }
   }
 
-  if start_weight_basis_points < 100 ||  start_weight_basis_points> 9900 || end_weight_basis_points > 9900 || start_weight_basis_points < 100 {
+  if !(100..=9900).contains(&start_weight_basis_points) || !(100..=9900).contains(&end_weight_basis_points) {
       return err!(PoolError::InvalidWeightConfig);
   }
 
