@@ -15,7 +15,7 @@ use crate::{
 /// * `min_shares_out` - The minimum number of shares expected to be received
 /// * `merkle_proof` - The Merkle proof for the whitelist
 /// * `referrer` - The referrer's public key (optional)
-#[access_control(standard_checks::before_token_swap(&ctx, merkle_proof))]
+#[access_control(standard_checks::before_token_swap(&ctx, merkle_proof, false))]
 pub fn swap_exact_assets_for_shares(
     ctx: Context<SwapTokens>,
     assets_in: u64,
@@ -80,7 +80,7 @@ pub fn swap_exact_assets_for_shares(
 /// * `merkle_proof` - The Merkle proof for the whitelist
 /// * `referrer` - The referrer's public key (optional)
 ///
-#[access_control(standard_checks::before_token_swap(&ctx, merkle_proof))]
+#[access_control(standard_checks::before_token_swap(&ctx, merkle_proof, false))]
 pub fn swap_assets_for_exact_shares(
     ctx: Context<SwapTokens>,
     shares_out: u64,

@@ -49,9 +49,12 @@ pub mod sale {
 pub fn before_token_swap(
     ctx: &Context<SwapTokens>,
     merkle_proof: Option<Vec<[u8; 32]>>,
+    is_sell: bool,
 ) -> Result<()> {
     merkle::_only_white_listed(ctx, merkle_proof)?;
     sale::_when_sale_active(ctx)?;
-    sale::_when_selling_allowed(ctx)?;
+    if is_sell {
+        sale::_when_selling_allowed(ctx)?
+    };
     Ok(())
 }
