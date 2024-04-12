@@ -81,15 +81,15 @@ pub mod fjord_lbp {
     // Buy functions ------------------------------------------------------
     pub fn swap_exact_assets_for_shares(
         ctx: Context<SwapTokens>,
-        shares_out: u64,
-        max_assets_in: u64,
+        assets_in: u64,
+        min_shares_out: u64,
         merkle_proof: Option<Vec<[u8; 32]>>,
         referrer: Option<Pubkey>,
     ) -> Result<()> {
-        swap::buy::swap_assets_for_exact_shares(
+        swap::buy::swap_exact_assets_for_shares(
             ctx,
-            shares_out,
-            max_assets_in,
+            assets_in,
+            min_shares_out,
             merkle_proof,
             referrer,
         )
