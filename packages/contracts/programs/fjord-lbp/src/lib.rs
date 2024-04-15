@@ -1,13 +1,13 @@
 use anchor_lang::prelude::*;
 
+pub mod constants;
 pub mod error;
 pub mod events;
-pub mod constants;
 pub mod instructions;
 pub mod state;
+pub use constants::*;
 pub use error::*;
 pub use events::*;
-pub use constants::*;
 pub use instructions::*;
 pub use state::*;
 
@@ -33,25 +33,25 @@ pub mod fjord_lbp {
         vest_cliff: i64,
         vest_end: i64,
         whitelist_merkle_root: [u8; 32],
-        selling_allowed: Option<bool>
-      ) -> Result<()> {
+        selling_allowed: bool,
+    ) -> Result<()> {
         initialize_pool::create_pool(
-            ctx, 
-            assets, 
-            shares, 
-            virtual_assets, 
-            virtual_shares, 
-            max_share_price, 
-            max_shares_out, 
-            max_assets_in, 
-            start_weight_basis_points, 
-            end_weight_basis_points, 
-            sale_start_time, 
-            sale_end_time, 
-            vest_cliff, 
-            vest_end, 
-            whitelist_merkle_root, 
-            selling_allowed
+            ctx,
+            assets,
+            shares,
+            virtual_assets,
+            virtual_shares,
+            max_share_price,
+            max_shares_out,
+            max_assets_in,
+            start_weight_basis_points,
+            end_weight_basis_points,
+            sale_start_time,
+            sale_end_time,
+            vest_cliff,
+            vest_end,
+            whitelist_merkle_root,
+            selling_allowed,
         )
-      }
+    }
 }
