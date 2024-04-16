@@ -25,10 +25,10 @@ const DEFAULT_VESTING_END_BN = DEFAULT_VESTING_CLIFF_BN.add(
  * !NOTE For testing
  */
 const testMerkleWhitelistedAddresses = [
-  "NMC4r582ErAaCrFFJZQ9PhkxtPmFpWFMkoZEEQT1mvk",
-  "HirkJEZy8Q3zdUuN55Ci8Gz71Ggb46wpqmodqz1He2jF",
-  "DP7KM2Y4wAGU3RLLVWZ7g1N52aafNRnLvSYDrb6E9siL",
-  "3hZu5KH5CSAtnfERxbKnFMTRy1VwPkyEphkm2PRfZjTB",
+  "BDw9cp6JDBjeih6HsFwFjj2hyHb2dtkAuu6kmUGzt8v2",
+  "Fzx2MEY6fuwjoL1g4Mh5D6dcxp24HEcdZ1QsrVxE5sfs",
+  "b9okb7Hi6hSGwr9whszoANGNq6RCBTP94EPRd5hT3Db",
+  "3choFgYsyo5gvMVJvqYNPa1CGrc1q5puAu8f6juRnRZw",
 ];
 
 export {

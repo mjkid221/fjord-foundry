@@ -1,13 +1,6 @@
 export type FjordLbp = {
   version: "0.1.0";
   name: "fjord_lbp";
-  constants: [
-    {
-      name: "MAX_FEE_BIPS";
-      type: "u16";
-      value: "10_000";
-    }
-  ];
   instructions: [
     {
       name: "initializeOwnerConfig";
@@ -251,7 +244,8 @@ export type FjordLbp = {
               {
                 kind: "account";
                 type: "publicKey";
-                path: "user";
+                account: "LiquidityBootstrappingPool";
+                path: "pool.creator";
               }
             ];
           };
@@ -356,11 +350,11 @@ export type FjordLbp = {
       ];
       args: [
         {
-          name: "sharesOut";
+          name: "assetsIn";
           type: "u64";
         },
         {
-          name: "maxAssetsIn";
+          name: "minSharesOut";
           type: "u64";
         },
         {
@@ -415,7 +409,8 @@ export type FjordLbp = {
               {
                 kind: "account";
                 type: "publicKey";
-                path: "user";
+                account: "LiquidityBootstrappingPool";
+                path: "pool.creator";
               }
             ];
           };
@@ -1005,13 +1000,6 @@ export type FjordLbp = {
 export const IDL: FjordLbp = {
   version: "0.1.0",
   name: "fjord_lbp",
-  constants: [
-    {
-      name: "MAX_FEE_BIPS",
-      type: "u16",
-      value: "10_000",
-    },
-  ],
   instructions: [
     {
       name: "initializeOwnerConfig",
@@ -1255,7 +1243,8 @@ export const IDL: FjordLbp = {
               {
                 kind: "account",
                 type: "publicKey",
-                path: "user",
+                account: "LiquidityBootstrappingPool",
+                path: "pool.creator",
               },
             ],
           },
@@ -1360,11 +1349,11 @@ export const IDL: FjordLbp = {
       ],
       args: [
         {
-          name: "sharesOut",
+          name: "assetsIn",
           type: "u64",
         },
         {
-          name: "maxAssetsIn",
+          name: "minSharesOut",
           type: "u64",
         },
         {
@@ -1419,7 +1408,8 @@ export const IDL: FjordLbp = {
               {
                 kind: "account",
                 type: "publicKey",
-                path: "user",
+                account: "LiquidityBootstrappingPool",
+                path: "pool.creator",
               },
             ],
           },

@@ -27,11 +27,15 @@ export const setup = async ({
   testUser,
   connection = new Connection(clusterApiUrl("devnet")),
   bankRunClient,
+  decimalsTokenA = 9,
+  decimalsTokenB = 9,
 }: {
   payer: Keypair;
   testUser?: Keypair;
   connection?: Connection;
   bankRunClient?: BanksClient;
+  decimalsTokenA?: number;
+  decimalsTokenB?: number;
 }) => {
   // Deploys two tokens for testing. Token A and Token B.
   const {
@@ -43,6 +47,7 @@ export const setup = async ({
     connection,
     testUser,
     bankRunClient,
+    decimals: decimalsTokenA,
   });
 
   const {
@@ -54,6 +59,7 @@ export const setup = async ({
     connection,
     testUser,
     bankRunClient,
+    decimals: decimalsTokenB,
   });
 
   return {

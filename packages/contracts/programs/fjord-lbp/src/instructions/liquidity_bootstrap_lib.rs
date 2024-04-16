@@ -1,3 +1,5 @@
+use anchor_spl::token_2022::spl_token_2022::extension::transfer_fee::MAX_FEE_BASIS_POINTS;
+
 pub struct ComputedReservesAndWeights {
     pub asset_reserve: u64,
     pub share_reserve: u64,
@@ -18,6 +20,7 @@ pub struct PreviewAmountArgs {
     pub virtual_shares: u64,
     pub share_token_decimal: u8,
     pub total_purchased: u64,
+    pub current_time: i64,
     pub max_share_price: u64,
     pub sale_start_time: i64,
     pub sale_end_time: i64,
@@ -26,11 +29,12 @@ pub struct PreviewAmountArgs {
 }
 
 pub mod math {
+
     use super::*;
     use crate::{
         div_wad, get_amount_in, get_amount_out, mul_wad,
         safe_math::{div, mul, safe_add, safe_sub},
-        safe_pow, weighted_math_lib, SafeMathError, WAD,
+        safe_pow, weighted_math_lib, SafeMathError,
     };
 
     pub fn preview_shares_out(
@@ -46,6 +50,7 @@ pub mod math {
             share_token_decimal,
             total_purchased: _,
             max_share_price,
+            current_time: _,
             sale_start_time: _,
             sale_end_time: _,
             start_weight_basis_points: _,
@@ -70,7 +75,6 @@ pub mod math {
         )?;
 
         let assets_in_scaled = _scale_token(asset_token_decimal, assets_in, true)?;
-
         let mut shares_out = get_amount_out(
             assets_in_scaled,
             asset_reserve_scaled,
@@ -82,9 +86,7 @@ pub mod math {
         if div_wad(assets_in_scaled, shares_out)? > max_share_price {
             shares_out = mul_wad(assets_in_scaled, max_share_price)?;
         }
-
         shares_out = _scale_token(share_token_decimal, shares_out, false)?;
-
         Ok(shares_out)
     }
 
@@ -101,6 +103,7 @@ pub mod math {
             share_token_decimal,
             total_purchased: _,
             max_share_price,
+            current_time: _,
             sale_start_time: _,
             sale_end_time: _,
             start_weight_basis_points: _,
@@ -152,6 +155,7 @@ pub mod math {
             shares,
             virtual_shares,
             total_purchased,
+            current_time,
             sale_start_time,
             sale_end_time,
             start_weight_basis_points,
@@ -160,20 +164,22 @@ pub mod math {
             share_token_decimal: _,
             max_share_price: _,
         } = args;
-
         let asset_reserve: u64 = safe_sub(assets, virtual_assets)?;
         let share_reserve: u64 = safe_sub(safe_add(shares, virtual_shares)?, total_purchased)?;
-
         let total_seconds = sale_end_time - sale_start_time;
-        let seconds_elapsed = 0;
+
+        let mut seconds_elapsed = 0;
+        if current_time > sale_start_time {
+            seconds_elapsed = current_time - sale_start_time;
+        }
         let asset_weight = weighted_math_lib::linear_interpolation(
             start_weight_basis_points.into(),
             end_weight_basis_points.into(),
-            seconds_elapsed,
+            seconds_elapsed.try_into().unwrap(),
             total_seconds.try_into().unwrap(),
         )?;
 
-        let share_weight = WAD - asset_weight;
+        let share_weight = MAX_FEE_BASIS_POINTS as u64 - asset_weight;
 
         Ok(ComputedReservesAndWeights {
             asset_reserve,
@@ -210,12 +216,18 @@ pub mod math {
         };
 
         // Determine whether to multiply or divide based on `scale_before` flag
-        if (token_decimals_u64 < 9 && scale_before) || (token_decimals_u64 >= 9 && !scale_before) {
+        if (token_decimals_u64 < 9 && scale_before) || (token_decimals_u64 > 9 && !scale_before) {
             scaled_amount = mul(scaled_amount, safe_pow(10u64, dec_diff as u32)?)?;
-        } else {
+        } else if (token_decimals_u64 < 9 && !scale_before)
+            || (token_decimals_u64 > 9 && scale_before)
+        {
             scaled_amount = div(scaled_amount, safe_pow(10u64, dec_diff as u32)?)?;
         }
 
         Ok(scaled_amount)
+    }
+
+    pub fn calculate_fee(amount: u64, fee: u16) -> u64 {
+        amount * u64::from(fee) / u64::from(MAX_FEE_BASIS_POINTS)
     }
 }

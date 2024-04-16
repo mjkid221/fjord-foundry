@@ -7,7 +7,7 @@ use crate::{
 };
 
 #[derive(Accounts)]
-#[instruction(referrer: Option<Pubkey>)]
+#[instruction(assets_in: u64, min_shares_out: u64, merkle_proof: Option<Vec<[u8; 32]>>, referrer: Option<Pubkey>)]
 pub struct SwapTokens<'info> {
     // Token mints
     pub asset_token_mint: Account<'info, Mint>,
@@ -15,23 +15,23 @@ pub struct SwapTokens<'info> {
     // The pool
     #[account(
       mut,
-      seeds = [share_token_mint.key().as_ref(), asset_token_mint.key().as_ref(), user.key().as_ref()], 
+      seeds = [share_token_mint.key().as_ref(), asset_token_mint.key().as_ref(), pool.creator.key().as_ref()], 
       bump
     )]
-    pub pool: Account<'info, LiquidityBootstrappingPool>,
+    pub pool: Box<Account<'info, LiquidityBootstrappingPool>>,
     // The token accounts that the pool will use to hold the tokens
     #[account(
       mut,
       associated_token::mint = asset_token_mint,
       associated_token::authority = pool
     )]
-    pub pool_asset_token_account: Account<'info, TokenAccount>,
+    pub pool_asset_token_account: Box<Account<'info, TokenAccount>>,
     #[account(
       mut,
       associated_token::mint = share_token_mint,
       associated_token::authority = pool
     )]
-    pub pool_share_token_account: Account<'info, TokenAccount>,
+    pub pool_share_token_account: Box<Account<'info, TokenAccount>>,
     // The token accounts that the user uses to store tokens
     #[account(
       init_if_needed,
@@ -39,21 +39,21 @@ pub struct SwapTokens<'info> {
       associated_token::mint = asset_token_mint, 
       associated_token::authority = user)
     ]
-    pub user_asset_token_account: Account<'info, TokenAccount>,
+    pub user_asset_token_account: Box<Account<'info, TokenAccount>>,
     #[account(
       init_if_needed,
       payer = user,
       associated_token::mint = share_token_mint, 
       associated_token::authority = user)
     ]
-    pub user_share_token_account: Account<'info, TokenAccount>,
+    pub user_share_token_account: Box<Account<'info, TokenAccount>>,
     // Global pool config
     #[account(
       mut, 
       seeds = ["owner_config".as_bytes()],
       bump = config.bump
     )]
-    pub config: Account<'info, OwnerConfig>,
+    pub config: Box<Account<'info, OwnerConfig>>,
     // The user's state in a pool
     #[account(
       init_if_needed,
@@ -62,7 +62,7 @@ pub struct SwapTokens<'info> {
       seeds = [user.key().as_ref(), pool.key().as_ref()],
       bump
     )]
-    pub user_state_in_pool: Account<'info, UserStateInPool>,
+    pub user_state_in_pool: Box<Account<'info, UserStateInPool>>,
     // The referrer's state in a pool
     #[account(
       init_if_needed,

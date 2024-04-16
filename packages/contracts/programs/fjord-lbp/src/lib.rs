@@ -40,6 +40,7 @@ pub mod fjord_lbp {
     }
 
     // Pool Creation ------------------------------------------------------
+    #[allow(clippy::too_many_arguments)]
     pub fn initialize_pool(
         ctx: Context<InitializePool>,
         assets: u64,
