@@ -356,11 +356,11 @@ export type FjordLbp = {
       ];
       args: [
         {
-          name: "sharesOut";
+          name: "assetsIn";
           type: "u64";
         },
         {
-          name: "maxAssetsIn";
+          name: "minSharesOut";
           type: "u64";
         },
         {
@@ -1360,11 +1360,11 @@ export const IDL: FjordLbp = {
       ],
       args: [
         {
-          name: "sharesOut",
+          name: "assetsIn",
           type: "u64",
         },
         {
-          name: "maxAssetsIn",
+          name: "minSharesOut",
           type: "u64",
         },
         {
