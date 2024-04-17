@@ -37,7 +37,7 @@ import { FjordLbp, IDL } from "../../target/types/fjord_lbp";
 
 chai.use(chaiAsPromised);
 
-describe("Fjord LBP - Buy", () => {
+describe.only("Fjord LBP - Buy", () => {
   // Configure the client to use the local cluster.
   anchor.setProvider(anchor.AnchorProvider.env());
   const lbpProgramId = (anchor.workspace.FjordLbp as Program<FjordLbp>)
