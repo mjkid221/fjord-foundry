@@ -35,6 +35,20 @@ pub enum PoolError {
     RedeemingDisallowed,
     #[msg("Caller is disallowed")]
     CallerDisallowed,
+    #[msg("Invalid selling allowed value")]
+    InvalidSellingAllowed,
+    #[msg("Share value cannot be 0")]
+    InvalidShareValue,
+    #[msg("Invalid share price")]
+    InvalidSharePrice,
+    #[msg("Max shares out cannot be 0")]
+    InvalidMaxSharesOut,
+    #[msg("Max assets in cannot be 0")]
+    InvalidMaxAssetsIn,
+    #[msg("There are insuffcient shares to transfer in your account")]
+    InsufficientShares,
+    #[msg("There are insuffcient assets to transfer in your account")]
+    InsufficientAssets,
 }
 
 // Access Control Errors
