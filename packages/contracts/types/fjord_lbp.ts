@@ -204,9 +204,7 @@ export type FjordLbp = {
         },
         {
           name: "sellingAllowed";
-          type: {
-            option: "bool";
-          };
+          type: "bool";
         }
       ];
     },
@@ -1684,6 +1682,41 @@ export type FjordLbp = {
       code: 6015;
       name: "CallerDisallowed";
       msg: "Caller is disallowed";
+    },
+    {
+      code: 6016;
+      name: "InvalidSellingAllowed";
+      msg: "Invalid selling allowed value";
+    },
+    {
+      code: 6017;
+      name: "InvalidShareValue";
+      msg: "Share value cannot be 0";
+    },
+    {
+      code: 6018;
+      name: "InvalidSharePrice";
+      msg: "Invalid share price";
+    },
+    {
+      code: 6019;
+      name: "InvalidMaxSharesOut";
+      msg: "Max shares out cannot be 0";
+    },
+    {
+      code: 6020;
+      name: "InvalidMaxAssetsIn";
+      msg: "Max assets in cannot be 0";
+    },
+    {
+      code: 6021;
+      name: "InsufficientShares";
+      msg: "There are insuffcient shares to transfer in your account";
+    },
+    {
+      code: 6022;
+      name: "InsufficientAssets";
+      msg: "There are insuffcient assets to transfer in your account";
     }
   ];
 };
@@ -1894,9 +1927,7 @@ export const IDL: FjordLbp = {
         },
         {
           name: "sellingAllowed",
-          type: {
-            option: "bool",
-          },
+          type: "bool",
         },
       ],
     },
@@ -3374,6 +3405,41 @@ export const IDL: FjordLbp = {
       code: 6015,
       name: "CallerDisallowed",
       msg: "Caller is disallowed",
+    },
+    {
+      code: 6016,
+      name: "InvalidSellingAllowed",
+      msg: "Invalid selling allowed value",
+    },
+    {
+      code: 6017,
+      name: "InvalidShareValue",
+      msg: "Share value cannot be 0",
+    },
+    {
+      code: 6018,
+      name: "InvalidSharePrice",
+      msg: "Invalid share price",
+    },
+    {
+      code: 6019,
+      name: "InvalidMaxSharesOut",
+      msg: "Max shares out cannot be 0",
+    },
+    {
+      code: 6020,
+      name: "InvalidMaxAssetsIn",
+      msg: "Max assets in cannot be 0",
+    },
+    {
+      code: 6021,
+      name: "InsufficientShares",
+      msg: "There are insuffcient shares to transfer in your account",
+    },
+    {
+      code: 6022,
+      name: "InsufficientAssets",
+      msg: "There are insuffcient assets to transfer in your account",
     },
   ],
 };
