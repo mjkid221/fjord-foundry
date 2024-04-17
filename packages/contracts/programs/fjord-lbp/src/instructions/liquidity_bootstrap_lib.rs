@@ -19,15 +19,29 @@ pub struct FormattedReserves {
     pub share_reserve_scaled: u64,
 }
 
+pub struct PreviewAmountArgs {
+    pub assets: u64,
+    pub virtual_assets: u64,
+    pub asset_token_decimal: u8,
+    pub shares: u64,
+    pub virtual_shares: u64,
+    pub share_token_decimal: u8,
+    pub total_purchased: u64,
+    pub current_time: i64,
+    pub max_share_price: u64,
+    pub sale_start_time: i64,
+    pub sale_end_time: i64,
+    pub start_weight_basis_points: u16,
+    pub end_weight_basis_points: u16,
+}
+
 pub mod math {
     use super::*;
     use crate::{
         div_wad, get_amount_in, get_amount_out, mul_wad,
         safe_math::{div, mul, safe_add, safe_sub},
-        safe_pow, weighted_math_lib, PreviewAmountArgs, PreviewAssetsIn, PreviewSharesOut,
-        SafeMathError,
+        safe_pow, weighted_math_lib, PreviewAmountArgs, SafeMathError,
     };
-    use anchor_lang::emit;
 
     pub fn preview_shares_out(
         args: PreviewAmountArgs,
@@ -54,7 +68,6 @@ pub mod math {
         }
         shares_out = _scale_token(args.share_token_decimal, shares_out, false)?;
 
-        emit!(PreviewSharesOut { shares_out });
         Ok(shares_out)
     }
 
@@ -70,7 +83,6 @@ pub mod math {
         } = _get_scaled_reserves_and_weights(&args)?;
 
         let shares_out_scaled = _scale_token(args.share_token_decimal, shares_out, true)?;
-
         let mut assets_in = get_amount_in(
             shares_out_scaled,
             asset_reserve_scaled,
@@ -82,9 +94,7 @@ pub mod math {
         if div_wad(assets_in, shares_out_scaled)? > args.max_share_price {
             assets_in = div_wad(shares_out_scaled, args.max_share_price)?;
         }
-
         assets_in = _scale_token(args.asset_token_decimal, assets_in, false)?;
-        emit!(PreviewAssetsIn { assets_in });
         Ok(assets_in)
     }
 
@@ -114,7 +124,6 @@ pub mod math {
         }
 
         shares_in = _scale_token(args.share_token_decimal, shares_in, false)?;
-
         Ok(shares_in)
     }
 

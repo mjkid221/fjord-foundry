@@ -13,7 +13,7 @@ use crate::{
 /// *`assetsOut` - The maximum amount of assets allowed to be received.
 /// *`maxSharesIn` - The number of shares to be exchanged for assets.
 /// *`recipient` - The address to receive the assets.
-/// *`sharesIn` - The actual number of shares used for the exchange.
+/// *`proof` - The Merkle proof for whitelisting.
 #[access_control(standard_checks::before_token_swap(&ctx, merkle_proof, true))]
 pub fn swap_shares_for_exact_assets(
     ctx: Context<SwapTokens>,
@@ -45,7 +45,6 @@ pub fn swap_shares_for_exact_assets(
         assets_out,
     )?;
     let swap_fees = calculate_fee(shares_in, ctx.accounts.config.swap_fee);
-
     shares_in += swap_fees;
     pool.total_swap_fees_share += swap_fees;
 
@@ -167,8 +166,18 @@ fn _swap_shares_for_assets<'info>(
         to: user_asset_token_account.to_account_info(),
         authority: pool.to_account_info(),
     };
-    let asset_cpi_ctx =
-        CpiContext::new(token_program.to_account_info(), asset_transfer_instruction);
+    let seeds = &[
+        pool.share_token.as_ref(),
+        pool.asset_token.as_ref(),
+        pool.creator.as_ref(),
+        &[pool.bump],
+    ];
+    let signer_seeds = &[&seeds[..]];
+    let asset_cpi_ctx = CpiContext::new_with_signer(
+        token_program.to_account_info(),
+        asset_transfer_instruction,
+        signer_seeds,
+    );
     token::transfer(asset_cpi_ctx, assets_out)?;
 
     emit!(Sell {

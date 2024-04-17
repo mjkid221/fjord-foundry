@@ -48,7 +48,7 @@ pub struct PreviewAssetsIn {
 
 #[event]
 pub struct PreviewAssetsOut {
-    pub shares_out: u64,
+    pub assets_out: u64,
 }
 
 #[event]

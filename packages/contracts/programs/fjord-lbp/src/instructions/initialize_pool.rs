@@ -45,6 +45,7 @@ pub struct InitializePool<'info> {
     pub system_program: Program<'info, System>,
 }
 
+#[allow(clippy::too_many_arguments)]
 pub fn create_pool(
   ctx: Context<InitializePool>,
   assets: u64,
@@ -111,6 +112,7 @@ pub fn create_pool(
 
   pool.selling_allowed = selling_allowed.unwrap_or(false);
   pool.whitelist_merkle_root = whitelist_merkle_root;
+  pool.bump = ctx.bumps.pool;
 
   // Transfer the tokens to the pool
   let asset_transfer_instruction = Transfer {
