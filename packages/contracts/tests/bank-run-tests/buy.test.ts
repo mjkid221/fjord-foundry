@@ -51,6 +51,7 @@ describe.only("Fjord LBP - Buy", () => {
 
   let creator: Keypair = anchor.workspace.FjordLbp.provider.wallet.payer;
   let testUserA: Keypair;
+  let testUserB: Keypair;
 
   let shareTokenMint: PublicKey; // project token address
   let assetTokenMint: PublicKey; // collateral token address
@@ -86,6 +87,7 @@ describe.only("Fjord LBP - Buy", () => {
 
   beforeEach(async () => {
     testUserA = Keypair.generate();
+    testUserB = Keypair.generate();
 
     // Setup owner configurations. This includes global pool fees, etc...
     const ownerConfig = createMockOwnerConfig();
@@ -141,6 +143,13 @@ describe.only("Fjord LBP - Buy", () => {
       SystemProgram.transfer({
         fromPubkey: creator.publicKey,
         toPubkey: testUserA.publicKey,
+        lamports: 5 * LAMPORTS_PER_SOL,
+      })
+    );
+    transferTx.add(
+      SystemProgram.transfer({
+        fromPubkey: creator.publicKey,
+        toPubkey: testUserB.publicKey,
         lamports: 5 * LAMPORTS_PER_SOL,
       })
     );
@@ -343,99 +352,249 @@ describe.only("Fjord LBP - Buy", () => {
     //     expectedSharesOut.toString()
     //   );
     // });
-    it("should swap exact assets for shares without a referrer", async () => {
+    // it("should swap exact assets for shares without a referrer", async () => {
+    //   // Skip time by 1100 seconds
+    //   await skipBlockTimestamp(bankRunCtx, 1100);
+    //   const initialUserCollateralTokenBalance = await getAccountBalance(
+    //     bankRunClient,
+    //     testUserA.publicKey,
+    //     assetTokenMint
+    //   );
+    //   // Get user's pool account
+    //   const userPoolPda = findProgramAddressSync(
+    //     [testUserA.publicKey.toBuffer(), poolPda.toBuffer()],
+    //     program.programId
+    //   )[0];
+    //   const referrer: PublicKey | null = null;
+    //   const merkleProof = generateMerkleProof(
+    //     whitelistedAddresses,
+    //     testUserA.publicKey.toBase58()
+    //   );
+    //   const assetAmountIn = initialUserCollateralTokenBalance.div(BN(2));
+    //   // Get expected shares out by reading a view function's emitted event.
+    //   const expectedSharesOut = await program.methods
+    //     .previewSharesOut(
+    //       // Assets In (Collateral)
+    //       assetAmountIn
+    //     )
+    //     .accounts({
+    //       assetTokenMint,
+    //       shareTokenMint,
+    //       pool: poolPda,
+    //       poolAssetTokenAccount,
+    //       poolShareTokenAccount,
+    //     })
+    //     .signers([creator])
+    //     .simulate()
+    //     .then((data) => data.events[0].data.sharesOut as BigNumber);
+    //   // Buy project token
+    //   await program.methods
+    //     .swapExactAssetsForShares(
+    //       // Assets In (Collateral)
+    //       assetAmountIn,
+    //       // Minimum shares out
+    //       expectedSharesOut,
+    //       // Merkle proof can be 'null' if there are no proofs
+    //       merkleProof,
+    //       // Referrer can be null if there are no referrers
+    //       referrer
+    //     )
+    //     .accounts({
+    //       assetTokenMint,
+    //       shareTokenMint,
+    //       user: testUserA.publicKey,
+    //       pool: poolPda,
+    //       poolAssetTokenAccount,
+    //       poolShareTokenAccount,
+    //       userAssetTokenAccount: assetTokenMintUserAccount,
+    //       userShareTokenAccount: shareTokenMintUserAccount,
+    //       config: ownerConfigPda,
+    //       referrerStateInPool: referrer,
+    //       userStateInPool: userPoolPda,
+    //     })
+    //     .signers([testUserA])
+    //     .rpc();
+    //   const pool = await program.account.liquidityBootstrappingPool.fetch(
+    //     poolPda
+    //   );
+    //   expect(pool.totalReferred.toString()).to.eq(BN(0).toString());
+    // });
+    // it("should swap exact assets for shares with a referrer", async () => {
+    //   // Skip time by 1100 seconds
+    //   await skipBlockTimestamp(bankRunCtx, 1100);
+    //   const initialUserCollateralTokenBalance = await getAccountBalance(
+    //     bankRunClient,
+    //     testUserA.publicKey,
+    //     assetTokenMint
+    //   );
+    //   // Get user's pool account
+    //   const userPoolPda = findProgramAddressSync(
+    //     [testUserA.publicKey.toBuffer(), poolPda.toBuffer()],
+    //     program.programId
+    //   )[0];
+    //   // We compute the referrer's account in the pool if a referrer exists
+    //   const referrer: PublicKey | null = Keypair.generate().publicKey;
+    //   const referrerPda = referrer
+    //     ? findProgramAddressSync(
+    //         [(referrer as PublicKey).toBuffer(), poolPda.toBuffer()],
+    //         program.programId
+    //       )[0]
+    //     : null;
+    //   const merkleProof = generateMerkleProof(
+    //     whitelistedAddresses,
+    //     testUserA.publicKey.toBase58()
+    //   );
+    //   const assetAmountIn = initialUserCollateralTokenBalance.div(BN(2));
+    //   // Get expected shares out by reading a view function's emitted event.
+    //   const expectedSharesOut = await program.methods
+    //     .previewSharesOut(
+    //       // Assets In (Collateral)
+    //       assetAmountIn
+    //     )
+    //     .accounts({
+    //       assetTokenMint,
+    //       shareTokenMint,
+    //       pool: poolPda,
+    //       poolAssetTokenAccount,
+    //       poolShareTokenAccount,
+    //     })
+    //     .signers([creator])
+    //     .simulate()
+    //     .then((data) => data.events[0].data.sharesOut as BigNumber);
+    //   // Buy project token
+    //   await program.methods
+    //     .swapExactAssetsForShares(
+    //       // Assets In (Collateral)
+    //       assetAmountIn,
+    //       // Minimum shares out
+    //       expectedSharesOut,
+    //       // Merkle proof can be 'null' if there are no proofs
+    //       merkleProof,
+    //       // Referrer can be null if there are no referrers
+    //       referrer
+    //     )
+    //     .accounts({
+    //       assetTokenMint,
+    //       shareTokenMint,
+    //       user: testUserA.publicKey,
+    //       pool: poolPda,
+    //       poolAssetTokenAccount,
+    //       poolShareTokenAccount,
+    //       userAssetTokenAccount: assetTokenMintUserAccount,
+    //       userShareTokenAccount: shareTokenMintUserAccount,
+    //       config: ownerConfigPda,
+    //       referrerStateInPool: referrerPda,
+    //       userStateInPool: userPoolPda,
+    //     })
+    //     .signers([testUserA])
+    //     .rpc();
+    //   const globalPoolConfig = await program.account.ownerConfig.fetch(
+    //     ownerConfigPda
+    //   );
+    //   const referrerPoolAccount = await program.account.userStateInPool.fetch(
+    //     referrerPda!
+    //   );
+    //   expect(referrerPoolAccount.referredAssets.toString()).to.eq(
+    //     assetAmountIn
+    //       .mul(BN(globalPoolConfig.referralFee))
+    //       .div(BN(MAX_FEE_BASIS_POINTS))
+    //       .toString()
+    //   );
+    // });
+    // it("should swap assets for exact shares without a referrer", async () => {
+    //   // Skip time by 1100 seconds
+    //   await skipBlockTimestamp(bankRunCtx, 1100);
+    //   const initialUserShareTokenBalance = await getAccountBalance(
+    //     bankRunClient,
+    //     testUserA.publicKey,
+    //     shareTokenMint
+    //   );
+    //   console.log(
+    //     "initialUserShareTokenBalance",
+    //     initialUserShareTokenBalance.toString()
+    //   );
+    //   // Get user's pool account
+    //   const userPoolPda = findProgramAddressSync(
+    //     [testUserA.publicKey.toBuffer(), poolPda.toBuffer()],
+    //     program.programId
+    //   )[0];
+    //   const referrer: PublicKey | null = null;
+    //   const merkleProof = generateMerkleProof(
+    //     whitelistedAddresses,
+    //     testUserA.publicKey.toBase58()
+    //   );
+    //   const pool = await program.account.liquidityBootstrappingPool.fetch(
+    //     poolPda
+    //   );
+    //   const { maxAssetsIn } = pool;
+    //   console.log("maxAssetsIn", maxAssetsIn.toString());
+    //   const sharesAmountOut = initialUserShareTokenBalance.div(BN(3));
+    //   console.log("sharesAmountOut", sharesAmountOut.toString());
+    //   // Get expected shares out by reading a view function's emitted event.
+    //   const expectedAssetsIn = await program.methods
+    //     .previewAssetsIn(
+    //       // Shares out (Collateral)
+    //       sharesAmountOut
+    //     )
+    //     .accounts({
+    //       assetTokenMint,
+    //       shareTokenMint,
+    //       pool: poolPda,
+    //       poolAssetTokenAccount,
+    //       poolShareTokenAccount,
+    //     })
+    //     .signers([creator])
+    //     .simulate()
+    //     .then((data) => data.events[0].data.assetsIn as anchor.BN);
+    //   console.log("expectedAssetsIn", expectedAssetsIn.toString());
+    //   // Buy project token
+    //   await program.methods
+    //     .swapAssetsForExactShares(
+    //       // Shares out
+    //       sharesAmountOut,
+    //       // Maximum assets in
+    //       expectedAssetsIn,
+    //       // Merkle proof can be 'null' if there are no proofs
+    //       merkleProof,
+    //       // Referrer can be null if there are no referrers
+    //       referrer
+    //     )
+    //     .accounts({
+    //       assetTokenMint,
+    //       shareTokenMint,
+    //       user: testUserA.publicKey,
+    //       pool: poolPda,
+    //       poolAssetTokenAccount,
+    //       poolShareTokenAccount,
+    //       userAssetTokenAccount: assetTokenMintUserAccount,
+    //       userShareTokenAccount: shareTokenMintUserAccount,
+    //       config: ownerConfigPda,
+    //       referrerStateInPool: referrer,
+    //       userStateInPool: userPoolPda,
+    //     })
+    //     .signers([testUserA])
+    //     .rpc();
+    //   // expect(pool.totalReferred.toString()).to.eq(BN(0).toString());
+    // });
+    it("should be able to swap tokens using swapExactAssetsForShare during sale time", async () => {
       // Skip time by 1100 seconds
       await skipBlockTimestamp(bankRunCtx, 1100);
-
+      // Fetch balances before running the test
+      const poolCollateralTokenBalanceBefore = await getAccountBalance(
+        bankRunClient,
+        poolPda,
+        assetTokenMint
+      );
       const initialUserCollateralTokenBalance = await getAccountBalance(
         bankRunClient,
         testUserA.publicKey,
         assetTokenMint
       );
-
       // Get user's pool account
       const userPoolPda = findProgramAddressSync(
         [testUserA.publicKey.toBuffer(), poolPda.toBuffer()],
         program.programId
       )[0];
-
-      const referrer: PublicKey | null = null;
-
-      const merkleProof = generateMerkleProof(
-        whitelistedAddresses,
-        testUserA.publicKey.toBase58()
-      );
-
-      const assetAmountIn = initialUserCollateralTokenBalance.div(BN(2));
-
-      // Get expected shares out by reading a view function's emitted event.
-      const expectedSharesOut = await program.methods
-        .previewSharesOut(
-          // Assets In (Collateral)
-          assetAmountIn
-        )
-        .accounts({
-          assetTokenMint,
-          shareTokenMint,
-          pool: poolPda,
-          poolAssetTokenAccount,
-          poolShareTokenAccount,
-        })
-        .signers([creator])
-        .simulate()
-        .then((data) => data.events[0].data.sharesOut as BigNumber);
-
-      // Buy project token
-      await program.methods
-        .swapExactAssetsForShares(
-          // Assets In (Collateral)
-          assetAmountIn,
-          // Minimum shares out
-          expectedSharesOut,
-          // Merkle proof can be 'null' if there are no proofs
-          merkleProof,
-          // Referrer can be null if there are no referrers
-          referrer
-        )
-        .accounts({
-          assetTokenMint,
-          shareTokenMint,
-          user: testUserA.publicKey,
-          pool: poolPda,
-          poolAssetTokenAccount,
-          poolShareTokenAccount,
-          userAssetTokenAccount: assetTokenMintUserAccount,
-          userShareTokenAccount: shareTokenMintUserAccount,
-          config: ownerConfigPda,
-          referrerStateInPool: referrer,
-          userStateInPool: userPoolPda,
-        })
-        .signers([testUserA])
-        .rpc();
-
-      const pool = await program.account.liquidityBootstrappingPool.fetch(
-        poolPda
-      );
-
-      expect(pool.totalReferred.toString()).to.eq(BN(0).toString());
-    });
-
-    it("should swap exact assets for shares with a referrer", async () => {
-      // Skip time by 1100 seconds
-      await skipBlockTimestamp(bankRunCtx, 1100);
-
-      const initialUserCollateralTokenBalance = await getAccountBalance(
-        bankRunClient,
-        testUserA.publicKey,
-        assetTokenMint
-      );
-
-      // Get user's pool account
-      const userPoolPda = findProgramAddressSync(
-        [testUserA.publicKey.toBuffer(), poolPda.toBuffer()],
-        program.programId
-      )[0];
-
       // We compute the referrer's account in the pool if a referrer exists
       const referrer: PublicKey | null = Keypair.generate().publicKey;
       const referrerPda = referrer
@@ -444,14 +603,11 @@ describe.only("Fjord LBP - Buy", () => {
             program.programId
           )[0]
         : null;
-
       const merkleProof = generateMerkleProof(
         whitelistedAddresses,
         testUserA.publicKey.toBase58()
       );
-
       const assetAmountIn = initialUserCollateralTokenBalance.div(BN(2));
-
       // Get expected shares out by reading a view function's emitted event.
       const expectedSharesOut = await program.methods
         .previewSharesOut(
@@ -468,7 +624,6 @@ describe.only("Fjord LBP - Buy", () => {
         .signers([creator])
         .simulate()
         .then((data) => data.events[0].data.sharesOut as BigNumber);
-
       // Buy project token
       await program.methods
         .swapExactAssetsForShares(
@@ -496,110 +651,405 @@ describe.only("Fjord LBP - Buy", () => {
         })
         .signers([testUserA])
         .rpc();
-
+      const pool = await program.account.liquidityBootstrappingPool.fetch(
+        poolPda
+      );
       const globalPoolConfig = await program.account.ownerConfig.fetch(
         ownerConfigPda
       );
-
+      const userPoolAccount = await program.account.userStateInPool.fetch(
+        userPoolPda
+      );
       const referrerPoolAccount = await program.account.userStateInPool.fetch(
         referrerPda!
       );
+      const poolCollateralTokenBalanceAfter = await getAccountBalance(
+        bankRunClient,
+        poolPda,
+        assetTokenMint
+      );
 
+      const userCollateralTokenBalanceAfter = await getAccountBalance(
+        bankRunClient,
+        testUserA.publicKey,
+        assetTokenMint
+      );
+
+      expect(pool.totalPurchased.toString()).to.eq(
+        expectedSharesOut.toString()
+      );
+
+      expect(pool.totalSwapFeesAsset.toString()).to.eq(
+        assetAmountIn
+          .mul(BN(globalPoolConfig.swapFee))
+          .div(BN(MAX_FEE_BASIS_POINTS))
+          .toString()
+      );
       expect(referrerPoolAccount.referredAssets.toString()).to.eq(
         assetAmountIn
           .mul(BN(globalPoolConfig.referralFee))
           .div(BN(MAX_FEE_BASIS_POINTS))
           .toString()
       );
+      expect(poolCollateralTokenBalanceAfter.toString()).to.eq(
+        poolCollateralTokenBalanceBefore.add(assetAmountIn).toString()
+      );
+      expect(userCollateralTokenBalanceAfter.toString()).to.eq(
+        initialUserCollateralTokenBalance.sub(assetAmountIn).toString()
+      );
+      expect(userPoolAccount.purchasedShares.toString()).to.eq(
+        expectedSharesOut.toString()
+      );
     });
-  });
-  it.only("should swap assets for exact shares without a referrer", async () => {
-    // Skip time by 1100 seconds
-    await skipBlockTimestamp(bankRunCtx, 1100);
+    it("should be able to swap tokens using swapExactAssetsForShare during sale time if there is no merkel proof", async () => {
+      ({
+        tokenAMint: shareTokenMint,
+        tokenBMint: assetTokenMint,
+        tokenAMintPayerAccount: creatorShareTokenAccount,
+        tokenBMintPayerAccount: creatorAssetTokenAccount,
+        tokenAUserAccount: shareTokenMintUserAccount,
+        tokenBUserAccount: assetTokenMintUserAccount,
+      } = await setup({
+        payer: creator,
+        connection,
+        testUser: testUserB,
+        bankRunClient,
+      }));
 
-    const initialUserShareTokenBalance = await getAccountBalance(
-      bankRunClient,
-      testUserA.publicKey,
-      shareTokenMint
-    );
+      // get token balance
+      initialProjectTokenBalanceCreator = await getAccountBalance(
+        bankRunCtx.banksClient,
+        creator.publicKey,
+        shareTokenMint
+      );
 
-    console.log(
-      "initialUserShareTokenBalance",
-      initialUserShareTokenBalance.toString()
-    );
+      initialCollateralTokenBalanceCreator = await getAccountBalance(
+        bankRunCtx.banksClient,
+        creator.publicKey,
+        assetTokenMint
+      );
+      const sharesAmount = initialProjectTokenBalanceCreator;
+      const assetsAmount = initialCollateralTokenBalanceCreator;
 
-    // Get user's pool account
-    const userPoolPda = findProgramAddressSync(
-      [testUserA.publicKey.toBuffer(), poolPda.toBuffer()],
-      program.programId
-    )[0];
+      // Get pool address
+      [poolPda] = findProgramAddressSync(
+        [
+          shareTokenMint.toBuffer(),
+          assetTokenMint.toBuffer(),
+          creator.publicKey.toBuffer(),
+        ],
+        program.programId
+      );
 
-    const referrer: PublicKey | null = null;
-
-    const merkleProof = generateMerkleProof(
-      whitelistedAddresses,
-      testUserA.publicKey.toBase58()
-    );
-
-    const pool = await program.account.liquidityBootstrappingPool.fetch(
-      poolPda
-    );
-
-    const { maxAssetsIn } = pool;
-
-    console.log("maxAssetsIn", maxAssetsIn.toString());
-
-    const sharesAmountOut = initialUserShareTokenBalance.div(BN(3));
-
-    console.log("sharesAmountOut", sharesAmountOut.toString());
-
-    // Get expected shares out by reading a view function's emitted event.
-    const expectedAssetsIn = await program.methods
-      .previewAssetsIn(
-        // Shares out (Collateral)
-        sharesAmountOut
-      )
-      .accounts({
-        assetTokenMint,
+      // Pre-compute the account addresses
+      // These will store the pool's tokens
+      poolShareTokenAccount = await getAssociatedTokenAddress(
         shareTokenMint,
-        pool: poolPda,
-        poolAssetTokenAccount,
-        poolShareTokenAccount,
-      })
-      .signers([creator])
-      .simulate()
-      .then((data) => data.events[0].data.assetsIn as anchor.BN);
-
-    console.log("expectedAssetsIn", expectedAssetsIn.toString());
-
-    // Buy project token
-    await program.methods
-      .swapAssetsForExactShares(
-        // Shares out
-        sharesAmountOut,
-        // Maximum assets in
-        expectedAssetsIn,
-        // Merkle proof can be 'null' if there are no proofs
-        merkleProof,
-        // Referrer can be null if there are no referrers
-        referrer
-      )
-      .accounts({
+        poolPda,
+        true
+      );
+      poolAssetTokenAccount = await getAssociatedTokenAddress(
         assetTokenMint,
-        shareTokenMint,
-        user: testUserA.publicKey,
-        pool: poolPda,
-        poolAssetTokenAccount,
-        poolShareTokenAccount,
-        userAssetTokenAccount: assetTokenMintUserAccount,
-        userShareTokenAccount: shareTokenMintUserAccount,
-        config: ownerConfigPda,
-        referrerStateInPool: referrer,
-        userStateInPool: userPoolPda,
-      })
-      .signers([testUserA])
-      .rpc();
+        poolPda,
+        true
+      );
 
-    // expect(pool.totalReferred.toString()).to.eq(BN(0).toString());
+      const poolParams = createMockpoolConfig({
+        assets: assetsAmount,
+        shares: sharesAmount,
+        startWeightBasisPoints: 15 * PERCENTAGE_BASIS_POINTS,
+        maxSharePrice: GENERIC_BN,
+        maxAssetsIn: GENERIC_BN,
+        maxSharesOut: GENERIC_BN,
+      });
+
+      const formattedPoolParams = Object.values(poolParams) as any;
+
+      await program.methods
+        .initializePool(...formattedPoolParams)
+        .accounts({
+          creator: creator.publicKey,
+          shareTokenMint,
+          assetTokenMint,
+          poolShareTokenAccount,
+          poolAssetTokenAccount,
+          creatorShareTokenAccount,
+          creatorAssetTokenAccount,
+        })
+        .signers([creator])
+        .rpc();
+      // Skip time by 1100 seconds
+      await skipBlockTimestamp(bankRunCtx, 1100);
+      // Fetch balances before running the test
+      const poolCollateralTokenBalanceBefore = await getAccountBalance(
+        bankRunClient,
+        poolPda,
+        assetTokenMint
+      );
+      const initialUserCollateralTokenBalance = await getAccountBalance(
+        bankRunClient,
+        testUserB.publicKey,
+        assetTokenMint
+      );
+      // Get user's pool account
+      const userPoolPda = findProgramAddressSync(
+        [testUserB.publicKey.toBuffer(), poolPda.toBuffer()],
+        program.programId
+      )[0];
+
+      // We compute the referrer's account in the pool if a referrer exists
+      const referrer: PublicKey | null = Keypair.generate().publicKey;
+      const referrerPda = referrer
+        ? findProgramAddressSync(
+            [(referrer as PublicKey).toBuffer(), poolPda.toBuffer()],
+            program.programId
+          )[0]
+        : null;
+
+      const assetAmountIn = initialUserCollateralTokenBalance.div(BN(2));
+      // Get expected shares out by reading a view function's emitted event.
+      const expectedSharesOut = await program.methods
+        .previewSharesOut(
+          // Assets In (Collateral)
+          assetAmountIn
+        )
+        .accounts({
+          assetTokenMint,
+          shareTokenMint,
+          pool: poolPda,
+          poolAssetTokenAccount,
+          poolShareTokenAccount,
+        })
+        .signers([creator])
+        .simulate()
+        .then((data) => data.events[0].data.sharesOut as BigNumber);
+      // Buy project token
+      await program.methods
+        .swapExactAssetsForShares(
+          // Assets In (Collateral)
+          assetAmountIn,
+          // Minimum shares out
+          expectedSharesOut,
+          // Merkle proof can be 'null' if there are no proofs
+          null,
+          // Referrer can be null if there are no referrers
+          referrer
+        )
+        .accounts({
+          assetTokenMint,
+          shareTokenMint,
+          user: testUserB.publicKey,
+          pool: poolPda,
+          poolAssetTokenAccount,
+          poolShareTokenAccount,
+          userAssetTokenAccount: assetTokenMintUserAccount,
+          userShareTokenAccount: shareTokenMintUserAccount,
+          config: ownerConfigPda,
+          referrerStateInPool: referrerPda,
+          userStateInPool: userPoolPda,
+        })
+        .signers([testUserB])
+        .rpc();
+
+      const pool = await program.account.liquidityBootstrappingPool.fetch(
+        poolPda
+      );
+      const globalPoolConfig = await program.account.ownerConfig.fetch(
+        ownerConfigPda
+      );
+      const userPoolAccount = await program.account.userStateInPool.fetch(
+        userPoolPda
+      );
+      const referrerPoolAccount = await program.account.userStateInPool.fetch(
+        referrerPda!
+      );
+      const poolCollateralTokenBalanceAfter = await getAccountBalance(
+        bankRunClient,
+        poolPda,
+        assetTokenMint
+      );
+
+      const userCollateralTokenBalanceAfter = await getAccountBalance(
+        bankRunClient,
+        testUserB.publicKey,
+        assetTokenMint
+      );
+
+      expect(pool.totalPurchased.toString()).to.eq(
+        expectedSharesOut.toString()
+      );
+
+      expect(pool.totalSwapFeesAsset.toString()).to.eq(
+        assetAmountIn
+          .mul(BN(globalPoolConfig.swapFee))
+          .div(BN(MAX_FEE_BASIS_POINTS))
+          .toString()
+      );
+      expect(referrerPoolAccount.referredAssets.toString()).to.eq(
+        assetAmountIn
+          .mul(BN(globalPoolConfig.referralFee))
+          .div(BN(MAX_FEE_BASIS_POINTS))
+          .toString()
+      );
+      expect(poolCollateralTokenBalanceAfter.toString()).to.eq(
+        poolCollateralTokenBalanceBefore.add(assetAmountIn).toString()
+      );
+      expect(userCollateralTokenBalanceAfter.toString()).to.eq(
+        initialUserCollateralTokenBalance.sub(assetAmountIn).toString()
+      );
+      expect(userPoolAccount.purchasedShares.toString()).to.eq(
+        expectedSharesOut.toString()
+      );
+    });
+
+    it.only("should not be able to swap tokens using swapExactAssetsForShare before sale time", async () => {
+      ({
+        tokenAMint: shareTokenMint,
+        tokenBMint: assetTokenMint,
+        tokenAMintPayerAccount: creatorShareTokenAccount,
+        tokenBMintPayerAccount: creatorAssetTokenAccount,
+        tokenAUserAccount: shareTokenMintUserAccount,
+        tokenBUserAccount: assetTokenMintUserAccount,
+      } = await setup({
+        payer: creator,
+        connection,
+        testUser: testUserB,
+        bankRunClient,
+      }));
+
+      // get token balance
+      initialProjectTokenBalanceCreator = await getAccountBalance(
+        bankRunCtx.banksClient,
+        creator.publicKey,
+        shareTokenMint
+      );
+
+      initialCollateralTokenBalanceCreator = await getAccountBalance(
+        bankRunCtx.banksClient,
+        creator.publicKey,
+        assetTokenMint
+      );
+      const sharesAmount = initialProjectTokenBalanceCreator;
+      const assetsAmount = initialCollateralTokenBalanceCreator;
+
+      // Get pool address
+      [poolPda] = findProgramAddressSync(
+        [
+          shareTokenMint.toBuffer(),
+          assetTokenMint.toBuffer(),
+          creator.publicKey.toBuffer(),
+        ],
+        program.programId
+      );
+
+      // Pre-compute the account addresses
+      // These will store the pool's tokens
+      poolShareTokenAccount = await getAssociatedTokenAddress(
+        shareTokenMint,
+        poolPda,
+        true
+      );
+      poolAssetTokenAccount = await getAssociatedTokenAddress(
+        assetTokenMint,
+        poolPda,
+        true
+      );
+
+      const poolParams = createMockpoolConfig({
+        assets: assetsAmount,
+        shares: sharesAmount,
+        startWeightBasisPoints: 15 * PERCENTAGE_BASIS_POINTS,
+        saleStartTime: BN(new Date().getTime() / 1000 + 50000000),
+        saleEndTime: BN(new Date().getTime() / 1000 + 100000000),
+        maxSharePrice: GENERIC_BN,
+        maxAssetsIn: GENERIC_BN,
+        maxSharesOut: GENERIC_BN,
+      });
+
+      const formattedPoolParams = Object.values(poolParams) as any;
+
+      await program.methods
+        .initializePool(...formattedPoolParams)
+        .accounts({
+          creator: creator.publicKey,
+          shareTokenMint,
+          assetTokenMint,
+          poolShareTokenAccount,
+          poolAssetTokenAccount,
+          creatorShareTokenAccount,
+          creatorAssetTokenAccount,
+        })
+        .signers([creator])
+        .rpc();
+      // Fetch balances before running the test
+      const initialUserCollateralTokenBalance = await getAccountBalance(
+        bankRunClient,
+        testUserB.publicKey,
+        assetTokenMint
+      );
+      // Get user's pool account
+      const userPoolPda = findProgramAddressSync(
+        [testUserB.publicKey.toBuffer(), poolPda.toBuffer()],
+        program.programId
+      )[0];
+      // We compute the referrer's account in the pool if a referrer exists
+      const referrer: PublicKey | null = Keypair.generate().publicKey;
+      const referrerPda = referrer
+        ? findProgramAddressSync(
+            [(referrer as PublicKey).toBuffer(), poolPda.toBuffer()],
+            program.programId
+          )[0]
+        : null;
+      const merkleProof = generateMerkleProof(
+        whitelistedAddresses,
+        testUserB.publicKey.toBase58()
+      );
+      const assetAmountIn = initialUserCollateralTokenBalance.div(BN(2));
+      // Get expected shares out by reading a view function's emitted event.
+      const expectedSharesOut = await program.methods
+        .previewSharesOut(
+          // Assets In (Collateral)
+          assetAmountIn
+        )
+        .accounts({
+          assetTokenMint,
+          shareTokenMint,
+          pool: poolPda,
+          poolAssetTokenAccount,
+          poolShareTokenAccount,
+        })
+        .signers([creator])
+        .simulate()
+        .then((data) => data.events[0].data.sharesOut as BigNumber);
+      // Buy project token
+      await expect(
+        program.methods
+          .swapExactAssetsForShares(
+            // Assets In (Collateral)
+            assetAmountIn,
+            // Minimum shares out
+            expectedSharesOut,
+            // Merkle proof can be 'null' if there are no proofs
+            merkleProof,
+            // Referrer can be null if
+            referrer
+          )
+          .accounts({
+            assetTokenMint,
+            shareTokenMint,
+            user: testUserB.publicKey,
+            pool: poolPda,
+            poolAssetTokenAccount,
+            poolShareTokenAccount,
+            userAssetTokenAccount: assetTokenMintUserAccount,
+            userShareTokenAccount: shareTokenMintUserAccount,
+            config: ownerConfigPda,
+            referrerStateInPool: referrerPda,
+            userStateInPool: userPoolPda,
+          })
+          .signers([testUserB])
+          .rpc()
+      ).to.be.rejectedWith("TradingDisallowed");
+    });
   });
 });
