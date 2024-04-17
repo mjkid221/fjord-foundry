@@ -87,7 +87,13 @@ pub fn get_amount_in(
     // -----------------------------------------------------------------------
 
     // `MAX_PERCENTAGE_OUT` check ensures `amountOut` is always less than `reserveOut`.
-    if amount_out > mul_wad(reserve_out, u64::from(MAX_PERCENTAGE_OUT))? {
+    if amount_out
+        > mul_div(
+            reserve_out,
+            MAX_PERCENTAGE_OUT as u64,
+            MAX_FEE_BASIS_POINTS as u64,
+        )?
+    {
         Err(SafeMathError::AmountOutTooLarge)
     } else {
         Ok(_get_amount_in(

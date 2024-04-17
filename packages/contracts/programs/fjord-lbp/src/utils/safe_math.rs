@@ -1,5 +1,3 @@
-use solana_program::msg;
-
 use crate::SafeMathError;
 
 /**

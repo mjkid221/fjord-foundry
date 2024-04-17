@@ -131,7 +131,7 @@ pub mod fjord_lbp {
 
     // View only
     pub fn preview_assets_in(ctx: Context<ReturnPreviewContext>, shares_out: u64) -> Result<u64> {
-        let assets_in = math::preview_assets_in(
+        let mut assets_in = math::preview_assets_in(
             PreviewAmountArgs {
                 assets: ctx.accounts.pool_asset_token_account.amount,
                 virtual_assets: ctx.accounts.pool.virtual_assets,
@@ -149,12 +149,13 @@ pub mod fjord_lbp {
             },
             shares_out,
         )?;
-
-        Ok(assets_in + calculate_fee(assets_in, ctx.accounts.config.swap_fee))
+        assets_in += calculate_fee(assets_in, ctx.accounts.config.swap_fee);
+        emit!(PreviewAssetsIn { assets_in });
+        Ok(assets_in)
     }
 
     pub fn preview_shares_out(ctx: Context<ReturnPreviewContext>, assets_in: u64) -> Result<u64> {
-        Ok(math::preview_shares_out(
+        let shares_out = math::preview_shares_out(
             PreviewAmountArgs {
                 assets: ctx.accounts.pool_asset_token_account.amount,
                 virtual_assets: ctx.accounts.pool.virtual_assets,
@@ -174,7 +175,9 @@ pub mod fjord_lbp {
                 assets_in,
                 calculate_fee(assets_in, ctx.accounts.config.swap_fee),
             )?,
-        )?)
+        )?;
+        emit!(PreviewSharesOut { shares_out });
+        Ok(shares_out)
     }
 
     // Fee setter ---------------------------------------------------------
