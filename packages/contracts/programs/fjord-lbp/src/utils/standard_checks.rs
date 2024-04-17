@@ -2,6 +2,8 @@ use crate::{PoolError, SwapTokens};
 use anchor_lang::prelude::*;
 
 pub mod merkle {
+    use solana_program::keccak;
+
     pub use super::*;
     use crate::merkle_verify;
 
@@ -11,13 +13,10 @@ pub mod merkle {
     ) -> Result<()> {
         // if merkle root is not an empty array and merkle proof is provided, check if the user is in the whitelist
         let merkle_root = ctx.accounts.pool.whitelist_merkle_root;
+        let node = keccak::hashv(&[&ctx.accounts.user.key().to_string().as_bytes()]);
         if merkle_root != [0u8; 32]
             && (merkle_proof.is_none()
-                || !merkle_verify(
-                    merkle_proof.unwrap(),
-                    merkle_root,
-                    ctx.accounts.user.key().to_bytes(),
-                ))
+                || !merkle_verify(&merkle_proof.unwrap()[..], &merkle_root, &node.0))
         {
             return Err(PoolError::WhitelistProof.into());
         }

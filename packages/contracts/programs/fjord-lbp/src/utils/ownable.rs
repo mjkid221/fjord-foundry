@@ -52,7 +52,8 @@ pub struct AcceptOwner<'info> {
 // Modules
 pub mod initializer {
   use anchor_lang::prelude::*;
-  use crate::{InitializeOwner, PoolError, MAX_FEE_BIPS};
+use anchor_spl::token_2022::spl_token_2022::extension::transfer_fee::MAX_FEE_BASIS_POINTS;
+  use crate::{InitializeOwner, PoolError};
 
   pub fn initialize_owner_config(ctx: Context<InitializeOwner>, 
     owner_key: Pubkey,  
@@ -63,18 +64,10 @@ pub mod initializer {
   ) -> Result<()> {
     let config = &mut ctx.accounts.config;
     // Check if the provided fees are within the acceptable range
-    if platform_fee > MAX_FEE_BIPS {
+    if platform_fee > MAX_FEE_BASIS_POINTS || referral_fee > MAX_FEE_BASIS_POINTS ||  swap_fee > MAX_FEE_BASIS_POINTS {
       return Err(PoolError::MaxFeeExceeded.into());
     }
 
-    if referral_fee > MAX_FEE_BIPS {
-        return Err(PoolError::MaxFeeExceeded.into());
-    }
-
-    if swap_fee > MAX_FEE_BIPS {
-        return Err(PoolError::MaxFeeExceeded.into());
-    }
-    
     config.owner = owner_key;
     config.bump = ctx.bumps.config;
     config.fee_recipient = fee_recipient;
@@ -112,6 +105,5 @@ pub mod access_control {
     }
     Ok(())
   }
-  
 }
 

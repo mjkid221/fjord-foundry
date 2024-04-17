@@ -1,10 +1,13 @@
 use anchor_lang::prelude::*;
-use anchor_spl::token::{self, Token, TokenAccount, Transfer};
+use anchor_spl::{
+    token::{self, Token, TokenAccount, Transfer},
+    token_2022::spl_token_2022::extension::transfer_fee::MAX_FEE_BASIS_POINTS,
+};
 
 use crate::{
-    math::{preview_assets_in, preview_shares_out},
+    math::{calculate_fee, preview_assets_in, preview_shares_out},
     safe_math, standard_checks, Buy, LiquidityBootstrappingPool, OwnerConfig, PoolError,
-    PreviewAmountArgs, SwapTokens, UserStateInPool, MAX_FEE_BIPS,
+    PreviewAmountArgs, SwapTokens, UserStateInPool,
 };
 
 /// Swap a specific amount of assets for a minimum number of shares with a referrer and Merkle proof.
@@ -21,13 +24,13 @@ pub fn swap_exact_assets_for_shares(
     assets_in: u64,
     min_shares_out: u64,
     merkle_proof: Option<Vec<[u8; 32]>>,
-    referrer: Option<Pubkey>,
+    _referrer: Option<Pubkey>,
 ) -> Result<()> {
     let pool = &mut ctx.accounts.pool;
     let pool_asset_token_account = &mut ctx.accounts.pool_asset_token_account;
     let pool_share_token_account = &mut ctx.accounts.pool_share_token_account;
 
-    let swap_fees = safe_math::mul_wad(assets_in, ctx.accounts.config.swap_fee.into())?;
+    let swap_fees = calculate_fee(assets_in, ctx.accounts.config.swap_fee);
     pool.total_swap_fees_asset += swap_fees;
 
     let shares_out = preview_shares_out(
@@ -38,6 +41,7 @@ pub fn swap_exact_assets_for_shares(
             shares: pool_share_token_account.amount,
             virtual_shares: pool.virtual_shares,
             share_token_decimal: ctx.accounts.share_token_mint.decimals,
+            current_time: Clock::get()?.unix_timestamp,
             total_purchased: pool.total_purchased,
             max_share_price: pool.max_share_price,
             sale_start_time: pool.sale_start_time,
@@ -65,7 +69,7 @@ pub fn swap_exact_assets_for_shares(
         pool_asset_token_account.amount,
         pool_share_token_account.amount,
         swap_fees,
-        referrer,
+        &mut ctx.accounts.referrer_state_in_pool,
     )?;
 
     Ok(())
@@ -86,7 +90,7 @@ pub fn swap_assets_for_exact_shares(
     shares_out: u64,
     max_assets_in: u64,
     merkle_proof: Option<Vec<[u8; 32]>>,
-    referrer: Option<Pubkey>,
+    _referrer: Option<Pubkey>,
 ) -> Result<()> {
     let pool = &mut ctx.accounts.pool;
     let pool_asset_token_account = &mut ctx.accounts.pool_asset_token_account;
@@ -102,6 +106,7 @@ pub fn swap_assets_for_exact_shares(
             share_token_decimal: ctx.accounts.share_token_mint.decimals,
             total_purchased: pool.total_purchased,
             max_share_price: pool.max_share_price,
+            current_time: Clock::get()?.unix_timestamp,
             sale_start_time: pool.sale_start_time,
             sale_end_time: pool.sale_end_time,
             start_weight_basis_points: pool.start_weight_basis_points,
@@ -109,7 +114,7 @@ pub fn swap_assets_for_exact_shares(
         },
         shares_out,
     )?;
-    let swap_fees = safe_math::mul_wad(assets_in, ctx.accounts.config.swap_fee.into())?;
+    let swap_fees = calculate_fee(assets_in, ctx.accounts.config.swap_fee);
     assets_in += swap_fees;
     pool.total_swap_fees_asset += swap_fees;
 
@@ -130,12 +135,13 @@ pub fn swap_assets_for_exact_shares(
         pool_asset_token_account.amount,
         pool_share_token_account.amount,
         swap_fees,
-        referrer,
+        &mut ctx.accounts.referrer_state_in_pool,
     )?;
 
     Ok(())
 }
 
+#[allow(clippy::too_many_arguments)]
 fn _swap_assets_for_shares<'info>(
     pool: &mut Account<'info, LiquidityBootstrappingPool>,
     user_state_in_pool: &mut Account<'info, UserStateInPool>,
@@ -149,7 +155,7 @@ fn _swap_assets_for_shares<'info>(
     assets: u64,
     shares: u64,
     swap_fees: u64,
-    referrer: Option<Pubkey>,
+    referrer_state_in_pool: &mut Option<Account<'info, UserStateInPool>>,
 ) -> Result<()> {
     if assets + assets_in - swap_fees >= pool.max_assets_in {
         return Err(PoolError::AssetsInExceeded.into());
@@ -161,10 +167,8 @@ fn _swap_assets_for_shares<'info>(
         to: pool_asset_token_account.to_account_info(),
         authority: user.to_account_info(),
     };
-
     let asset_cpi_ctx =
         CpiContext::new(token_program.to_account_info(), asset_transfer_instruction);
-
     token::transfer(asset_cpi_ctx, assets_in)?;
 
     let total_purchased_after: u64 = pool.total_purchased + shares_out;
@@ -172,15 +176,16 @@ fn _swap_assets_for_shares<'info>(
         return Err(PoolError::SharesOutExceeded.into());
     }
     pool.total_purchased = total_purchased_after;
-
     user_state_in_pool.purchased_shares += shares_out;
 
-    if referrer.is_some() && global_pool_config.referral_fee != 0 {
-        let referrer_fee_fraction =
-            safe_math::div_wad(global_pool_config.referral_fee.into(), MAX_FEE_BIPS.into());
-        let assets_referred = safe_math::mul_wad(assets_in, referrer_fee_fraction?);
-
-        user_state_in_pool.referred_assets += assets_referred?;
+    if referrer_state_in_pool.is_some() && global_pool_config.referral_fee != 0 {
+        let referrer_fee_fraction = safe_math::div_wad(
+            global_pool_config.referral_fee.into(),
+            MAX_FEE_BASIS_POINTS.into(),
+        );
+        let assets_referred = safe_math::mul_wad(assets_in, referrer_fee_fraction?)?;
+        pool.total_referred += assets_referred;
+        referrer_state_in_pool.as_mut().unwrap().referred_assets += assets_referred;
     }
 
     emit!(Buy {

@@ -1,11 +1,19 @@
 use std::cmp::min;
 
+use anchor_spl::token_2022::spl_token_2022::extension::transfer_fee::MAX_FEE_BASIS_POINTS;
+
 use crate::{
     div_wad, div_wad_up, mul_div, mul_wad, mul_wad_up, pow_wad_up, safe_add, safe_sub,
     SafeMathError, MAX_PERCENTAGE_IN, MAX_PERCENTAGE_OUT, WAD,
 };
 
 pub fn linear_interpolation(x: u64, y: u64, i: u64, n: u64) -> Result<u64, SafeMathError> {
+    // -----------------------------------------------------------------------
+    //
+    //         ⎛ |x - y| ⎞
+    // x ± i ⋅   ─────────
+    //         ⎝    n    ⎠
+    // -----------------------------------------------------------------------
     if x > y {
         Ok(x - (mul_div(x - y, min(i, n), n))?)
     } else {
@@ -35,9 +43,14 @@ pub fn get_amount_out(
     // reserveOut ⋅  1 -  ────────────────────
     //             ⎝    ⎝reserveIn + amountIn⎠           ⎠
     // -----------------------------------------------------------------------
-
     // Assert `amountIn` cannot exceed `MAX_PERCENTAGE_IN`.
-    if amount_in > mul_wad(reserve_in, u64::from(MAX_PERCENTAGE_IN))? {
+    if amount_in
+        > mul_div(
+            reserve_in,
+            MAX_PERCENTAGE_IN as u64,
+            MAX_FEE_BASIS_POINTS as u64,
+        )?
+    {
         Err(SafeMathError::AmountInTooLarge)
     } else {
         Ok(_get_amount_out(
