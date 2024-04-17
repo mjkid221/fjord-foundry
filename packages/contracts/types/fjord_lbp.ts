@@ -1034,6 +1034,31 @@ export type FjordLbp = {
       ];
     },
     {
+      name: "Sell";
+      fields: [
+        {
+          name: "user";
+          type: "publicKey";
+          index: false;
+        },
+        {
+          name: "shares";
+          type: "u64";
+          index: false;
+        },
+        {
+          name: "assets";
+          type: "u64";
+          index: false;
+        },
+        {
+          name: "swapFee";
+          type: "u64";
+          index: false;
+        }
+      ];
+    },
+    {
       name: "FeeSet";
       fields: [
         {
@@ -2208,6 +2233,31 @@ export const IDL: FjordLbp = {
         },
         {
           name: "shares",
+          type: "u64",
+          index: false,
+        },
+        {
+          name: "swapFee",
+          type: "u64",
+          index: false,
+        },
+      ],
+    },
+    {
+      name: "Sell",
+      fields: [
+        {
+          name: "user",
+          type: "publicKey",
+          index: false,
+        },
+        {
+          name: "shares",
+          type: "u64",
+          index: false,
+        },
+        {
+          name: "assets",
           type: "u64",
           index: false,
         },

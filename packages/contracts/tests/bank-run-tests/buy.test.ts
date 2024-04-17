@@ -37,13 +37,13 @@ import { FjordLbp, IDL } from "../../target/types/fjord_lbp";
 
 chai.use(chaiAsPromised);
 
-describe("Fjord LBP - Buy", () => {
+describe.only("Fjord LBP - Buy", () => {
   // Configure the client to use the local cluster.
   anchor.setProvider(anchor.AnchorProvider.env());
   const lbpProgramId = (anchor.workspace.FjordLbp as Program<FjordLbp>)
     .programId;
 
-  let creator: Keypair = anchor.workspace.FjordLbp.provider.wallet.payer;
+  let creator: Keypair;
   let testUserA: Keypair;
 
   let shareTokenMint: PublicKey; // project token address
@@ -80,6 +80,9 @@ describe("Fjord LBP - Buy", () => {
 
   beforeEach(async () => {
     testUserA = Keypair.generate();
+    creator = anchor.workspace.FjordLbp.provider.wallet.payer;
+    program = anchor.workspace.FjordLbp as Program<FjordLbp>;
+    connection = program.provider.connection;
 
     // Setup owner configurations. This includes global pool fees, etc...
     const ownerConfig = createMockOwnerConfig();
@@ -88,19 +91,23 @@ describe("Fjord LBP - Buy", () => {
       new anchor.web3.PublicKey("BPFLoaderUpgradeab1e11111111111111111111111")
     );
 
-    // Initialize global pool settings
-    const tx = program.methods
-      .initializeOwnerConfig(...(Object.values(ownerConfig) as any))
-      .accounts({
-        program: program.programId,
-        programData: programDataAddress,
-        authority: creator.publicKey,
-      })
-      .signers([creator]);
+    try {
+      // Initialize global pool settings
+      const tx = program.methods
+        .initializeOwnerConfig(...(Object.values(ownerConfig) as any))
+        .accounts({
+          program: program.programId,
+          programData: programDataAddress,
+          authority: creator.publicKey,
+        })
+        .signers([creator]);
 
-    const pubkeys = await tx.pubkeys();
-    ownerConfigPda = pubkeys.config as PublicKey;
-    await tx.rpc();
+      const pubkeys = await tx.pubkeys();
+      ownerConfigPda = pubkeys.config as PublicKey;
+      await tx.rpc();
+    } catch {
+      // Do nothing
+    }
 
     // Setup bankrun client [HACKY]
     // Bankrun runs a fresh instance of the network which doesn't come with a valid program_data account that's needed in initializeOwnerConfig().

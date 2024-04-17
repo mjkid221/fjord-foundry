@@ -19,6 +19,18 @@ pub struct Buy {
     pub swap_fee: u64,
 }
 
+#[event]
+pub struct Sell {
+    // The pubkey of the user initiating the swap
+    pub user: Pubkey,
+    // The amount of shares in
+    pub shares: u64,
+    // The amount of assets received
+    pub assets: u64,
+    // The amount of fee charged in swap
+    pub swap_fee: u64,
+}
+
 // Emitted when the fee settings are updated
 #[event]
 pub struct FeeSet {
@@ -28,6 +40,7 @@ pub struct FeeSet {
     pub swap_fee: u16,
 }
 
+// For Read-only contexts
 #[event]
 pub struct PreviewAssetsIn {
     pub assets_in: u64,
