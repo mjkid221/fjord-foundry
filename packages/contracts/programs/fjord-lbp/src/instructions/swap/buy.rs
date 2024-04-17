@@ -118,6 +118,11 @@ pub fn swap_assets_for_exact_shares(
     assets_in += swap_fees;
     pool.total_swap_fees_asset += swap_fees;
 
+    msg!("assets_in: {}", assets_in); //TODO: remove
+    msg!("max_assets_in: {}", max_assets_in); //TODO: remove
+    msg!("shares_out: {}", shares_out); //TODO: remove
+    msg!("pool_asset_token_account.amount: {}", pool_asset_token_account.amount); //TODO: remove
+
     if assets_in > max_assets_in {
         return Err(PoolError::SlippageExceeded.into());
     }
