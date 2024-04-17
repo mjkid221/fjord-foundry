@@ -18,7 +18,24 @@ declare_id!("9yf45kAVeaaaAqBewB6fLX4ie5qBC2vWwqiBhNQayvWq");
 
 #[program]
 pub mod fjord_lbp {
+    use self::math::calculate_fee;
+
     use super::*;
+    pub struct PreviewAmountArgs {
+        pub assets: u64,
+        pub virtual_assets: u64,
+        pub asset_token_decimal: u8,
+        pub shares: u64,
+        pub virtual_shares: u64,
+        pub share_token_decimal: u8,
+        pub total_purchased: u64,
+        pub current_time: i64,
+        pub max_share_price: u64,
+        pub sale_start_time: i64,
+        pub sale_end_time: i64,
+        pub start_weight_basis_points: u16,
+        pub end_weight_basis_points: u16,
+    }
 
     // Initializer --------------------------------------------------------
     pub fn initialize_owner_config(
@@ -110,6 +127,54 @@ pub mod fjord_lbp {
             merkle_proof,
             referrer,
         )
+    }
+
+    // View only
+    pub fn preview_assets_in(ctx: Context<ReturnPreviewContext>, shares_out: u64) -> Result<u64> {
+        let assets_in = math::preview_assets_in(
+            PreviewAmountArgs {
+                assets: ctx.accounts.pool_asset_token_account.amount,
+                virtual_assets: ctx.accounts.pool.virtual_assets,
+                asset_token_decimal: ctx.accounts.asset_token_mint.decimals,
+                shares: ctx.accounts.pool_share_token_account.amount,
+                virtual_shares: ctx.accounts.pool.virtual_shares,
+                share_token_decimal: ctx.accounts.share_token_mint.decimals,
+                total_purchased: ctx.accounts.pool.total_purchased,
+                max_share_price: ctx.accounts.pool.max_share_price,
+                current_time: Clock::get()?.unix_timestamp,
+                sale_start_time: ctx.accounts.pool.sale_start_time,
+                sale_end_time: ctx.accounts.pool.sale_end_time,
+                start_weight_basis_points: ctx.accounts.pool.start_weight_basis_points,
+                end_weight_basis_points: ctx.accounts.pool.end_weight_basis_points,
+            },
+            shares_out,
+        )?;
+
+        Ok(assets_in + calculate_fee(assets_in, ctx.accounts.config.swap_fee))
+    }
+
+    pub fn preview_shares_out(ctx: Context<ReturnPreviewContext>, assets_in: u64) -> Result<u64> {
+        Ok(math::preview_shares_out(
+            PreviewAmountArgs {
+                assets: ctx.accounts.pool_asset_token_account.amount,
+                virtual_assets: ctx.accounts.pool.virtual_assets,
+                asset_token_decimal: ctx.accounts.asset_token_mint.decimals,
+                shares: ctx.accounts.pool_share_token_account.amount,
+                virtual_shares: ctx.accounts.pool.virtual_shares,
+                share_token_decimal: ctx.accounts.share_token_mint.decimals,
+                total_purchased: ctx.accounts.pool.total_purchased,
+                max_share_price: ctx.accounts.pool.max_share_price,
+                current_time: Clock::get()?.unix_timestamp,
+                sale_start_time: ctx.accounts.pool.sale_start_time,
+                sale_end_time: ctx.accounts.pool.sale_end_time,
+                start_weight_basis_points: ctx.accounts.pool.start_weight_basis_points,
+                end_weight_basis_points: ctx.accounts.pool.end_weight_basis_points,
+            },
+            safe_math::safe_sub(
+                assets_in,
+                calculate_fee(assets_in, ctx.accounts.config.swap_fee),
+            )?,
+        )?)
     }
 
     // Fee setter ---------------------------------------------------------

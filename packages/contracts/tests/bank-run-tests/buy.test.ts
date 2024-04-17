@@ -259,13 +259,31 @@ describe.only("Fjord LBP - Buy", () => {
       );
 
       const assetAmountIn = initialUserCollateralTokenBalance.div(BN(2));
+
+      // Get expected shares out by reading a view function's emitted event.
+      const expectedSharesOut = await program.methods
+        .previewSharesOut(
+          // Assets In (Collateral)
+          assetAmountIn
+        )
+        .accounts({
+          assetTokenMint,
+          shareTokenMint,
+          pool: poolPda,
+          poolAssetTokenAccount,
+          poolShareTokenAccount,
+        })
+        .signers([creator])
+        .simulate()
+        .then((data) => data.events[0].data.sharesOut as BigNumber);
+
       // Buy project token
       await program.methods
         .swapExactAssetsForShares(
           // Assets In (Collateral)
           assetAmountIn,
           // Minimum shares out
-          BN(0),
+          expectedSharesOut,
           // Merkle proof can be 'null' if there are no proofs
           merkleProof,
           // Referrer can be null if there are no referrers
@@ -321,8 +339,9 @@ describe.only("Fjord LBP - Buy", () => {
       expect(poolCollateralTokenBalanceAfter.toString()).to.eq(
         poolCollateralTokenBalanceBefore.add(assetAmountIn).toString()
       );
-      // TODO: add tx simulation to accurately predict purchased shares
-      expect(userPoolAccount.purchasedShares.toNumber()).to.be.gt(0);
+      expect(userPoolAccount.purchasedShares.toString()).to.eq(
+        expectedSharesOut.toString()
+      );
     });
   });
 });

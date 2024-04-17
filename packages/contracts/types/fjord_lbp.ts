@@ -541,6 +541,152 @@ export type FjordLbp = {
       ];
     },
     {
+      name: "previewAssetsIn";
+      accounts: [
+        {
+          name: "assetTokenMint";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "shareTokenMint";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "pool";
+          isMut: true;
+          isSigner: false;
+          pda: {
+            seeds: [
+              {
+                kind: "account";
+                type: "publicKey";
+                account: "Mint";
+                path: "share_token_mint";
+              },
+              {
+                kind: "account";
+                type: "publicKey";
+                account: "Mint";
+                path: "asset_token_mint";
+              },
+              {
+                kind: "account";
+                type: "publicKey";
+                account: "LiquidityBootstrappingPool";
+                path: "pool.creator";
+              }
+            ];
+          };
+        },
+        {
+          name: "poolAssetTokenAccount";
+          isMut: true;
+          isSigner: false;
+        },
+        {
+          name: "poolShareTokenAccount";
+          isMut: true;
+          isSigner: false;
+        },
+        {
+          name: "config";
+          isMut: true;
+          isSigner: false;
+          pda: {
+            seeds: [
+              {
+                kind: "const";
+                type: "string";
+                value: "owner_config";
+              }
+            ];
+          };
+        }
+      ];
+      args: [
+        {
+          name: "sharesOut";
+          type: "u64";
+        }
+      ];
+      returns: "u64";
+    },
+    {
+      name: "previewSharesOut";
+      accounts: [
+        {
+          name: "assetTokenMint";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "shareTokenMint";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "pool";
+          isMut: true;
+          isSigner: false;
+          pda: {
+            seeds: [
+              {
+                kind: "account";
+                type: "publicKey";
+                account: "Mint";
+                path: "share_token_mint";
+              },
+              {
+                kind: "account";
+                type: "publicKey";
+                account: "Mint";
+                path: "asset_token_mint";
+              },
+              {
+                kind: "account";
+                type: "publicKey";
+                account: "LiquidityBootstrappingPool";
+                path: "pool.creator";
+              }
+            ];
+          };
+        },
+        {
+          name: "poolAssetTokenAccount";
+          isMut: true;
+          isSigner: false;
+        },
+        {
+          name: "poolShareTokenAccount";
+          isMut: true;
+          isSigner: false;
+        },
+        {
+          name: "config";
+          isMut: true;
+          isSigner: false;
+          pda: {
+            seeds: [
+              {
+                kind: "const";
+                type: "string";
+                value: "owner_config";
+              }
+            ];
+          };
+        }
+      ];
+      args: [
+        {
+          name: "assetsIn";
+          type: "u64";
+        }
+      ];
+      returns: "u64";
+    },
+    {
       name: "setFees";
       accounts: [
         {
@@ -908,6 +1054,46 @@ export type FjordLbp = {
         {
           name: "swapFee";
           type: "u16";
+          index: false;
+        }
+      ];
+    },
+    {
+      name: "PreviewAssetsIn";
+      fields: [
+        {
+          name: "assetsIn";
+          type: "u64";
+          index: false;
+        }
+      ];
+    },
+    {
+      name: "PreviewAssetsOut";
+      fields: [
+        {
+          name: "sharesOut";
+          type: "u64";
+          index: false;
+        }
+      ];
+    },
+    {
+      name: "PreviewSharesIn";
+      fields: [
+        {
+          name: "sharesIn";
+          type: "u64";
+          index: false;
+        }
+      ];
+    },
+    {
+      name: "PreviewSharesOut";
+      fields: [
+        {
+          name: "sharesOut";
+          type: "u64";
           index: false;
         }
       ];
@@ -1540,6 +1726,152 @@ export const IDL: FjordLbp = {
       ],
     },
     {
+      name: "previewAssetsIn",
+      accounts: [
+        {
+          name: "assetTokenMint",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "shareTokenMint",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "pool",
+          isMut: true,
+          isSigner: false,
+          pda: {
+            seeds: [
+              {
+                kind: "account",
+                type: "publicKey",
+                account: "Mint",
+                path: "share_token_mint",
+              },
+              {
+                kind: "account",
+                type: "publicKey",
+                account: "Mint",
+                path: "asset_token_mint",
+              },
+              {
+                kind: "account",
+                type: "publicKey",
+                account: "LiquidityBootstrappingPool",
+                path: "pool.creator",
+              },
+            ],
+          },
+        },
+        {
+          name: "poolAssetTokenAccount",
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: "poolShareTokenAccount",
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: "config",
+          isMut: true,
+          isSigner: false,
+          pda: {
+            seeds: [
+              {
+                kind: "const",
+                type: "string",
+                value: "owner_config",
+              },
+            ],
+          },
+        },
+      ],
+      args: [
+        {
+          name: "sharesOut",
+          type: "u64",
+        },
+      ],
+      returns: "u64",
+    },
+    {
+      name: "previewSharesOut",
+      accounts: [
+        {
+          name: "assetTokenMint",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "shareTokenMint",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "pool",
+          isMut: true,
+          isSigner: false,
+          pda: {
+            seeds: [
+              {
+                kind: "account",
+                type: "publicKey",
+                account: "Mint",
+                path: "share_token_mint",
+              },
+              {
+                kind: "account",
+                type: "publicKey",
+                account: "Mint",
+                path: "asset_token_mint",
+              },
+              {
+                kind: "account",
+                type: "publicKey",
+                account: "LiquidityBootstrappingPool",
+                path: "pool.creator",
+              },
+            ],
+          },
+        },
+        {
+          name: "poolAssetTokenAccount",
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: "poolShareTokenAccount",
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: "config",
+          isMut: true,
+          isSigner: false,
+          pda: {
+            seeds: [
+              {
+                kind: "const",
+                type: "string",
+                value: "owner_config",
+              },
+            ],
+          },
+        },
+      ],
+      args: [
+        {
+          name: "assetsIn",
+          type: "u64",
+        },
+      ],
+      returns: "u64",
+    },
+    {
       name: "setFees",
       accounts: [
         {
@@ -1907,6 +2239,46 @@ export const IDL: FjordLbp = {
         {
           name: "swapFee",
           type: "u16",
+          index: false,
+        },
+      ],
+    },
+    {
+      name: "PreviewAssetsIn",
+      fields: [
+        {
+          name: "assetsIn",
+          type: "u64",
+          index: false,
+        },
+      ],
+    },
+    {
+      name: "PreviewAssetsOut",
+      fields: [
+        {
+          name: "sharesOut",
+          type: "u64",
+          index: false,
+        },
+      ],
+    },
+    {
+      name: "PreviewSharesIn",
+      fields: [
+        {
+          name: "sharesIn",
+          type: "u64",
+          index: false,
+        },
+      ],
+    },
+    {
+      name: "PreviewSharesOut",
+      fields: [
+        {
+          name: "sharesOut",
+          type: "u64",
           index: false,
         },
       ],

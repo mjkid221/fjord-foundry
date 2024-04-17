@@ -1,3 +1,4 @@
+use anchor_lang::{AnchorDeserialize, AnchorSerialize};
 use anchor_spl::token_2022::spl_token_2022::extension::transfer_fee::MAX_FEE_BASIS_POINTS;
 
 pub struct ComputedReservesAndWeights {
@@ -12,29 +13,16 @@ pub struct ScaledReserves {
     pub share_reserve_scaled: u64,
 }
 
-pub struct PreviewAmountArgs {
-    pub assets: u64,
-    pub virtual_assets: u64,
-    pub asset_token_decimal: u8,
-    pub shares: u64,
-    pub virtual_shares: u64,
-    pub share_token_decimal: u8,
-    pub total_purchased: u64,
-    pub current_time: i64,
-    pub max_share_price: u64,
-    pub sale_start_time: i64,
-    pub sale_end_time: i64,
-    pub start_weight_basis_points: u16,
-    pub end_weight_basis_points: u16,
-}
-
 pub mod math {
+
+    use anchor_lang::emit;
 
     use super::*;
     use crate::{
         div_wad, get_amount_in, get_amount_out, mul_wad,
         safe_math::{div, mul, safe_add, safe_sub},
-        safe_pow, weighted_math_lib, SafeMathError,
+        safe_pow, weighted_math_lib, PreviewAmountArgs, PreviewAssetsIn, PreviewSharesOut,
+        SafeMathError,
     };
 
     pub fn preview_shares_out(
@@ -87,6 +75,8 @@ pub mod math {
             shares_out = mul_wad(assets_in_scaled, max_share_price)?;
         }
         shares_out = _scale_token(share_token_decimal, shares_out, false)?;
+
+        emit!(PreviewSharesOut { shares_out });
         Ok(shares_out)
     }
 
@@ -142,7 +132,7 @@ pub mod math {
         }
 
         assets_in = _scale_token(asset_token_decimal, assets_in, false)?;
-
+        emit!(PreviewAssetsIn { assets_in });
         Ok(assets_in)
     }
 

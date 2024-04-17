@@ -3,12 +3,12 @@ use anchor_lang::prelude::*;
 // Emitted when a pool is created
 #[event]
 pub struct PoolCreatedEvent {
-    pub pool: Pubkey
+    pub pool: Pubkey,
 }
 
 // Emitted when assets (collateral token) are swapped for shares (project token)
 #[event]
-pub struct Buy {    
+pub struct Buy {
     // The pubkey of the user initiating the swap
     pub user: Pubkey,
     // The amount of assets being swapped
@@ -26,4 +26,24 @@ pub struct FeeSet {
     pub platform_fee: u16,
     pub referral_fee: u16,
     pub swap_fee: u16,
+}
+
+#[event]
+pub struct PreviewAssetsIn {
+    pub assets_in: u64,
+}
+
+#[event]
+pub struct PreviewAssetsOut {
+    pub shares_out: u64,
+}
+
+#[event]
+pub struct PreviewSharesIn {
+    pub shares_in: u64,
+}
+
+#[event]
+pub struct PreviewSharesOut {
+    pub shares_out: u64,
 }
