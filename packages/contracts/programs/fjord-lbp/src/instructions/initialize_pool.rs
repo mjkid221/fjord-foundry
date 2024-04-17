@@ -2,6 +2,7 @@ use anchor_lang::prelude::*;
 use anchor_spl::token::{self, Mint, Token, TokenAccount, Transfer};
 use anchor_spl::associated_token::AssociatedToken;
 use std::mem::size_of;
+use std::fmt::Debug;
 
 use crate::{LiquidityBootstrappingPool, PoolCreatedEvent, PoolError, ONE_DAY_SECONDS};
 
@@ -61,7 +62,7 @@ pub fn create_pool(
   vest_cliff: i64,
   vest_end: i64,
   whitelist_merkle_root: [u8; 32],
-  selling_allowed: Option<bool>
+  selling_allowed: bool
 ) -> Result<()> {
   let pool = &mut ctx.accounts.pool;
 
@@ -74,7 +75,7 @@ pub fn create_pool(
       return err!(PoolError::SalePeriodLow);
   }
 
-  if sale_end_time < vest_end {
+  if vest_end != 0 && sale_end_time <= vest_end {
       if sale_end_time > vest_cliff {
           return err!(PoolError::InvalidVestCliff);
       }
@@ -83,13 +84,45 @@ pub fn create_pool(
       }
   }
 
+  if vest_end != 0 && sale_end_time > vest_end {
+      return err!(PoolError::InvalidVestEnd);
+  }
+
+
   if !(100..=9900).contains(&start_weight_basis_points) || !(100..=9900).contains(&end_weight_basis_points) {
-      return err!(PoolError::InvalidWeightConfig);
+    return err!(PoolError::InvalidWeightConfig);
   }
 
   if assets == 0 && virtual_assets == 0 {
       return err!(PoolError::InvalidAssetValue);
   }
+
+  if shares == 0 && virtual_shares == 0 {
+      return err!(PoolError::InvalidShareValue);
+  }
+
+  if max_share_price == 0 {
+      return err!(PoolError::InvalidSharePrice);
+  }
+
+  if max_shares_out == 0 {
+      return err!(PoolError::InvalidMaxSharesOut);
+  }
+
+  if max_assets_in == 0 {
+      return err!(PoolError::InvalidMaxAssetsIn);
+  }
+
+      // Check for sufficient share token balance
+  if ctx.accounts.creator_share_token_account.amount < shares {
+      return err!(PoolError::InsufficientShares);
+  }
+
+          // Check for sufficient asset token balance
+  if ctx.accounts.creator_asset_token_account.amount < assets {
+      return err!(PoolError::InsufficientAssets);
+  }
+  
 
   pool.asset_token = ctx.accounts.asset_token_mint.key();
   pool.share_token = ctx.accounts.share_token_mint.key();
@@ -109,7 +142,7 @@ pub fn create_pool(
   pool.vest_cliff = vest_cliff;
   pool.vest_end = vest_end;
 
-  pool.selling_allowed = selling_allowed.unwrap_or(false);
+  pool.selling_allowed = selling_allowed;
   pool.whitelist_merkle_root = whitelist_merkle_root;
 
   // Transfer the tokens to the pool

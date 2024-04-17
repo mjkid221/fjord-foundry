@@ -1,4 +1,5 @@
 import { BN } from "@coral-xyz/anchor";
+import * as anchor from "@coral-xyz/anchor";
 import { IdlType } from "@coral-xyz/anchor/dist/cjs/idl";
 import {
   DecodeType,
@@ -27,9 +28,9 @@ export const createMockpoolConfig = (
   shares: requestField?.shares || new BN(0), // Project token
   virtualAssets: requestField?.virtualAssets || new BN(0),
   virtualShares: requestField?.virtualShares || new BN(0),
-  maxSharePrice: requestField?.maxSharePrice || new BN(0),
-  maxSharesOut: requestField?.maxSharesOut || new BN(0),
-  maxAssetsIn: requestField?.maxAssetsIn || new BN(0),
+  maxSharePrice: requestField?.maxSharePrice || new BN(10000000),
+  maxSharesOut: requestField?.maxSharesOut || new BN(10000000),
+  maxAssetsIn: requestField?.maxAssetsIn || new BN(10000000),
   startWeightBasisPoints:
     requestField?.startWeightBasisPoints || 50 * PERCENTAGE_BASIS_POINTS, // Default: 50%
   endWeightBasisPoints:
@@ -41,6 +42,20 @@ export const createMockpoolConfig = (
   whitelistMerkleRoot: requestField?.whitelistMerkleRoot || [],
   sellingAllowed: requestField?.sellingAllowed || false,
 });
+
+type PoolConfig = ReturnType<typeof createMockpoolConfig>;
+export type Accounts = {
+  creator: anchor.Address | undefined;
+  shareTokenMint: anchor.Address | undefined;
+  assetTokenMint: anchor.Address | undefined;
+  poolShareTokenAccount: anchor.Address | undefined;
+  poolAssetTokenAccount: anchor.Address | undefined;
+  creatorShareTokenAccount: anchor.Address | undefined;
+  creatorAssetTokenAccount: anchor.Address | undefined;
+};
+
+export const formatPoolParams = (poolParams: PoolConfig) =>
+  Object.values(poolParams) as any;
 
 /**
  * Helpers to infer types from Anchor's IDL. We need to do this because the IDL is built to be consumed by Anchor and Rust runtime.

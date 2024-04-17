@@ -43,7 +43,7 @@ const GENERIC_BN = BN("1000000000000000000");
 
 chai.use(chaiAsPromised);
 
-describe.only("Fjord LBP - Buy", () => {
+describe("Fjord LBP - Buy", () => {
   // Configure the client to use the local cluster.
   anchor.setProvider(anchor.AnchorProvider.env());
   const lbpProgramId = (anchor.workspace.FjordLbp as Program<FjordLbp>)
