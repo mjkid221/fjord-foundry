@@ -74,7 +74,7 @@ pub mod fjord_lbp {
         vest_cliff: i64,
         vest_end: i64,
         whitelist_merkle_root: [u8; 32],
-        selling_allowed: Option<bool>,
+        selling_allowed: bool,
     ) -> Result<()> {
         initialize_pool::create_pool(
             ctx,
