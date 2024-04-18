@@ -36,6 +36,7 @@ pub struct PreviewAmountArgs {
 }
 
 pub mod math {
+
     use super::*;
     use crate::{
         div_wad, get_amount_in, get_amount_out, mul_wad,
