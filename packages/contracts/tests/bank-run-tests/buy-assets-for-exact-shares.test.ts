@@ -43,7 +43,7 @@ const GENERIC_BN = BN("1000000000000000000");
 
 chai.use(chaiAsPromised);
 
-describe("Fjord LBP - Buy `swapAssetsForExactShares`", () => {
+describe.only("Fjord LBP - Buy `swapAssetsForExactShares`", () => {
   // Configure the client to use the local cluster.
   anchor.setProvider(anchor.AnchorProvider.env());
   const lbpProgramId = (anchor.workspace.FjordLbp as Program<FjordLbp>)
@@ -240,7 +240,7 @@ describe("Fjord LBP - Buy `swapAssetsForExactShares`", () => {
       .rpc();
   });
 
-  describe("Fjord LBP Buy `swapAssetsForExactShares` Operations", () => {
+  describe("Buy Success Cases", () => {
     it("should swap assets for exact shares without a referrer", async () => {
       // Skip time by 1100 seconds
       await skipBlockTimestamp(bankRunCtx, 1100);
@@ -791,7 +791,78 @@ describe("Fjord LBP - Buy `swapAssetsForExactShares`", () => {
         sharesAmountOut.toString()
       );
     });
+  });
+  describe("Buy Failure Cases", () => {
+    it("should not be able to swap tokens if the user is not whitelisted", async () => {
+      // Skip time by 1100 seconds
+      await skipBlockTimestamp(bankRunCtx, 1100);
 
+      // Get user's pool account
+      const userPoolPda = findProgramAddressSync(
+        [testUserA.publicKey.toBuffer(), poolPda.toBuffer()],
+        program.programId
+      )[0];
+
+      const referrer: PublicKey | null = null;
+      const merkleProof = generateMerkleProof(
+        testMerkleWhitelistedAddresses,
+        testUserA.publicKey.toBase58()
+      );
+
+      const poolBeforeTransaction =
+        await program.account.liquidityBootstrappingPool.fetch(poolPda);
+
+      const { maxSharesOut } = poolBeforeTransaction;
+
+      const sharesAmountOut = maxSharesOut.div(BN("1000000000000000"));
+
+      // Get expected assets in by reading a view function's emitted event.
+      const expectedAssetsIn = await program.methods
+        .previewAssetsIn(
+          // Shares Out
+          sharesAmountOut
+        )
+        .accounts({
+          assetTokenMint,
+          shareTokenMint,
+          pool: poolPda,
+          poolAssetTokenAccount,
+          poolShareTokenAccount,
+        })
+        .signers([creator])
+        .simulate()
+        .then((data) => data.events[0].data.assetsIn as BigNumber);
+
+      // Buy project token with a non-whitelisted user
+      await expect(
+        program.methods
+          .swapAssetsForExactShares(
+            // shares out
+            sharesAmountOut,
+            // Minimum assets in
+            expectedAssetsIn,
+            // Merkle proof can be 'null' if there are no proofs
+            merkleProof,
+            // Referrer can be null if there are no referrers
+            referrer
+          )
+          .accounts({
+            assetTokenMint,
+            shareTokenMint,
+            user: testUserA.publicKey,
+            pool: poolPda,
+            poolAssetTokenAccount,
+            poolShareTokenAccount,
+            userAssetTokenAccount: assetTokenMintUserAccount,
+            userShareTokenAccount: shareTokenMintUserAccount,
+            config: ownerConfigPda,
+            referrerStateInPool: referrer,
+            userStateInPool: userPoolPda,
+          })
+          .signers([testUserA])
+          .rpc()
+      ).to.be.rejectedWith("WhitelistProof");
+    });
     it("should not be able to swap tokens using swapAssetsForExactShares before sale time", async () => {
       ({
         tokenAMint: shareTokenMint,
@@ -1920,77 +1991,6 @@ describe("Fjord LBP - Buy `swapAssetsForExactShares`", () => {
           .signers([testUserA])
           .rpc()
       ).to.be.rejectedWith("SlippageExceeded");
-    });
-
-    it("should not be able to swap tokens if the user is not whitelisted", async () => {
-      // Skip time by 1100 seconds
-      await skipBlockTimestamp(bankRunCtx, 1100);
-
-      // Get user's pool account
-      const userPoolPda = findProgramAddressSync(
-        [testUserA.publicKey.toBuffer(), poolPda.toBuffer()],
-        program.programId
-      )[0];
-
-      const referrer: PublicKey | null = null;
-      const merkleProof = generateMerkleProof(
-        testMerkleWhitelistedAddresses,
-        testUserA.publicKey.toBase58()
-      );
-
-      const poolBeforeTransaction =
-        await program.account.liquidityBootstrappingPool.fetch(poolPda);
-
-      const { maxSharesOut } = poolBeforeTransaction;
-
-      const sharesAmountOut = maxSharesOut.div(BN("1000000000000000"));
-
-      // Get expected assets in by reading a view function's emitted event.
-      const expectedAssetsIn = await program.methods
-        .previewAssetsIn(
-          // Shares Out
-          sharesAmountOut
-        )
-        .accounts({
-          assetTokenMint,
-          shareTokenMint,
-          pool: poolPda,
-          poolAssetTokenAccount,
-          poolShareTokenAccount,
-        })
-        .signers([creator])
-        .simulate()
-        .then((data) => data.events[0].data.assetsIn as BigNumber);
-
-      // Buy project token with a non-whitelisted user
-      await expect(
-        program.methods
-          .swapAssetsForExactShares(
-            // shares out
-            sharesAmountOut,
-            // Minimum assets in
-            expectedAssetsIn,
-            // Merkle proof can be 'null' if there are no proofs
-            merkleProof,
-            // Referrer can be null if there are no referrers
-            referrer
-          )
-          .accounts({
-            assetTokenMint,
-            shareTokenMint,
-            user: testUserA.publicKey,
-            pool: poolPda,
-            poolAssetTokenAccount,
-            poolShareTokenAccount,
-            userAssetTokenAccount: assetTokenMintUserAccount,
-            userShareTokenAccount: shareTokenMintUserAccount,
-            config: ownerConfigPda,
-            referrerStateInPool: referrer,
-            userStateInPool: userPoolPda,
-          })
-          .signers([testUserA])
-          .rpc()
-      ).to.be.rejectedWith("WhitelistProof");
     });
   });
 });
