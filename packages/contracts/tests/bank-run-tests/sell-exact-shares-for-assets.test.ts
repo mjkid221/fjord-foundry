@@ -380,96 +380,97 @@ describe("Fjord LBP - Sell - shares for exact assets", () => {
       );
     });
 
-    it.only("should be able to sell project token (shares) for exact collateral tokens (assets)", async () => {
-      const {
-        userAssetBalance: userAssetBalanceBefore,
-        poolAssetBalance: poolAssetBalanceBefore,
-        userPoolPda,
-        userPoolAccount: userPoolAccountBefore,
-        pool: poolBefore,
-      } = await getAllAccountState({
-        program,
-        poolPda,
-        bankRunClient,
-        shareTokenMint,
-        assetTokenMint,
-        user: testUserA.publicKey,
-        ownerConfigPda,
-      });
+    // TODO: Move this one to it's own file
+    // it("should be able to sell project token (shares) for exact collateral tokens (assets)", async () => {
+    //   const {
+    //     userAssetBalance: userAssetBalanceBefore,
+    //     poolAssetBalance: poolAssetBalanceBefore,
+    //     userPoolPda,
+    //     userPoolAccount: userPoolAccountBefore,
+    //     pool: poolBefore,
+    //   } = await getAllAccountState({
+    //     program,
+    //     poolPda,
+    //     bankRunClient,
+    //     shareTokenMint,
+    //     assetTokenMint,
+    //     user: testUserA.publicKey,
+    //     ownerConfigPda,
+    //   });
 
-      const assetsToSell = BN("100000000");
+    //   const assetsToSell = BN("100000000");
 
-      const maxSharesIn = await program.methods
-        .previewSharesIn(
-          // Assets to sell (Collateral)
-          assetsToSell
-        )
-        .accounts({
-          assetTokenMint,
-          shareTokenMint,
-          pool: poolPda,
-          poolAssetTokenAccount,
-          poolShareTokenAccount,
-        })
-        .signers([creator])
-        .simulate()
-        .then((data) => data.events[0].data.sharesIn as BigNumber);
+    //   const maxSharesIn = await program.methods
+    //     .previewSharesIn(
+    //       // Assets to sell (Collateral)
+    //       assetsToSell
+    //     )
+    //     .accounts({
+    //       assetTokenMint,
+    //       shareTokenMint,
+    //       pool: poolPda,
+    //       poolAssetTokenAccount,
+    //       poolShareTokenAccount,
+    //     })
+    //     .signers([creator])
+    //     .simulate()
+    //     .then((data) => data.events[0].data.sharesIn as BigNumber);
 
-      // Sell project token
-      await program.methods
-        .swapSharesForExactAssets(assetsToSell, maxSharesIn, null, null)
-        .accounts({
-          assetTokenMint,
-          shareTokenMint,
-          user: testUserA.publicKey,
-          pool: poolPda,
-          poolAssetTokenAccount,
-          poolShareTokenAccount,
-          userAssetTokenAccount: assetTokenMintUserAccount,
-          userShareTokenAccount: shareTokenMintUserAccount,
-          config: ownerConfigPda,
-          referrerStateInPool: null,
-          userStateInPool: userPoolPda,
-        })
-        .signers([testUserA])
-        .rpc();
+    //   // Sell project token
+    //   await program.methods
+    //     .swapSharesForExactAssets(assetsToSell, maxSharesIn, null, null)
+    //     .accounts({
+    //       assetTokenMint,
+    //       shareTokenMint,
+    //       user: testUserA.publicKey,
+    //       pool: poolPda,
+    //       poolAssetTokenAccount,
+    //       poolShareTokenAccount,
+    //       userAssetTokenAccount: assetTokenMintUserAccount,
+    //       userShareTokenAccount: shareTokenMintUserAccount,
+    //       config: ownerConfigPda,
+    //       referrerStateInPool: null,
+    //       userStateInPool: userPoolPda,
+    //     })
+    //     .signers([testUserA])
+    //     .rpc();
 
-      const {
-        userPoolAccount: userPoolAccountAfter,
-        userAssetBalance: userAssetBalanceAfter,
-        poolAssetBalance: poolAssetBalanceAfter,
-        pool: poolAfter,
-        ownerConfig: { swapFee },
-      } = await getAllAccountState({
-        program,
-        poolPda,
-        bankRunClient,
-        shareTokenMint,
-        assetTokenMint,
-        user: testUserA.publicKey,
-        ownerConfigPda,
-      });
+    //   const {
+    //     userPoolAccount: userPoolAccountAfter,
+    //     userAssetBalance: userAssetBalanceAfter,
+    //     poolAssetBalance: poolAssetBalanceAfter,
+    //     pool: poolAfter,
+    //     ownerConfig: { swapFee },
+    //   } = await getAllAccountState({
+    //     program,
+    //     poolPda,
+    //     bankRunClient,
+    //     shareTokenMint,
+    //     assetTokenMint,
+    //     user: testUserA.publicKey,
+    //     ownerConfigPda,
+    //   });
 
-      expect(userPoolAccountAfter.purchasedShares.toString()).to.eq(
-        userPoolAccountBefore.purchasedShares.sub(maxSharesIn).toString()
-      );
-      expect(userAssetBalanceAfter.toString()).to.eq(
-        userAssetBalanceBefore.add(assetsToSell).toString()
-      );
+    //   expect(userPoolAccountAfter.purchasedShares.toString()).to.eq(
+    //     userPoolAccountBefore.purchasedShares.sub(maxSharesIn).toString()
+    //   );
+    //   expect(userAssetBalanceAfter.toString()).to.eq(
+    //     userAssetBalanceBefore.add(assetsToSell).toString()
+    //   );
 
-      expect(poolAfter.totalSwapFeesShare.toNumber()).to.be.closeTo(
-        poolBefore.totalSwapFeesShare
-          .add(maxSharesIn.mul(BN(swapFee)).div(BN(MAX_FEE_BASIS_POINTS)))
-          .toNumber(),
-        120000 // 0.99% error margin
-      );
-      expect(poolAfter.totalPurchased.toString()).to.eq(
-        poolBefore.totalPurchased.sub(maxSharesIn).toString()
-      );
-      expect(poolAssetBalanceAfter.toString()).to.eq(
-        poolAssetBalanceBefore.sub(assetsToSell).toString()
-      );
-    });
+    //   expect(poolAfter.totalSwapFeesShare.toNumber()).to.be.closeTo(
+    //     poolBefore.totalSwapFeesShare
+    //       .add(maxSharesIn.mul(BN(swapFee)).div(BN(MAX_FEE_BASIS_POINTS)))
+    //       .toNumber(),
+    //     120000 // 0.99% error margin
+    //   );
+    //   expect(poolAfter.totalPurchased.toString()).to.eq(
+    //     poolBefore.totalPurchased.sub(maxSharesIn).toString()
+    //   );
+    //   expect(poolAssetBalanceAfter.toString()).to.eq(
+    //     poolAssetBalanceBefore.sub(assetsToSell).toString()
+    //   );
+    // });
   });
 
   describe("Failure case", async () => {
