@@ -52,10 +52,6 @@ pub fn swap_exact_assets_for_shares(
         safe_math::safe_sub(assets_in, swap_fees)?,
     )?;
 
-    msg!("shares_out: {}", shares_out); //TODO: remove
-    msg!("min_shares_out: {}", min_shares_out); //TODO: remove
-    msg!("assets_in: {}", assets_in); //TODO: remove
-
     if shares_out < min_shares_out {
         return Err(PoolError::SlippageExceeded.into());
     }
@@ -121,11 +117,6 @@ pub fn swap_assets_for_exact_shares(
     let swap_fees = calculate_fee(assets_in, ctx.accounts.config.swap_fee);
     assets_in += swap_fees;
     pool.total_swap_fees_asset += swap_fees;
-
-    // msg!("assets_in: {}", assets_in); //TODO: remove
-    // msg!("max_assets_in: {}", max_assets_in); //TODO: remove
-    // msg!("shares_out: {}", shares_out); //TODO: remove
-    // msg!("pool_asset_token_account.amount: {}", pool_asset_token_account.amount); //TODO: remove
 
     if assets_in > max_assets_in {
         return Err(PoolError::SlippageExceeded.into());

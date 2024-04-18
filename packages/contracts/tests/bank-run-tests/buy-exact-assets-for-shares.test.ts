@@ -715,7 +715,6 @@ describe("Fjord LBP - Buy `swapExactAssetsForShares`", () => {
         expectedSharesOut.toString()
       );
     });
-
     it("should not be able to swap tokens using swapExactAssetsForShare before sale time", async () => {
       ({
         tokenAMint: shareTokenMint,
@@ -956,10 +955,7 @@ describe("Fjord LBP - Buy `swapExactAssetsForShares`", () => {
 
       // Skip time by 1100 seconds
       await skipBlockTimestamp(bankRunCtx, 1100);
-      // Get the pool
-      const pool = await program.account.liquidityBootstrappingPool.fetch(
-        poolPda
-      );
+
       // Fetch balances before running the test
       const initialUserCollateralTokenBalance = await getAccountBalance(
         bankRunClient,
@@ -979,13 +975,8 @@ describe("Fjord LBP - Buy `swapExactAssetsForShares`", () => {
         testUserA.publicKey.toBase58()
       );
 
-      const { maxAssetsIn } = pool;
-
       const assetAmountIn = initialUserCollateralTokenBalance.div(BN(2));
 
-      console.log(
-        `Max Assets In: ${maxAssetsIn.toString()}. assetsAmountIn: ${assetAmountIn.toString()}`
-      );
       // Get expected shares out by reading a view function's emitted event.
       const expectedSharesOut = await program.methods
         .previewSharesOut(
