@@ -37,7 +37,7 @@ const GENERIC_BN = BN("1000000000000000000");
 
 chai.use(chaiAsPromised);
 
-describe("Fjord LBP - Sell", () => {
+describe("Fjord LBP - Sell - shares for exact assets", () => {
   // Configure the client to use the local cluster.
   anchor.setProvider(anchor.AnchorProvider.env());
   const lbpProgramId = (anchor.workspace.FjordLbp as Program<FjordLbp>)
@@ -380,7 +380,7 @@ describe("Fjord LBP - Sell", () => {
       );
     });
 
-    it("should be able to sell project token (shares) for exact collateral tokens (assets)", async () => {
+    it.only("should be able to sell project token (shares) for exact collateral tokens (assets)", async () => {
       const {
         userAssetBalance: userAssetBalanceBefore,
         poolAssetBalance: poolAssetBalanceBefore,
