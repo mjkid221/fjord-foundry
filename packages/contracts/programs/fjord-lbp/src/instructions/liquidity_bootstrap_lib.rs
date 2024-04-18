@@ -14,9 +14,6 @@ pub struct ScaledReserves {
 
 pub mod math {
 
-    use anchor_lang::emit;
-    use solana_program::msg;
-
     use super::*;
     use crate::{
         div_wad, get_amount_in, get_amount_out, mul_wad,
@@ -125,14 +122,8 @@ pub mod math {
         )?;
 
         if div_wad(assets_in, shares_out_scaled)? > max_share_price {
-            msg!(
-                "div_wad(assets_in, shares_out_scaled)?: {}",
-                div_wad(assets_in, shares_out_scaled)?
-            );
             assets_in = div_wad(shares_out_scaled, max_share_price)?;
         }
-
-        msg!("scaled assets in: {}", assets_in);
 
         assets_in = _scale_token(asset_token_decimal, assets_in, false)?;
         Ok(assets_in)
