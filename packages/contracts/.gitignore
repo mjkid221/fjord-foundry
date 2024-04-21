@@ -5,5 +5,5 @@ target
 node_modules
 test-ledger
 .yarn
-deployment-keypair/production/id.json
+deployment-keypair/**/id.json
 tests/**/Anchor.toml
