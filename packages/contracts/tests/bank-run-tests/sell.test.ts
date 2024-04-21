@@ -51,6 +51,10 @@ describe("Fjord LBP - Sell", () => {
 
   // A fixed account that holds the owner configuration of all the pools (e.g. fees)
   let ownerConfigPda: PublicKey;
+  const treasuryPda: PublicKey = PublicKey.findProgramAddressSync(
+    [Buffer.from("treasury")],
+    lbpProgramId
+  )[0];
 
   // Pool accounts that store the tokens
   let poolShareTokenAccount: PublicKey;
@@ -106,6 +110,8 @@ describe("Fjord LBP - Sell", () => {
     // Bankrun runs a fresh instance of the network which doesn't come with a valid program_data account that's needed in initializeOwnerConfig().
     // So we must first start the anchor with our program, then initialize the owner config, then start the bankrun client with the ported over account.
     const ownerConfigAcc = await connection.getAccountInfo(ownerConfigPda);
+    const treasuryAcc = await connection.getAccountInfo(treasuryPda);
+
     bankRunCtx = await startAnchor(
       "",
       [],
@@ -113,6 +119,10 @@ describe("Fjord LBP - Sell", () => {
         {
           address: ownerConfigPda,
           info: ownerConfigAcc!,
+        },
+        {
+          address: treasuryPda,
+          info: treasuryAcc!,
         },
       ]
     );
@@ -286,10 +296,11 @@ describe("Fjord LBP - Sell", () => {
         assetTokenMint,
         user: testUserA.publicKey,
         ownerConfigPda,
+        creator: creator.publicKey,
       });
 
       // Number of project tokens to sell (Shares)
-      const sharesIn = userPoolAccountBefore.purchasedShares.div(BN(2));
+      const sharesIn = userPoolAccountBefore?.purchasedShares.div(BN(2))!;
 
       const minAssetsOut = await program.methods
         .previewAssetsOut(
@@ -340,10 +351,11 @@ describe("Fjord LBP - Sell", () => {
         assetTokenMint,
         user: testUserA.publicKey,
         ownerConfigPda,
+        creator: creator.publicKey,
       });
 
-      expect(userPoolAccountAfter.purchasedShares.toString()).to.eq(
-        userPoolAccountBefore.purchasedShares.sub(sharesIn).toString()
+      expect(userPoolAccountAfter?.purchasedShares.toString()).to.eq(
+        userPoolAccountBefore?.purchasedShares.sub(sharesIn).toString()
       );
       expect(userAssetBalanceAfter.toString()).to.eq(
         userAssetBalanceBefore.add(minAssetsOut).toString()
@@ -376,6 +388,7 @@ describe("Fjord LBP - Sell", () => {
         assetTokenMint,
         user: testUserA.publicKey,
         ownerConfigPda,
+        creator: creator.publicKey,
       });
 
       const assetsToSell = BN("100000000");
@@ -429,10 +442,11 @@ describe("Fjord LBP - Sell", () => {
         assetTokenMint,
         user: testUserA.publicKey,
         ownerConfigPda,
+        creator: creator.publicKey,
       });
 
-      expect(userPoolAccountAfter.purchasedShares.toString()).to.eq(
-        userPoolAccountBefore.purchasedShares.sub(maxSharesIn).toString()
+      expect(userPoolAccountAfter?.purchasedShares.toString()).to.eq(
+        userPoolAccountBefore?.purchasedShares.sub(maxSharesIn).toString()
       );
       expect(userAssetBalanceAfter.toString()).to.eq(
         userAssetBalanceBefore.add(assetsToSell).toString()

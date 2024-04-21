@@ -18,15 +18,17 @@ declare_id!("9yf45kAVeaaaAqBewB6fLX4ie5qBC2vWwqiBhNQayvWq");
 
 #[program]
 pub mod fjord_lbp {
-    use self::math::calculate_fee;
-
     use super::*;
+    use instructions::structs::ComputedReservesAndWeights;
 
     // Initializer --------------------------------------------------------
+    #[allow(clippy::too_many_arguments)]
     pub fn initialize_owner_config(
         ctx: Context<InitializeOwner>,
         owner_key: Pubkey,
-        fee_recipient: Pubkey,
+        swap_fee_recipient: Pubkey,
+        fee_recipients: Vec<Pubkey>,
+        fee_percentages: Vec<u16>,
         platform_fee: u16,
         referral_fee: u16,
         swap_fee: u16,
@@ -34,7 +36,9 @@ pub mod fjord_lbp {
         ownable::initializer::initialize_owner_config(
             ctx,
             owner_key,
-            fee_recipient,
+            swap_fee_recipient,
+            fee_recipients,
+            fee_percentages,
             platform_fee,
             referral_fee,
             swap_fee,
@@ -147,6 +151,15 @@ pub mod fjord_lbp {
         )
     }
 
+    // Redemption functions -----------------------------------------------
+    pub fn close_pool<'info>(ctx: Context<'_, '_, '_, 'info, ClosePool<'info>>) -> Result<()> {
+        redemption::close_pool(ctx)
+    }
+
+    pub fn redeem(ctx: Context<RedeemTokens>, referred: bool) -> Result<()> {
+        redemption::redeem(ctx, referred)
+    }
+
     // View functions -----------------------------------------------------
     pub fn preview_assets_in(ctx: Context<ReturnPreviewContext>, shares_out: u64) -> Result<u64> {
         let mut assets_in = math::preview_assets_in(
@@ -167,7 +180,7 @@ pub mod fjord_lbp {
             },
             shares_out,
         )?;
-        assets_in += calculate_fee(assets_in, ctx.accounts.config.swap_fee);
+        assets_in += math::calculate_fee(assets_in, ctx.accounts.config.swap_fee);
         emit!(PreviewAssetsIn { assets_in });
         Ok(assets_in)
     }
@@ -191,7 +204,7 @@ pub mod fjord_lbp {
             },
             assets_out,
         )?;
-        shares_in += calculate_fee(shares_in, ctx.accounts.config.swap_fee);
+        shares_in += math::calculate_fee(shares_in, ctx.accounts.config.swap_fee);
         emit!(PreviewSharesIn { shares_in });
         Ok(shares_in)
     }
@@ -215,7 +228,7 @@ pub mod fjord_lbp {
             },
             safe_math::safe_sub(
                 assets_in,
-                calculate_fee(assets_in, ctx.accounts.config.swap_fee),
+                math::calculate_fee(assets_in, ctx.accounts.config.swap_fee),
             )?,
         )?;
         emit!(PreviewSharesOut { shares_out });
@@ -241,25 +254,71 @@ pub mod fjord_lbp {
             },
             safe_math::safe_sub(
                 shares_in,
-                calculate_fee(shares_in, ctx.accounts.config.swap_fee),
+                math::calculate_fee(shares_in, ctx.accounts.config.swap_fee),
             )?,
         )?;
         emit!(PreviewAssetsOut { assets_out });
         Ok(assets_out)
     }
 
-    // Fee setter ---------------------------------------------------------
+    pub fn reserves_and_weights(
+        ctx: Context<ReturnPreviewContext>,
+    ) -> Result<ComputedReservesAndWeights> {
+        let reserves_and_weights = math::compute_reserves_and_weights(&PreviewAmountArgs {
+            assets: ctx.accounts.pool_asset_token_account.amount,
+            virtual_assets: ctx.accounts.pool.virtual_assets,
+            asset_token_decimal: ctx.accounts.asset_token_mint.decimals,
+            shares: ctx.accounts.pool_share_token_account.amount,
+            virtual_shares: ctx.accounts.pool.virtual_shares,
+            share_token_decimal: ctx.accounts.share_token_mint.decimals,
+            total_purchased: ctx.accounts.pool.total_purchased,
+            max_share_price: ctx.accounts.pool.max_share_price,
+            current_time: Clock::get()?.unix_timestamp,
+            sale_start_time: ctx.accounts.pool.sale_start_time,
+            sale_end_time: ctx.accounts.pool.sale_end_time,
+            start_weight_basis_points: ctx.accounts.pool.start_weight_basis_points,
+            end_weight_basis_points: ctx.accounts.pool.end_weight_basis_points,
+        })?;
+        let ComputedReservesAndWeights {
+            asset_reserve,
+            share_reserve,
+            asset_weight,
+            share_weight,
+        } = reserves_and_weights;
+
+        emit!(ReservesAndWeights {
+            asset_reserve,
+            share_reserve,
+            asset_weight,
+            share_weight,
+        });
+        Ok(reserves_and_weights)
+    }
+
+    // Pool Management ----------------------------------------------------
+    pub fn toggle_pause(ctx: Context<OnlyPoolCreator>) -> Result<()> {
+        pool_management::toggle_pause(ctx)
+    }
+
+    // Owner Authority Controls -------------------------------------------
     pub fn set_fees(
-        ctx: Context<OnlyOwner>,
-        fee_recipient: Option<Pubkey>,
+        ctx: Context<FeeConfig>,
         platform_fee: Option<u16>,
         referral_fee: Option<u16>,
         swap_fee: Option<u16>,
     ) -> Result<()> {
-        setter::set_fees(ctx, fee_recipient, platform_fee, referral_fee, swap_fee)
+        setter::set_fees(ctx, platform_fee, referral_fee, swap_fee)
     }
 
-    // Access controls ----------------------------------------------------
+    pub fn set_treasury_fee_recipients(
+        ctx: Context<TreasuryFeeRecipientConfig>,
+        swap_fee_recipient: Option<Pubkey>,
+        fee_recipients: Vec<Pubkey>,
+        fee_percentages: Vec<u16>,
+    ) -> Result<()> {
+        setter::set_fee_recipients(ctx, swap_fee_recipient, fee_recipients, fee_percentages)
+    }
+
     pub fn nominate_new_owner(ctx: Context<OnlyOwner>, new_owner_key: Pubkey) -> Result<()> {
         ownable::access_control::nominate_new_owner(ctx, new_owner_key)
     }

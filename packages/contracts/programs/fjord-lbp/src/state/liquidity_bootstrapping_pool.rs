@@ -43,6 +43,9 @@ pub struct LiquidityBootstrappingPool {
     // Flag to indicate the liquidity pool is closed
     pub closed: bool,
 
+    // Flag to indicate the swaps are paused
+    pub paused: bool,
+
     // Whitelist
     pub whitelist_merkle_root: [u8; 32],
 

@@ -43,6 +43,13 @@ pub mod sale {
         }
         Ok(())
     }
+
+    pub fn _when_not_paused(ctx: &Context<SwapTokens>) -> Result<()> {
+        if ctx.accounts.pool.paused {
+            return Err(PoolError::Paused.into());
+        }
+        Ok(())
+    }
 }
 
 pub fn before_token_swap(
@@ -50,8 +57,9 @@ pub fn before_token_swap(
     merkle_proof: Option<Vec<[u8; 32]>>,
     is_sell: bool,
 ) -> Result<()> {
-    merkle::_only_white_listed(ctx, merkle_proof)?;
+    sale::_when_not_paused(ctx)?;
     sale::_when_sale_active(ctx)?;
+    merkle::_only_white_listed(ctx, merkle_proof)?;
     if is_sell {
         sale::_when_selling_allowed(ctx)?
     };

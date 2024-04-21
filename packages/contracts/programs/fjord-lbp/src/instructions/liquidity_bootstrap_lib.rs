@@ -1,10 +1,14 @@
 use anchor_spl::token_2022::spl_token_2022::extension::transfer_fee::MAX_FEE_BASIS_POINTS;
 
-pub struct ComputedReservesAndWeights {
-    pub asset_reserve: u64,
-    pub share_reserve: u64,
-    pub asset_weight: u64,
-    pub share_weight: u64,
+pub mod structs {
+    use anchor_lang::prelude::*;
+    #[derive(AnchorDeserialize, AnchorSerialize, Clone)]
+    pub struct ComputedReservesAndWeights {
+        pub asset_reserve: u64,
+        pub share_reserve: u64,
+        pub asset_weight: u64,
+        pub share_weight: u64,
+    }
 }
 
 pub struct ScaledReserves {
@@ -36,7 +40,9 @@ pub struct PreviewAmountArgs {
 }
 
 pub mod math {
+    use self::structs::ComputedReservesAndWeights;
     use super::*;
+
     use crate::{
         div_wad, get_amount_in, get_amount_out, mul_wad,
         safe_math::{div, mul, safe_add, safe_sub},
@@ -62,12 +68,10 @@ pub mod math {
             asset_weight,
             share_weight,
         )?;
-
         if div_wad(assets_in_scaled, shares_out)? > args.max_share_price {
             shares_out = mul_wad(assets_in_scaled, args.max_share_price)?;
         }
         shares_out = _scale_token(args.share_token_decimal, shares_out, false)?;
-
         Ok(shares_out)
     }
 
@@ -182,7 +186,7 @@ pub mod math {
         })
     }
 
-    fn compute_reserves_and_weights(
+    pub fn compute_reserves_and_weights(
         args: &PreviewAmountArgs,
     ) -> Result<ComputedReservesAndWeights, SafeMathError> {
         let PreviewAmountArgs {
@@ -264,6 +268,6 @@ pub mod math {
     }
 
     pub fn calculate_fee(amount: u64, fee: u16) -> u64 {
-        amount * u64::from(fee) / u64::from(MAX_FEE_BASIS_POINTS)
+        (u128::from(amount) * u128::from(fee) / u128::from(MAX_FEE_BASIS_POINTS)) as u64
     }
 }

@@ -1,5 +1,7 @@
 pub mod liquidity_bootstrapping_pool;
-pub mod only_owner;
+pub mod owner_config;
+pub mod treasury;
 
 pub use liquidity_bootstrapping_pool::*;
-pub use only_owner::*;  
+pub use owner_config::*;
+pub use treasury::*;
