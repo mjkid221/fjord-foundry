@@ -457,97 +457,83 @@ describe("Fjord LBP - Sell - shares for exact assets", () => {
       );
     });
 
-    // TODO: Move this one to it's own file
-    // it("should be able to sell project token (shares) for exact collateral tokens (assets)", async () => {
-    //   const {
-    //     userAssetBalance: userAssetBalanceBefore,
-    //     poolAssetBalance: poolAssetBalanceBefore,
-    //     userPoolPda,
-    //     userPoolAccount: userPoolAccountBefore,
-    //     pool: poolBefore,
-    //   } = await getAllAccountState({
-    //     program,
-    //     poolPda,
-    //     bankRunClient,
-    //     shareTokenMint,
-    //     assetTokenMint,
-    //     user: testUserA.publicKey,
-    //     ownerConfigPda,
-    //   });
+    it("should be able to swap exact project tokens (shares) for collateral tokens (assets) when the number of shares out is greater that that in the preview.", async () => {
+      const { userPoolPda, userPoolAccount: userPoolAccountBefore } =
+        await getAllAccountState({
+          program,
+          poolPda,
+          bankRunClient,
+          shareTokenMint,
+          assetTokenMint,
+          user: testUserA.publicKey,
+          ownerConfigPda,
+        });
 
-    //   const assetsToSell = BN("100000000");
+      // Number of project tokens to sell (Shares)
+      const sharesIn = userPoolAccountBefore.purchasedShares.div(BN(3));
 
-    //   const maxSharesIn = await program.methods
-    //     .previewSharesIn(
-    //       // Assets to sell (Collateral)
-    //       assetsToSell
-    //     )
-    //     .accounts({
-    //       assetTokenMint,
-    //       shareTokenMint,
-    //       pool: poolPda,
-    //       poolAssetTokenAccount,
-    //       poolShareTokenAccount,
-    //     })
-    //     .signers([creator])
-    //     .simulate()
-    //     .then((data) => data.events[0].data.sharesIn as BigNumber);
+      const greaterSharesIn = userPoolAccountBefore.purchasedShares.div(BN(2));
 
-    //   // Sell project token
-    //   await program.methods
-    //     .swapSharesForExactAssets(assetsToSell, maxSharesIn, null, null)
-    //     .accounts({
-    //       assetTokenMint,
-    //       shareTokenMint,
-    //       user: testUserA.publicKey,
-    //       pool: poolPda,
-    //       poolAssetTokenAccount,
-    //       poolShareTokenAccount,
-    //       userAssetTokenAccount: assetTokenMintUserAccount,
-    //       userShareTokenAccount: shareTokenMintUserAccount,
-    //       config: ownerConfigPda,
-    //       referrerStateInPool: null,
-    //       userStateInPool: userPoolPda,
-    //     })
-    //     .signers([testUserA])
-    //     .rpc();
+      const minAssetsOut = await program.methods
+        .previewAssetsOut(
+          // Shares to sell (Collateral)
+          sharesIn
+        )
+        .accounts({
+          assetTokenMint,
+          shareTokenMint,
+          pool: poolPda,
+          poolAssetTokenAccount,
+          poolShareTokenAccount,
+        })
+        .signers([creator])
+        .simulate()
+        .then((data) => data.events[0].data.assetsOut as BigNumber);
 
-    //   const {
-    //     userPoolAccount: userPoolAccountAfter,
-    //     userAssetBalance: userAssetBalanceAfter,
-    //     poolAssetBalance: poolAssetBalanceAfter,
-    //     pool: poolAfter,
-    //     ownerConfig: { swapFee },
-    //   } = await getAllAccountState({
-    //     program,
-    //     poolPda,
-    //     bankRunClient,
-    //     shareTokenMint,
-    //     assetTokenMint,
-    //     user: testUserA.publicKey,
-    //     ownerConfigPda,
-    //   });
+      // Sell project token
+      await program.methods
+        .swapExactSharesForAssets(greaterSharesIn, minAssetsOut, null, null)
+        .accounts({
+          assetTokenMint,
+          shareTokenMint,
+          user: testUserA.publicKey,
+          pool: poolPda,
+          poolAssetTokenAccount,
+          poolShareTokenAccount,
+          userAssetTokenAccount: assetTokenMintUserAccount,
+          userShareTokenAccount: shareTokenMintUserAccount,
+          config: ownerConfigPda,
+          referrerStateInPool: null,
+          userStateInPool: userPoolPda,
+        })
+        .signers([testUserA])
+        .rpc();
 
-    //   expect(userPoolAccountAfter.purchasedShares.toString()).to.eq(
-    //     userPoolAccountBefore.purchasedShares.sub(maxSharesIn).toString()
-    //   );
-    //   expect(userAssetBalanceAfter.toString()).to.eq(
-    //     userAssetBalanceBefore.add(assetsToSell).toString()
-    //   );
+      const {
+        userPoolAccount: userPoolAccountAfter,
+        userAssetBalance: userAssetBalanceAfter,
+      } = await getAllAccountState({
+        program,
+        poolPda,
+        bankRunClient,
+        shareTokenMint,
+        assetTokenMint,
+        user: testUserA.publicKey,
+        ownerConfigPda,
+      });
 
-    //   expect(poolAfter.totalSwapFeesShare.toNumber()).to.be.closeTo(
-    //     poolBefore.totalSwapFeesShare
-    //       .add(maxSharesIn.mul(BN(swapFee)).div(BN(MAX_FEE_BASIS_POINTS)))
-    //       .toNumber(),
-    //     120000 // 0.99% error margin
-    //   );
-    //   expect(poolAfter.totalPurchased.toString()).to.eq(
-    //     poolBefore.totalPurchased.sub(maxSharesIn).toString()
-    //   );
-    //   expect(poolAssetBalanceAfter.toString()).to.eq(
-    //     poolAssetBalanceBefore.sub(assetsToSell).toString()
-    //   );
-    // });
+      expect(userPoolAccountAfter.purchasedShares.toString()).to.eq(
+        userPoolAccountBefore.purchasedShares.sub(greaterSharesIn).toString()
+      );
+
+      expect(Number(sharesIn.toString())).to.be.lessThan(
+        Number(greaterSharesIn.toString())
+      );
+
+      expect(Number(userAssetBalanceAfter.toString())).to.be.greaterThan(
+        Number(minAssetsOut.toString())
+      );
+    });
   });
 
   describe("Success case - merkle proof", async () => {
@@ -741,7 +727,155 @@ describe("Fjord LBP - Sell - shares for exact assets", () => {
     });
   });
 
-  describe("Failure case", async () => {
+  describe("Failure cases - merkle proof present", async () => {
+    beforeEach(async () => {
+      const sharesAmount = initialProjectTokenBalanceCreator;
+      const assetsAmount = initialCollateralTokenBalanceCreator;
+
+      const poolParams = createMockpoolConfig({
+        assets: assetsAmount,
+        shares: sharesAmount,
+        whitelistMerkleRoot: generateMerkleRoot(whitelistedAddresses),
+        maxSharePrice: GENERIC_BN,
+        maxAssetsIn: GENERIC_BN,
+        maxSharesOut: GENERIC_BN,
+        sellingAllowed: true,
+      });
+
+      const formattedPoolParams = Object.values(poolParams) as any;
+
+      await program.methods
+        .initializePool(...formattedPoolParams)
+        .accounts({
+          creator: creator.publicKey,
+          shareTokenMint,
+          assetTokenMint,
+          poolShareTokenAccount,
+          poolAssetTokenAccount,
+          creatorShareTokenAccount,
+          creatorAssetTokenAccount,
+        })
+        .signers([creator])
+        .rpc();
+
+      // Skip time by 1100 seconds
+      await skipBlockTimestamp(bankRunCtx, 1100);
+
+      const initialUserCollateralTokenBalance = await getAccountBalance(
+        bankRunClient,
+        testUserA.publicKey,
+        assetTokenMint
+      );
+
+      // Get user's pool account
+      const initialUserPoolPda = findProgramAddressSync(
+        [testUserA.publicKey.toBuffer(), poolPda.toBuffer()],
+        program.programId
+      )[0];
+
+      const merkleProof = generateMerkleProof(
+        whitelistedAddresses,
+        testUserA.publicKey.toBase58()
+      );
+
+      const assetAmountIn = initialUserCollateralTokenBalance.div(BN(2));
+
+      // Get expected shares out by reading a view function's emitted event.
+      const expectedSharesOut = await program.methods
+        .previewSharesOut(
+          // Assets In (Collateral)
+          assetAmountIn
+        )
+        .accounts({
+          assetTokenMint,
+          shareTokenMint,
+          pool: poolPda,
+          poolAssetTokenAccount,
+          poolShareTokenAccount,
+        })
+        .signers([creator])
+        .simulate()
+        .then((data) => data.events[0].data.sharesOut as BigNumber);
+
+      // Buy project token
+      await program.methods
+        .swapExactAssetsForShares(
+          assetAmountIn,
+          expectedSharesOut,
+          merkleProof,
+          null
+        )
+        .accounts({
+          assetTokenMint,
+          shareTokenMint,
+          user: testUserA.publicKey,
+          pool: poolPda,
+          poolAssetTokenAccount,
+          poolShareTokenAccount,
+          userAssetTokenAccount: assetTokenMintUserAccount,
+          userShareTokenAccount: shareTokenMintUserAccount,
+          config: ownerConfigPda,
+          referrerStateInPool: null,
+          userStateInPool: initialUserPoolPda,
+        })
+        .signers([testUserA])
+        .rpc();
+    });
+    it("Should not be able to sell when the whitelist is not passed as a param", async () => {
+      const { userPoolPda, userPoolAccount: userPoolAccountBefore } =
+        await getAllAccountState({
+          program,
+          poolPda,
+          bankRunClient,
+          shareTokenMint,
+          assetTokenMint,
+          user: testUserA.publicKey,
+          ownerConfigPda,
+        });
+
+      // Number of project tokens to sell (Shares)
+      const sharesIn = userPoolAccountBefore.purchasedShares.div(BN(2));
+
+      const minAssetsOut = await program.methods
+        .previewAssetsOut(
+          // Shares to sell (Collateral)
+          sharesIn
+        )
+        .accounts({
+          assetTokenMint,
+          shareTokenMint,
+          pool: poolPda,
+          poolAssetTokenAccount,
+          poolShareTokenAccount,
+        })
+        .signers([creator])
+        .simulate()
+        .then((data) => data.events[0].data.assetsOut as BigNumber);
+
+      // Sell project token
+      await expect(
+        program.methods
+          .swapExactSharesForAssets(sharesIn, minAssetsOut, null, null) // No merkle proof passed as a param
+          .accounts({
+            assetTokenMint,
+            shareTokenMint,
+            user: testUserA.publicKey,
+            pool: poolPda,
+            poolAssetTokenAccount,
+            poolShareTokenAccount,
+            userAssetTokenAccount: assetTokenMintUserAccount,
+            userShareTokenAccount: shareTokenMintUserAccount,
+            config: ownerConfigPda,
+            referrerStateInPool: null,
+            userStateInPool: userPoolPda,
+          })
+          .signers([testUserA])
+          .rpc()
+      ).to.be.rejectedWith("WhitelistProof");
+    });
+  });
+
+  describe("Failure cases - no merkle proof", async () => {
     beforeEach(async () => {
       const sharesAmount = initialProjectTokenBalanceCreator;
       const assetsAmount = initialCollateralTokenBalanceCreator;
@@ -877,3 +1011,95 @@ describe("Fjord LBP - Sell - shares for exact assets", () => {
     });
   });
 });
+
+// TODO: Move this one to it's own file
+// it("should be able to sell project token (shares) for exact collateral tokens (assets)", async () => {
+//   const {
+//     userAssetBalance: userAssetBalanceBefore,
+//     poolAssetBalance: poolAssetBalanceBefore,
+//     userPoolPda,
+//     userPoolAccount: userPoolAccountBefore,
+//     pool: poolBefore,
+//   } = await getAllAccountState({
+//     program,
+//     poolPda,
+//     bankRunClient,
+//     shareTokenMint,
+//     assetTokenMint,
+//     user: testUserA.publicKey,
+//     ownerConfigPda,
+//   });
+
+//   const assetsToSell = BN("100000000");
+
+//   const maxSharesIn = await program.methods
+//     .previewSharesIn(
+//       // Assets to sell (Collateral)
+//       assetsToSell
+//     )
+//     .accounts({
+//       assetTokenMint,
+//       shareTokenMint,
+//       pool: poolPda,
+//       poolAssetTokenAccount,
+//       poolShareTokenAccount,
+//     })
+//     .signers([creator])
+//     .simulate()
+//     .then((data) => data.events[0].data.sharesIn as BigNumber);
+
+//   // Sell project token
+//   await program.methods
+//     .swapSharesForExactAssets(assetsToSell, maxSharesIn, null, null)
+//     .accounts({
+//       assetTokenMint,
+//       shareTokenMint,
+//       user: testUserA.publicKey,
+//       pool: poolPda,
+//       poolAssetTokenAccount,
+//       poolShareTokenAccount,
+//       userAssetTokenAccount: assetTokenMintUserAccount,
+//       userShareTokenAccount: shareTokenMintUserAccount,
+//       config: ownerConfigPda,
+//       referrerStateInPool: null,
+//       userStateInPool: userPoolPda,
+//     })
+//     .signers([testUserA])
+//     .rpc();
+
+//   const {
+//     userPoolAccount: userPoolAccountAfter,
+//     userAssetBalance: userAssetBalanceAfter,
+//     poolAssetBalance: poolAssetBalanceAfter,
+//     pool: poolAfter,
+//     ownerConfig: { swapFee },
+//   } = await getAllAccountState({
+//     program,
+//     poolPda,
+//     bankRunClient,
+//     shareTokenMint,
+//     assetTokenMint,
+//     user: testUserA.publicKey,
+//     ownerConfigPda,
+//   });
+
+//   expect(userPoolAccountAfter.purchasedShares.toString()).to.eq(
+//     userPoolAccountBefore.purchasedShares.sub(maxSharesIn).toString()
+//   );
+//   expect(userAssetBalanceAfter.toString()).to.eq(
+//     userAssetBalanceBefore.add(assetsToSell).toString()
+//   );
+
+//   expect(poolAfter.totalSwapFeesShare.toNumber()).to.be.closeTo(
+//     poolBefore.totalSwapFeesShare
+//       .add(maxSharesIn.mul(BN(swapFee)).div(BN(MAX_FEE_BASIS_POINTS)))
+//       .toNumber(),
+//     120000 // 0.99% error margin
+//   );
+//   expect(poolAfter.totalPurchased.toString()).to.eq(
+//     poolBefore.totalPurchased.sub(maxSharesIn).toString()
+//   );
+//   expect(poolAssetBalanceAfter.toString()).to.eq(
+//     poolAssetBalanceBefore.sub(assetsToSell).toString()
+//   );
+// });
