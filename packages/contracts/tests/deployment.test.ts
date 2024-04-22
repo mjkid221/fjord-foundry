@@ -11,7 +11,7 @@ import {
   BigNumber,
   PERCENTAGE_BASIS_POINTS,
   testMerkleWhitelistedAddresses,
-} from "../../constants";
+} from "../constants";
 import {
   Accounts,
   createMockpoolConfig,
@@ -19,8 +19,8 @@ import {
   generateMerkleRoot,
   generateTimestamp,
   setup,
-} from "../../helpers";
-import { FjordLbp } from "../../target/types/fjord_lbp";
+} from "../helpers";
+import { FjordLbp } from "../target/types/fjord_lbp";
 
 chai.use(chaiAsPromised);
 

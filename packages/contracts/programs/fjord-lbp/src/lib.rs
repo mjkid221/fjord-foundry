@@ -5,18 +5,59 @@ pub mod error;
 pub mod events;
 pub mod instructions;
 pub mod state;
+pub mod utils;
 pub use constants::*;
 pub use error::*;
 pub use events::*;
 pub use instructions::*;
 pub use state::*;
+pub use utils::*;
 
 // Program Id for the Fjord LBP program. This is the address this program will be deployed to.
-declare_id!("fjorR4ubuG42xkRUF6SrA1hKkb1T4LqgfupE1mPLK4K");
+declare_id!("9yf45kAVeaaaAqBewB6fLX4ie5qBC2vWwqiBhNQayvWq");
 
 #[program]
 pub mod fjord_lbp {
+    use self::math::calculate_fee;
+
     use super::*;
+    pub struct PreviewAmountArgs {
+        pub assets: u64,
+        pub virtual_assets: u64,
+        pub asset_token_decimal: u8,
+        pub shares: u64,
+        pub virtual_shares: u64,
+        pub share_token_decimal: u8,
+        pub total_purchased: u64,
+        pub current_time: i64,
+        pub max_share_price: u64,
+        pub sale_start_time: i64,
+        pub sale_end_time: i64,
+        pub start_weight_basis_points: u16,
+        pub end_weight_basis_points: u16,
+    }
+
+    // Initializer --------------------------------------------------------
+    pub fn initialize_owner_config(
+        ctx: Context<InitializeOwner>,
+        owner_key: Pubkey,
+        fee_recipient: Pubkey,
+        platform_fee: u16,
+        referral_fee: u16,
+        swap_fee: u16,
+    ) -> Result<()> {
+        ownable::initializer::initialize_owner_config(
+            ctx,
+            owner_key,
+            fee_recipient,
+            platform_fee,
+            referral_fee,
+            swap_fee,
+        )
+    }
+
+    // Pool Creation ------------------------------------------------------
+    #[allow(clippy::too_many_arguments)]
     pub fn initialize_pool(
         ctx: Context<InitializePool>,
         assets: u64,
@@ -53,5 +94,109 @@ pub mod fjord_lbp {
             whitelist_merkle_root,
             selling_allowed,
         )
+    }
+
+    // Buy functions ------------------------------------------------------
+    pub fn swap_exact_assets_for_shares(
+        ctx: Context<SwapTokens>,
+        assets_in: u64,
+        min_shares_out: u64,
+        merkle_proof: Option<Vec<[u8; 32]>>,
+        referrer: Option<Pubkey>,
+    ) -> Result<()> {
+        swap::buy::swap_exact_assets_for_shares(
+            ctx,
+            assets_in,
+            min_shares_out,
+            merkle_proof,
+            referrer,
+        )
+    }
+
+    pub fn swap_assets_for_exact_shares(
+        ctx: Context<SwapTokens>,
+        shares_out: u64,
+        max_assets_in: u64,
+        merkle_proof: Option<Vec<[u8; 32]>>,
+        referrer: Option<Pubkey>,
+    ) -> Result<()> {
+        swap::buy::swap_assets_for_exact_shares(
+            ctx,
+            shares_out,
+            max_assets_in,
+            merkle_proof,
+            referrer,
+        )
+    }
+
+    // View only
+    pub fn preview_assets_in(ctx: Context<ReturnPreviewContext>, shares_out: u64) -> Result<u64> {
+        let mut assets_in = math::preview_assets_in(
+            PreviewAmountArgs {
+                assets: ctx.accounts.pool_asset_token_account.amount,
+                virtual_assets: ctx.accounts.pool.virtual_assets,
+                asset_token_decimal: ctx.accounts.asset_token_mint.decimals,
+                shares: ctx.accounts.pool_share_token_account.amount,
+                virtual_shares: ctx.accounts.pool.virtual_shares,
+                share_token_decimal: ctx.accounts.share_token_mint.decimals,
+                total_purchased: ctx.accounts.pool.total_purchased,
+                max_share_price: ctx.accounts.pool.max_share_price,
+                current_time: Clock::get()?.unix_timestamp,
+                sale_start_time: ctx.accounts.pool.sale_start_time,
+                sale_end_time: ctx.accounts.pool.sale_end_time,
+                start_weight_basis_points: ctx.accounts.pool.start_weight_basis_points,
+                end_weight_basis_points: ctx.accounts.pool.end_weight_basis_points,
+            },
+            shares_out,
+        )?;
+        assets_in += calculate_fee(assets_in, ctx.accounts.config.swap_fee);
+        emit!(PreviewAssetsIn { assets_in });
+        Ok(assets_in)
+    }
+
+    pub fn preview_shares_out(ctx: Context<ReturnPreviewContext>, assets_in: u64) -> Result<u64> {
+        let shares_out = math::preview_shares_out(
+            PreviewAmountArgs {
+                assets: ctx.accounts.pool_asset_token_account.amount,
+                virtual_assets: ctx.accounts.pool.virtual_assets,
+                asset_token_decimal: ctx.accounts.asset_token_mint.decimals,
+                shares: ctx.accounts.pool_share_token_account.amount,
+                virtual_shares: ctx.accounts.pool.virtual_shares,
+                share_token_decimal: ctx.accounts.share_token_mint.decimals,
+                total_purchased: ctx.accounts.pool.total_purchased,
+                max_share_price: ctx.accounts.pool.max_share_price,
+                current_time: Clock::get()?.unix_timestamp,
+                sale_start_time: ctx.accounts.pool.sale_start_time,
+                sale_end_time: ctx.accounts.pool.sale_end_time,
+                start_weight_basis_points: ctx.accounts.pool.start_weight_basis_points,
+                end_weight_basis_points: ctx.accounts.pool.end_weight_basis_points,
+            },
+            safe_math::safe_sub(
+                assets_in,
+                calculate_fee(assets_in, ctx.accounts.config.swap_fee),
+            )?,
+        )?;
+        emit!(PreviewSharesOut { shares_out });
+        Ok(shares_out)
+    }
+
+    // Fee setter ---------------------------------------------------------
+    pub fn set_fees(
+        ctx: Context<OnlyOwner>,
+        fee_recipient: Option<Pubkey>,
+        platform_fee: Option<u16>,
+        referral_fee: Option<u16>,
+        swap_fee: Option<u16>,
+    ) -> Result<()> {
+        setter::set_fees(ctx, fee_recipient, platform_fee, referral_fee, swap_fee)
+    }
+
+    // Access controls ----------------------------------------------------
+    pub fn nominate_new_owner(ctx: Context<OnlyOwner>, new_owner_key: Pubkey) -> Result<()> {
+        ownable::access_control::nominate_new_owner(ctx, new_owner_key)
+    }
+
+    pub fn accept_new_owner(ctx: Context<AcceptOwner>) -> Result<()> {
+        ownable::access_control::accept_owner(ctx)
     }
 }

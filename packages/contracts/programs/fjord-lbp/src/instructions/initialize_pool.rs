@@ -88,27 +88,28 @@ pub fn create_pool(
       return err!(PoolError::InvalidVestEnd);
   }
 
-  if start_weight_basis_points < 100 ||  start_weight_basis_points > 9900 || end_weight_basis_points > 9900 || end_weight_basis_points < 100 {
-      return err!(PoolError::InvalidWeightConfig);
+
+  if !(100..=9900).contains(&start_weight_basis_points) || !(100..=9900).contains(&end_weight_basis_points) {
+    return err!(PoolError::InvalidWeightConfig);
   }
 
-  if assets <= 0 && virtual_assets == 0 {
+  if assets == 0 && virtual_assets == 0 {
       return err!(PoolError::InvalidAssetValue);
   }
 
-  if shares <= 0 && virtual_shares <= 0 {
+  if shares == 0 && virtual_shares == 0 {
       return err!(PoolError::InvalidShareValue);
   }
 
-  if max_share_price <= 0 {
+  if max_share_price == 0 {
       return err!(PoolError::InvalidSharePrice);
   }
 
-  if max_shares_out <= 0 {
+  if max_shares_out == 0 {
       return err!(PoolError::InvalidMaxSharesOut);
   }
 
-  if max_assets_in <= 0 {
+  if max_assets_in == 0 {
       return err!(PoolError::InvalidMaxAssetsIn);
   }
 

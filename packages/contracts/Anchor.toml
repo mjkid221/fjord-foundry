@@ -18,7 +18,7 @@ skip-lint = false
 
 # Local ---------------------------------------------------------------------
 [programs.localnet]
-fjord_lbp = "fjorR4ubuG42xkRUF6SrA1hKkb1T4LqgfupE1mPLK4K"
+fjord_lbp = "9yf45kAVeaaaAqBewB6fLX4ie5qBC2vWwqiBhNQayvWq"
 # ---------------------------------------------------------------------------
 
 [registry]
@@ -47,3 +47,6 @@ types = "types"
 
 [scripts]
 test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"
+
+[test]
+upgradeable = true
