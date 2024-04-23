@@ -45,6 +45,9 @@ pub struct LiquidityBootstrappingPool {
 
     // Whitelist
     pub whitelist_merkle_root: [u8; 32],
+
+    // Bump seed
+    pub bump: u8,
 }
 
 /// Account storing the information of the user in the liquidity bootstrapping pool

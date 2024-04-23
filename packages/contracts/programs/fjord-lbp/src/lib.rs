@@ -21,21 +21,6 @@ pub mod fjord_lbp {
     use self::math::calculate_fee;
 
     use super::*;
-    pub struct PreviewAmountArgs {
-        pub assets: u64,
-        pub virtual_assets: u64,
-        pub asset_token_decimal: u8,
-        pub shares: u64,
-        pub virtual_shares: u64,
-        pub share_token_decimal: u8,
-        pub total_purchased: u64,
-        pub current_time: i64,
-        pub max_share_price: u64,
-        pub sale_start_time: i64,
-        pub sale_end_time: i64,
-        pub start_weight_basis_points: u16,
-        pub end_weight_basis_points: u16,
-    }
 
     // Initializer --------------------------------------------------------
     pub fn initialize_owner_config(
@@ -129,7 +114,40 @@ pub mod fjord_lbp {
         )
     }
 
-    // View only
+    // Sell functions -----------------------------------------------------
+    pub fn swap_exact_shares_for_assets(
+        ctx: Context<SwapTokens>,
+        shares_in: u64,
+        min_assets_out: u64,
+        merkle_proof: Option<Vec<[u8; 32]>>,
+        referrer: Option<Pubkey>,
+    ) -> Result<()> {
+        swap::sell::swap_exact_shares_for_assets(
+            ctx,
+            shares_in,
+            min_assets_out,
+            merkle_proof,
+            referrer,
+        )
+    }
+
+    pub fn swap_shares_for_exact_assets(
+        ctx: Context<SwapTokens>,
+        assets_out: u64,
+        max_shares_in: u64,
+        merkle_proof: Option<Vec<[u8; 32]>>,
+        referrer: Option<Pubkey>,
+    ) -> Result<()> {
+        swap::sell::swap_shares_for_exact_assets(
+            ctx,
+            assets_out,
+            max_shares_in,
+            merkle_proof,
+            referrer,
+        )
+    }
+
+    // View functions -----------------------------------------------------
     pub fn preview_assets_in(ctx: Context<ReturnPreviewContext>, shares_out: u64) -> Result<u64> {
         let mut assets_in = math::preview_assets_in(
             PreviewAmountArgs {
@@ -152,6 +170,30 @@ pub mod fjord_lbp {
         assets_in += calculate_fee(assets_in, ctx.accounts.config.swap_fee);
         emit!(PreviewAssetsIn { assets_in });
         Ok(assets_in)
+    }
+
+    pub fn preview_shares_in(ctx: Context<ReturnPreviewContext>, assets_out: u64) -> Result<u64> {
+        let mut shares_in = math::preview_shares_in(
+            PreviewAmountArgs {
+                assets: ctx.accounts.pool_asset_token_account.amount,
+                virtual_assets: ctx.accounts.pool.virtual_assets,
+                asset_token_decimal: ctx.accounts.asset_token_mint.decimals,
+                shares: ctx.accounts.pool_share_token_account.amount,
+                virtual_shares: ctx.accounts.pool.virtual_shares,
+                share_token_decimal: ctx.accounts.share_token_mint.decimals,
+                total_purchased: ctx.accounts.pool.total_purchased,
+                max_share_price: ctx.accounts.pool.max_share_price,
+                current_time: Clock::get()?.unix_timestamp,
+                sale_start_time: ctx.accounts.pool.sale_start_time,
+                sale_end_time: ctx.accounts.pool.sale_end_time,
+                start_weight_basis_points: ctx.accounts.pool.start_weight_basis_points,
+                end_weight_basis_points: ctx.accounts.pool.end_weight_basis_points,
+            },
+            assets_out,
+        )?;
+        shares_in += calculate_fee(shares_in, ctx.accounts.config.swap_fee);
+        emit!(PreviewSharesIn { shares_in });
+        Ok(shares_in)
     }
 
     pub fn preview_shares_out(ctx: Context<ReturnPreviewContext>, assets_in: u64) -> Result<u64> {
@@ -178,6 +220,32 @@ pub mod fjord_lbp {
         )?;
         emit!(PreviewSharesOut { shares_out });
         Ok(shares_out)
+    }
+
+    pub fn preview_assets_out(ctx: Context<ReturnPreviewContext>, shares_in: u64) -> Result<u64> {
+        let assets_out = math::preview_assets_out(
+            PreviewAmountArgs {
+                assets: ctx.accounts.pool_asset_token_account.amount,
+                virtual_assets: ctx.accounts.pool.virtual_assets,
+                asset_token_decimal: ctx.accounts.asset_token_mint.decimals,
+                shares: ctx.accounts.pool_share_token_account.amount,
+                virtual_shares: ctx.accounts.pool.virtual_shares,
+                share_token_decimal: ctx.accounts.share_token_mint.decimals,
+                total_purchased: ctx.accounts.pool.total_purchased,
+                max_share_price: ctx.accounts.pool.max_share_price,
+                current_time: Clock::get()?.unix_timestamp,
+                sale_start_time: ctx.accounts.pool.sale_start_time,
+                sale_end_time: ctx.accounts.pool.sale_end_time,
+                start_weight_basis_points: ctx.accounts.pool.start_weight_basis_points,
+                end_weight_basis_points: ctx.accounts.pool.end_weight_basis_points,
+            },
+            safe_math::safe_sub(
+                shares_in,
+                calculate_fee(shares_in, ctx.accounts.config.swap_fee),
+            )?,
+        )?;
+        emit!(PreviewAssetsOut { assets_out });
+        Ok(assets_out)
     }
 
     // Fee setter ---------------------------------------------------------

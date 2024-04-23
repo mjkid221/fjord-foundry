@@ -11,7 +11,7 @@ pub struct ReturnPreviewContext<'info> {
   #[account(
     mut,
     seeds = [share_token_mint.key().as_ref(), asset_token_mint.key().as_ref(), pool.creator.key().as_ref()], 
-    bump
+    bump = pool.bump
   )]
   pub pool: Account<'info, LiquidityBootstrappingPool>,
    #[account(

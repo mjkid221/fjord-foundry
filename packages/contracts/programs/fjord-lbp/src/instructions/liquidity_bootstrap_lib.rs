@@ -12,6 +12,29 @@ pub struct ScaledReserves {
     pub share_reserve_scaled: u64,
 }
 
+pub struct FormattedReserves {
+    pub asset_weight: u64,
+    pub share_weight: u64,
+    pub asset_reserve_scaled: u64,
+    pub share_reserve_scaled: u64,
+}
+
+pub struct PreviewAmountArgs {
+    pub assets: u64,
+    pub virtual_assets: u64,
+    pub asset_token_decimal: u8,
+    pub shares: u64,
+    pub virtual_shares: u64,
+    pub share_token_decimal: u8,
+    pub total_purchased: u64,
+    pub current_time: i64,
+    pub max_share_price: u64,
+    pub sale_start_time: i64,
+    pub sale_end_time: i64,
+    pub start_weight_basis_points: u16,
+    pub end_weight_basis_points: u16,
+}
+
 pub mod math {
 
     use super::*;
@@ -25,40 +48,14 @@ pub mod math {
         args: PreviewAmountArgs,
         assets_in: u64,
     ) -> Result<u64, SafeMathError> {
-        let PreviewAmountArgs {
-            assets: _,
-            virtual_assets: _,
-            asset_token_decimal,
-            shares: _,
-            virtual_shares: _,
-            share_token_decimal,
-            total_purchased: _,
-            max_share_price,
-            current_time: _,
-            sale_start_time: _,
-            sale_end_time: _,
-            start_weight_basis_points: _,
-            end_weight_basis_points: _,
-        } = args;
-
-        let ComputedReservesAndWeights {
-            asset_reserve,
-            share_reserve,
+        let FormattedReserves {
             asset_weight,
             share_weight,
-        } = compute_reserves_and_weights(args)?;
-
-        let ScaledReserves {
             asset_reserve_scaled,
             share_reserve_scaled,
-        } = scaled_reserves(
-            asset_token_decimal,
-            share_token_decimal,
-            asset_reserve,
-            share_reserve,
-        )?;
+        } = _get_scaled_reserves_and_weights(&args)?;
 
-        let assets_in_scaled = _scale_token(asset_token_decimal, assets_in, true)?;
+        let assets_in_scaled = _scale_token(args.asset_token_decimal, assets_in, true)?;
         let mut shares_out = get_amount_out(
             assets_in_scaled,
             asset_reserve_scaled,
@@ -67,10 +64,10 @@ pub mod math {
             share_weight,
         )?;
 
-        if div_wad(assets_in_scaled, shares_out)? > max_share_price {
-            shares_out = mul_wad(assets_in_scaled, max_share_price)?;
+        if div_wad(assets_in_scaled, shares_out)? > args.max_share_price {
+            shares_out = mul_wad(assets_in_scaled, args.max_share_price)?;
         }
-        shares_out = _scale_token(share_token_decimal, shares_out, false)?;
+        shares_out = _scale_token(args.share_token_decimal, shares_out, false)?;
 
         Ok(shares_out)
     }
@@ -79,22 +76,88 @@ pub mod math {
         args: PreviewAmountArgs,
         shares_out: u64,
     ) -> Result<u64, SafeMathError> {
-        let PreviewAmountArgs {
-            assets: _,
-            virtual_assets: _,
-            asset_token_decimal,
-            shares: _,
-            virtual_shares: _,
-            share_token_decimal,
-            total_purchased: _,
-            max_share_price,
-            current_time: _,
-            sale_start_time: _,
-            sale_end_time: _,
-            start_weight_basis_points: _,
-            end_weight_basis_points: _,
-        } = args;
+        let FormattedReserves {
+            asset_weight,
+            share_weight,
+            asset_reserve_scaled,
+            share_reserve_scaled,
+        } = _get_scaled_reserves_and_weights(&args)?;
 
+        let shares_out_scaled = _scale_token(args.share_token_decimal, shares_out, true)?;
+        let mut assets_in = get_amount_in(
+            shares_out_scaled,
+            asset_reserve_scaled,
+            share_reserve_scaled,
+            asset_weight,
+            share_weight,
+        )?;
+
+        if div_wad(assets_in, shares_out_scaled)? > args.max_share_price {
+            assets_in = div_wad(shares_out_scaled, args.max_share_price)?;
+        }
+        assets_in = _scale_token(args.asset_token_decimal, assets_in, false)?;
+        Ok(assets_in)
+    }
+
+    pub fn preview_shares_in(
+        args: PreviewAmountArgs,
+        assets_out: u64,
+    ) -> Result<u64, SafeMathError> {
+        let FormattedReserves {
+            asset_weight,
+            share_weight,
+            asset_reserve_scaled,
+            share_reserve_scaled,
+        } = _get_scaled_reserves_and_weights(&args)?;
+
+        let assets_out_scaled = _scale_token(args.asset_token_decimal, assets_out, true)?;
+
+        let mut shares_in = get_amount_in(
+            assets_out_scaled,
+            share_reserve_scaled,
+            asset_reserve_scaled,
+            share_weight,
+            asset_weight,
+        )?;
+
+        if div_wad(assets_out_scaled, shares_in)? > args.max_share_price {
+            shares_in = div_wad(assets_out_scaled, args.max_share_price)?;
+        }
+
+        shares_in = _scale_token(args.share_token_decimal, shares_in, false)?;
+        Ok(shares_in)
+    }
+
+    pub fn preview_assets_out(
+        args: PreviewAmountArgs,
+        shares_in: u64,
+    ) -> Result<u64, SafeMathError> {
+        let FormattedReserves {
+            asset_weight,
+            share_weight,
+            asset_reserve_scaled,
+            share_reserve_scaled,
+        } = _get_scaled_reserves_and_weights(&args)?;
+
+        let shares_in_scaled = _scale_token(args.share_token_decimal, shares_in, true)?;
+        let mut assets_out = get_amount_out(
+            shares_in_scaled,
+            share_reserve_scaled,
+            asset_reserve_scaled,
+            share_weight,
+            asset_weight,
+        )?;
+
+        if div_wad(assets_out, shares_in_scaled)? > args.max_share_price {
+            assets_out = mul_wad(shares_in_scaled, args.max_share_price)?;
+        }
+        assets_out = _scale_token(args.asset_token_decimal, assets_out, false)?;
+        Ok(assets_out)
+    }
+
+    fn _get_scaled_reserves_and_weights(
+        args: &PreviewAmountArgs,
+    ) -> Result<FormattedReserves, SafeMathError> {
         let ComputedReservesAndWeights {
             asset_reserve,
             share_reserve,
@@ -106,31 +169,22 @@ pub mod math {
             asset_reserve_scaled,
             share_reserve_scaled,
         } = scaled_reserves(
-            asset_token_decimal,
-            share_token_decimal,
+            args.asset_token_decimal,
+            args.share_token_decimal,
             asset_reserve,
             share_reserve,
         )?;
 
-        let shares_out_scaled = _scale_token(share_token_decimal, shares_out, true)?;
-        let mut assets_in = get_amount_in(
-            shares_out_scaled,
-            asset_reserve_scaled,
-            share_reserve_scaled,
+        Ok(FormattedReserves {
             asset_weight,
             share_weight,
-        )?;
-
-        if div_wad(assets_in, shares_out_scaled)? > max_share_price {
-            assets_in = div_wad(shares_out_scaled, max_share_price)?;
-        }
-
-        assets_in = _scale_token(asset_token_decimal, assets_in, false)?;
-        Ok(assets_in)
+            asset_reserve_scaled,
+            share_reserve_scaled,
+        })
     }
 
     fn compute_reserves_and_weights(
-        args: PreviewAmountArgs,
+        args: &PreviewAmountArgs,
     ) -> Result<ComputedReservesAndWeights, SafeMathError> {
         let PreviewAmountArgs {
             assets,
@@ -146,7 +200,7 @@ pub mod math {
             asset_token_decimal: _,
             share_token_decimal: _,
             max_share_price: _,
-        } = args;
+        } = *args;
         let asset_reserve: u64 = safe_sub(assets, virtual_assets)?;
         let share_reserve: u64 = safe_sub(safe_add(shares, virtual_shares)?, total_purchased)?;
         let total_seconds = sale_end_time - sale_start_time;
