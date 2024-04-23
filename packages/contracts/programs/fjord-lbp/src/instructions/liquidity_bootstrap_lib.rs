@@ -42,7 +42,6 @@ pub struct PreviewAmountArgs {
 pub mod math {
     use self::structs::ComputedReservesAndWeights;
     use super::*;
-
     use crate::{
         div_wad, get_amount_in, get_amount_out, mul_wad,
         safe_math::{div, mul, safe_add, safe_sub},

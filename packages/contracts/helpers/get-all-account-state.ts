@@ -70,7 +70,7 @@ export const getAllAccountState = async ({
     [user.toBuffer(), poolPda.toBuffer()],
     program.programId
   )[0];
-  let userPoolAccount;
+  let userPoolAccount: any;
   try {
     userPoolAccount = await program.account.userStateInPool.fetch(userPoolPda);
   } catch {
