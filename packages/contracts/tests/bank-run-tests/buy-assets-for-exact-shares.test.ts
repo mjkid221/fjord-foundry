@@ -179,8 +179,11 @@ describe("Fjord LBP - Buy `swapAssetsForExactShares`", () => {
       connection,
       testUser: testUserA,
       bankRunClient,
+      supplyTokenA: 1_000_000_000_000,
+      supplyTokenB: 1_000_000_000,
+      decimalsTokenA: 6,
+      decimalsTokenB: 9,
     }));
-
     // get token balance
     initialProjectTokenBalanceCreator = await getAccountBalance(
       bankRunCtx.banksClient,
@@ -193,8 +196,9 @@ describe("Fjord LBP - Buy `swapAssetsForExactShares`", () => {
       creator.publicKey,
       assetTokenMint
     );
-    const sharesAmount = initialProjectTokenBalanceCreator;
-    const assetsAmount = initialCollateralTokenBalanceCreator;
+
+    const sharesAmount = BN(50_000_000_000).mul(BN(10 ** 6));
+    const assetsAmount = BN(1_000_000).mul(BN(10 ** 9));
 
     // Get pool address
     [poolPda] = findProgramAddressSync(
@@ -227,7 +231,8 @@ describe("Fjord LBP - Buy `swapAssetsForExactShares`", () => {
     const poolParams = createMockpoolConfig({
       assets: assetsAmount,
       shares: sharesAmount,
-      startWeightBasisPoints: 15 * PERCENTAGE_BASIS_POINTS,
+      startWeightBasisPoints: 1 * PERCENTAGE_BASIS_POINTS,
+      endWeightBasisPoints: 40 * PERCENTAGE_BASIS_POINTS,
       whitelistMerkleRoot: generateMerkleRoot(whitelistedAddresses),
       maxSharePrice: GENERIC_BN,
       maxAssetsIn: GENERIC_BN,
@@ -271,9 +276,7 @@ describe("Fjord LBP - Buy `swapAssetsForExactShares`", () => {
         poolPda
       );
 
-      const { maxSharesOut } = pool;
-
-      const sharesAmountOut = maxSharesOut.div(BN("1000000000000000"));
+      const sharesAmountOut = BN(1).mul(BN(10 ** 5));
 
       // Get expected shares out by reading a view function's emitted event.
       const expectedAssetsIn = await program.methods
@@ -449,7 +452,7 @@ describe("Fjord LBP - Buy `swapAssetsForExactShares`", () => {
 
       const { maxSharesOut } = pool;
 
-      const sharesAmountOut = maxSharesOut.div(BN("1000000000000000"));
+      const sharesAmountOut = maxSharesOut.div(BN(10000000000));
       // Get expected shares out by reading a view function's emitted event.
       const expectedAssetsIn = await program.methods
         .previewAssetsIn(
@@ -524,28 +527,16 @@ describe("Fjord LBP - Buy `swapAssetsForExactShares`", () => {
         sharesAmountOut.toString()
       );
 
-      // Check if the pool has the correct amount of swap fees
-      expect(
-        Number(poolAfterTransaction.totalSwapFeesAsset.toString())
-      ).to.be.closeTo(
-        Number(
-          expectedAssetsIn
-            .mul(BN(globalPoolConfig.swapFee))
-            .div(BN(MAX_FEE_BASIS_POINTS))
-            .toString()
-        ),
-        1100000
+      // Check that the fees collected are correct
+      const feesCollected = poolAfterTransaction.totalSwapFeesAsset.sub(
+        pool.totalSwapFeesAsset
       );
-
-      expect(
-        Number(poolAfterTransaction.totalSwapFeesAsset.toString())
-      ).to.be.eq(
-        Number(
-          expectedAssetsIn
-            .mul(BN(globalPoolConfig.swapFee))
-            .div(BN(MAX_FEE_BASIS_POINTS))
-            .toString()
-        )
+      const assetInWithoutFees = expectedAssetsIn.sub(feesCollected);
+      expect(feesCollected.toString()).to.eq(
+        assetInWithoutFees
+          .mul(BN(globalPoolConfig.swapFee))
+          .div(BN(MAX_FEE_BASIS_POINTS))
+          .toString()
       );
 
       // Check if the referrer has the correct amount of referred assets
@@ -681,7 +672,7 @@ describe("Fjord LBP - Buy `swapAssetsForExactShares`", () => {
 
       const { maxSharesOut } = poolBeforeTransaction;
 
-      const sharesAmountOut = maxSharesOut.div(BN("1000000000000000"));
+      const sharesAmountOut = maxSharesOut.div(BN(10000000000));
       // Get expected shares out by reading a view function's emitted event.
       const expectedAssetsIn = await program.methods
         .previewAssetsIn(
@@ -756,27 +747,15 @@ describe("Fjord LBP - Buy `swapAssetsForExactShares`", () => {
       );
 
       // Check if the pool has the correct amount of swap fees
-      expect(
-        Number(poolAfterTransaction.totalSwapFeesAsset.toString())
-      ).to.be.closeTo(
-        Number(
-          expectedAssetsIn
-            .mul(BN(globalPoolConfig.swapFee))
-            .div(BN(MAX_FEE_BASIS_POINTS))
-            .toString()
-        ),
-        1100000
+      const feesCollected = poolAfterTransaction.totalSwapFeesAsset.sub(
+        poolBeforeTransaction.totalSwapFeesAsset
       );
-
-      expect(
-        Number(poolAfterTransaction.totalSwapFeesAsset.toString())
-      ).to.be.eq(
-        Number(
-          expectedAssetsIn
-            .mul(BN(globalPoolConfig.swapFee))
-            .div(BN(MAX_FEE_BASIS_POINTS))
-            .toString()
-        )
+      const assetInWithoutFees = expectedAssetsIn.sub(feesCollected);
+      expect(feesCollected.toString()).to.eq(
+        assetInWithoutFees
+          .mul(BN(globalPoolConfig.swapFee))
+          .div(BN(MAX_FEE_BASIS_POINTS))
+          .toString()
       );
 
       // Check if the referrer has the correct amount of referred assets
@@ -982,7 +961,7 @@ describe("Fjord LBP - Buy `swapAssetsForExactShares`", () => {
 
       const { maxSharesOut } = poolBeforeTransaction;
 
-      const sharesAmountOut = maxSharesOut.div(BN("1000000000000000"));
+      const sharesAmountOut = maxSharesOut.div(BN(1000000000000));
       // Get expected shares out by reading a view function's emitted event.
       const expectedAssetsIn = await program.methods
         .previewAssetsIn(
