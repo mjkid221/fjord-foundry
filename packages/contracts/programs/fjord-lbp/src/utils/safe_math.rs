@@ -4,7 +4,7 @@ use crate::SafeMathError;
  * Clarification: WAD is usually an Ethereum term for 1e18 in Math Libraries.
  * It is just used here for consistency across Fjord's arithmetic logic.
  */
-pub const WAD: u64 = 1_000_000_000_000_000_000;
+pub const WAD: u64 = 1_000_000_000_000;
 
 /**
  * (x * y)/WAD

@@ -1972,9 +1972,7 @@ describe("Fjord LBP - Buy `swapExactAssetsForShares`", () => {
         .simulate()
         .then((data) => data.events[0].data.sharesOut as BigNumber);
 
-      const largerSharesOutNumber = BN(
-        (expectedSharesOut.toNumber() * 1.05).toString()
-      );
+      const largerSharesOutNumber = BN(expectedSharesOut.toNumber() * 1.05);
 
       await expect(
         program.methods
