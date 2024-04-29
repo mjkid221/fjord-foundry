@@ -378,7 +378,7 @@ fn retrieve_valid_keys<'a>(a: Vec<FeeMapping>, b: &[AccountInfo<'a>], token_mint
     // Check that all accounts are writable
     for account_info in b {
         if !account_info.is_writable {
-            return Err(PoolError::InvalidFeeRecipients.into());
+            return Err(PoolError::InvalidFeeRecipientWritable.into());
         }
     }
 

@@ -55,6 +55,8 @@ pub enum PoolError {
     Paused,
     #[msg("The fee recipient and percentages must match in length")]
     InvalidFeeRecipients,
+    #[msg("The fee recipient must be writable")]
+    InvalidFeeRecipientWritable,
     #[msg("Supplied account must match the pool creator pubkey")]
     InvalidCreator,
     #[msg("Invalid swap fee recipient")]
