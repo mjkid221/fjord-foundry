@@ -3,6 +3,7 @@ import { findProgramAddressSync } from "@project-serum/anchor/dist/cjs/utils/pub
 import { PublicKey } from "@solana/web3.js";
 import { BanksClient } from "solana-bankrun";
 
+import { BN } from "../constants";
 import { FjordLbp } from "../types";
 
 import { getAccountBalance } from "./bankrun";
@@ -14,45 +15,79 @@ export const getAllAccountState = async ({
   shareTokenMint,
   assetTokenMint,
   user,
-  ownerConfigPda,
+  creator,
+  ownerConfigPda = PublicKey.findProgramAddressSync(
+    [Buffer.from("owner_config")],
+    program.programId
+  )[0],
+  treasuryPda = PublicKey.findProgramAddressSync(
+    [Buffer.from("treasury")],
+    program.programId
+  )[0],
 }: {
   program: Program<FjordLbp>;
   poolPda: PublicKey;
   bankRunClient: BanksClient;
   shareTokenMint: PublicKey;
   assetTokenMint: PublicKey;
+  creator: PublicKey;
   user: PublicKey;
-  ownerConfigPda: PublicKey;
+  ownerConfigPda?: PublicKey;
+  treasuryPda?: PublicKey;
 }) => {
+  const tryFetchAccountBalance = async (
+    userAddress: PublicKey,
+    tokenAddress: PublicKey
+  ) => {
+    try {
+      return await getAccountBalance(bankRunClient, userAddress, tokenAddress);
+    } catch {
+      return BN(0);
+    }
+  };
+
   const pool = await program.account.liquidityBootstrappingPool.fetch(poolPda);
-  const poolShareBalance = await getAccountBalance(
-    bankRunClient,
+  const treasury = await program.account.treasury.fetch(treasuryPda);
+  const poolShareBalance = await tryFetchAccountBalance(
     poolPda,
     shareTokenMint
   );
-  const poolAssetBalance = await getAccountBalance(
-    bankRunClient,
+  const poolAssetBalance = await tryFetchAccountBalance(
     poolPda,
     assetTokenMint
   );
+
+  const treasuryAssetBalance = await tryFetchAccountBalance(
+    treasuryPda,
+    assetTokenMint
+  );
+  const treasuryShareBalance = await tryFetchAccountBalance(
+    treasuryPda,
+    shareTokenMint
+  );
+
   const userPoolPda = findProgramAddressSync(
     [user.toBuffer(), poolPda.toBuffer()],
     program.programId
   )[0];
+  let userPoolAccount: any;
+  try {
+    userPoolAccount = await program.account.userStateInPool.fetch(userPoolPda);
+  } catch {
+    // Do nothing
+  }
 
-  const userPoolAccount = await program.account.userStateInPool.fetch(
-    userPoolPda
-  );
+  const userShareBalance = await tryFetchAccountBalance(user, shareTokenMint);
 
-  const userShareBalance = await getAccountBalance(
-    bankRunClient,
-    user,
+  const userAssetBalance = await tryFetchAccountBalance(user, assetTokenMint);
+
+  const creatorShareBalance = await tryFetchAccountBalance(
+    creator,
     shareTokenMint
   );
 
-  const userAssetBalance = await getAccountBalance(
-    bankRunClient,
-    user,
+  const creatorAssetBalance = await tryFetchAccountBalance(
+    creator,
     assetTokenMint
   );
 
@@ -70,5 +105,12 @@ export const getAllAccountState = async ({
     userAssetBalance,
     // Owner config
     ownerConfig,
+    // Treasury
+    treasury,
+    treasuryAssetBalance,
+    treasuryShareBalance,
+    // Pool creator
+    creatorShareBalance,
+    creatorAssetBalance,
   };
 };

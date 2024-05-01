@@ -14,7 +14,12 @@ export const getAccountBalance = async (
   tokenAddress: PublicKey
 ) => {
   const ata = await getAssociatedTokenAddress(tokenAddress, userAddress, true);
-  const rawAccountData = (await client.getAccount(ata))?.data;
-  const decoded = AccountLayout.decode(rawAccountData!);
-  return BN(decoded.amount.toString());
+
+  try {
+    const rawAccountData = (await client.getAccount(ata))?.data;
+    const decoded = AccountLayout.decode(rawAccountData!);
+    return BN(decoded.amount.toString());
+  } catch {
+    return BN(0);
+  }
 };

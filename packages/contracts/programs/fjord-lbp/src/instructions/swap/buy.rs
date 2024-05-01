@@ -1,8 +1,5 @@
 use anchor_lang::prelude::*;
-use anchor_spl::{
-    token::{self, Token, TokenAccount, Transfer},
-    token_2022::spl_token_2022::extension::transfer_fee::MAX_FEE_BASIS_POINTS,
-};
+use anchor_spl::token::{self, Token, TokenAccount, Transfer};
 
 use crate::{
     math::{calculate_fee, preview_assets_in, preview_shares_out},
@@ -178,14 +175,13 @@ fn _swap_assets_for_shares<'info>(
     pool.total_purchased = total_purchased_after;
     user_state_in_pool.purchased_shares += shares_out;
 
-    if referrer_state_in_pool.is_some() && global_pool_config.referral_fee != 0 {
-        let referrer_fee_fraction = safe_math::div_wad(
-            global_pool_config.referral_fee.into(),
-            MAX_FEE_BASIS_POINTS.into(),
-        );
-        let assets_referred = safe_math::mul_wad(assets_in, referrer_fee_fraction?)?;
-        pool.total_referred += assets_referred;
-        referrer_state_in_pool.as_mut().unwrap().referred_assets += assets_referred;
+    match referrer_state_in_pool.as_mut() {
+        Some(referrer_state) if global_pool_config.referral_fee != 0 => {
+            let assets_referred = calculate_fee(assets_in, global_pool_config.referral_fee);
+            pool.total_referred += assets_referred;
+            referrer_state.referred_assets += assets_referred;
+        }
+        _ => {}
     }
 
     emit!(Buy {

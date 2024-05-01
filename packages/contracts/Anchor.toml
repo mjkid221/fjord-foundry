@@ -13,12 +13,12 @@ skip-lint = false
 
 # Dev -----------------------------------------------------------------------
 # [programs.devnet]
-# fjord_lbp = "fjorR4ubuG42xkRUF6SrA1hKkb1T4LqgfupE1mPLK4K"
+# fjord_lbp = "HK6KFuWu9ZzEaiKy16LDcaQ2u1G1NAhib7pvNxzA3jKr"
 # ---------------------------------------------------------------------------
 
 # Local ---------------------------------------------------------------------
 [programs.localnet]
-fjord_lbp = "9yf45kAVeaaaAqBewB6fLX4ie5qBC2vWwqiBhNQayvWq"
+fjord_lbp = "HK6KFuWu9ZzEaiKy16LDcaQ2u1G1NAhib7pvNxzA3jKr"
 # ---------------------------------------------------------------------------
 
 [registry]

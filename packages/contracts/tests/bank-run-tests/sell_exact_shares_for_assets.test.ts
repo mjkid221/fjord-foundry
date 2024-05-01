@@ -57,6 +57,10 @@ describe("Fjord LBP - Sell - shares for exact assets", () => {
 
   // Address of the deployed pool
   let poolPda: PublicKey;
+  const treasuryPda: PublicKey = PublicKey.findProgramAddressSync(
+    [Buffer.from("treasury")],
+    lbpProgramId
+  )[0];
 
   // A fixed account that holds the owner configuration of all the pools (e.g. fees)
   let ownerConfigPda: PublicKey;
@@ -126,6 +130,8 @@ describe("Fjord LBP - Sell - shares for exact assets", () => {
     // Bankrun runs a fresh instance of the network which doesn't come with a valid program_data account that's needed in initializeOwnerConfig().
     // So we must first start the anchor with our program, then initialize the owner config, then start the bankrun client with the ported over account.
     const ownerConfigAcc = await connection.getAccountInfo(ownerConfigPda);
+    const treasuryAcc = await connection.getAccountInfo(treasuryPda);
+
     bankRunCtx = await startAnchor(
       "",
       [],
@@ -133,6 +139,10 @@ describe("Fjord LBP - Sell - shares for exact assets", () => {
         {
           address: ownerConfigPda,
           info: ownerConfigAcc!,
+        },
+        {
+          address: treasuryPda,
+          info: treasuryAcc!,
         },
       ]
     );
@@ -299,7 +309,7 @@ describe("Fjord LBP - Sell - shares for exact assets", () => {
         .rpc();
     });
 
-    it("should be able to sell project token (shares) for exact collateral tokens (assets)", async () => {
+    it("should be able to sell exact project tokens (shares) for collateral tokens (assets)", async () => {
       const {
         userAssetBalance: userAssetBalanceBefore,
         poolAssetBalance: poolAssetBalanceBefore,
@@ -314,14 +324,16 @@ describe("Fjord LBP - Sell - shares for exact assets", () => {
         assetTokenMint,
         user: testUserA.publicKey,
         ownerConfigPda,
+        creator: creator.publicKey,
       });
 
-      const assetsToSell = BN("100000000");
+      // Number of project tokens to sell (Shares)
+      const sharesIn = userPoolAccountBefore.purchasedShares.div(BN(2));
 
-      const maxSharesIn = await program.methods
-        .previewSharesIn(
-          // Assets to sell (Collateral)
-          assetsToSell
+      const minAssetsOut = await program.methods
+        .previewAssetsOut(
+          // Shares to sell (Collateral)
+          sharesIn
         )
         .accounts({
           assetTokenMint,
@@ -332,11 +344,11 @@ describe("Fjord LBP - Sell - shares for exact assets", () => {
         })
         .signers([creator])
         .simulate()
-        .then((data) => data.events[0].data.sharesIn as BigNumber);
+        .then((data) => data.events[0].data.assetsOut as BigNumber);
 
       // Sell project token
       await program.methods
-        .swapSharesForExactAssets(assetsToSell, maxSharesIn, null, null)
+        .swapExactSharesForAssets(sharesIn, minAssetsOut, null, null)
         .accounts({
           assetTokenMint,
           shareTokenMint,
@@ -367,39 +379,40 @@ describe("Fjord LBP - Sell - shares for exact assets", () => {
         assetTokenMint,
         user: testUserA.publicKey,
         ownerConfigPda,
+        creator: creator.publicKey,
       });
 
       expect(userPoolAccountAfter.purchasedShares.toString()).to.eq(
-        userPoolAccountBefore.purchasedShares.sub(maxSharesIn).toString()
+        userPoolAccountBefore.purchasedShares.sub(sharesIn).toString()
       );
       expect(userAssetBalanceAfter.toString()).to.eq(
-        userAssetBalanceBefore.add(assetsToSell).toString()
+        userAssetBalanceBefore.add(minAssetsOut).toString()
       );
-
-      expect(poolAfter.totalSwapFeesShare.toNumber()).to.be.closeTo(
+      expect(poolAfter.totalSwapFeesShare.toString()).to.eq(
         poolBefore.totalSwapFeesShare
-          .add(maxSharesIn.mul(BN(swapFee)).div(BN(MAX_FEE_BASIS_POINTS)))
-          .toNumber(),
-        120000 // 0.99% error margin
+          .add(sharesIn.mul(BN(swapFee)).div(BN(MAX_FEE_BASIS_POINTS)))
+          .toString()
       );
       expect(poolAfter.totalPurchased.toString()).to.eq(
-        poolBefore.totalPurchased.sub(maxSharesIn).toString()
+        poolBefore.totalPurchased.sub(sharesIn).toString()
       );
       expect(poolAssetBalanceAfter.toString()).to.eq(
-        poolAssetBalanceBefore.sub(assetsToSell).toString()
+        poolAssetBalanceBefore.sub(minAssetsOut).toString()
       );
     });
 
-    it("should be able to sell project tokens (shares) for exact collateral tokens (assets) with a referrer but no referrer fee is assigned", async () => {
-      const { userPoolPda } = await getAllAccountState({
-        program,
-        poolPda,
-        bankRunClient,
-        shareTokenMint,
-        assetTokenMint,
-        user: testUserA.publicKey,
-        ownerConfigPda,
-      });
+    it("should be able to sell exact project tokens (shares) for collateral tokens (assets) with a referrer but no referrer fee is assigned", async () => {
+      const { userPoolPda, userPoolAccount: userPoolAccountBefore } =
+        await getAllAccountState({
+          program,
+          poolPda,
+          bankRunClient,
+          shareTokenMint,
+          assetTokenMint,
+          user: testUserA.publicKey,
+          ownerConfigPda,
+          creator: creator.publicKey,
+        });
 
       // We compute the referrer's account in the pool if a referrer exists
       const referrer: PublicKey | null = Keypair.generate().publicKey;
@@ -411,12 +424,12 @@ describe("Fjord LBP - Sell - shares for exact assets", () => {
         : null;
 
       // Number of project tokens to sell (Shares)
-      const assetsToSell = BN("100000000");
+      const sharesIn = userPoolAccountBefore.purchasedShares.div(BN(2));
 
-      const maxSharesIn = await program.methods
-        .previewSharesIn(
-          // Assets to sell (Collateral)
-          assetsToSell
+      const minAssetsOut = await program.methods
+        .previewAssetsOut(
+          // Shares to sell (Collateral)
+          sharesIn
         )
         .accounts({
           assetTokenMint,
@@ -427,11 +440,11 @@ describe("Fjord LBP - Sell - shares for exact assets", () => {
         })
         .signers([creator])
         .simulate()
-        .then((data) => data.events[0].data.sharesIn as BigNumber);
+        .then((data) => data.events[0].data.assetsOut as BigNumber);
 
       // Sell project token
       await program.methods
-        .swapSharesForExactAssets(assetsToSell, maxSharesIn, null, referrer)
+        .swapExactSharesForAssets(sharesIn, minAssetsOut, null, referrer)
         .accounts({
           assetTokenMint,
           shareTokenMint,
@@ -454,6 +467,86 @@ describe("Fjord LBP - Sell - shares for exact assets", () => {
 
       expect(referrerPoolAccount.referredAssets.toString()).to.eq(
         BN(0).toString()
+      );
+    });
+
+    it("should be able to swap exact project tokens (shares) for collateral tokens (assets) when the number of shares out is greater that that in the preview.", async () => {
+      const { userPoolPda, userPoolAccount: userPoolAccountBefore } =
+        await getAllAccountState({
+          program,
+          poolPda,
+          bankRunClient,
+          shareTokenMint,
+          assetTokenMint,
+          user: testUserA.publicKey,
+          ownerConfigPda,
+          creator: creator.publicKey,
+        });
+
+      // Number of project tokens to sell (Shares)
+      const sharesIn = userPoolAccountBefore.purchasedShares.div(BN(3));
+
+      const greaterSharesIn = userPoolAccountBefore.purchasedShares.div(BN(2));
+
+      const minAssetsOut = await program.methods
+        .previewAssetsOut(
+          // Shares to sell (Collateral)
+          sharesIn
+        )
+        .accounts({
+          assetTokenMint,
+          shareTokenMint,
+          pool: poolPda,
+          poolAssetTokenAccount,
+          poolShareTokenAccount,
+        })
+        .signers([creator])
+        .simulate()
+        .then((data) => data.events[0].data.assetsOut as BigNumber);
+
+      // Sell project token
+      await program.methods
+        .swapExactSharesForAssets(greaterSharesIn, minAssetsOut, null, null)
+        .accounts({
+          assetTokenMint,
+          shareTokenMint,
+          user: testUserA.publicKey,
+          pool: poolPda,
+          poolAssetTokenAccount,
+          poolShareTokenAccount,
+          userAssetTokenAccount: assetTokenMintUserAccount,
+          userShareTokenAccount: shareTokenMintUserAccount,
+          config: ownerConfigPda,
+          referrerStateInPool: null,
+          userStateInPool: userPoolPda,
+        })
+        .signers([testUserA])
+        .rpc();
+
+      const {
+        userPoolAccount: userPoolAccountAfter,
+        userAssetBalance: userAssetBalanceAfter,
+      } = await getAllAccountState({
+        program,
+        poolPda,
+        bankRunClient,
+        shareTokenMint,
+        assetTokenMint,
+        user: testUserA.publicKey,
+        ownerConfigPda,
+        creator: creator.publicKey,
+      });
+
+      expect(userPoolAccountAfter.purchasedShares.toString()).to.eq(
+        userPoolAccountBefore.purchasedShares.sub(greaterSharesIn).toString()
+      );
+
+      expect(Number(sharesIn.toString())).to.be.lessThan(
+        Number(greaterSharesIn.toString())
+      );
+
+      expect(Number(userAssetBalanceAfter.toString())).to.be.greaterThan(
+        Number(minAssetsOut.toString())
       );
     });
   });
@@ -553,7 +646,7 @@ describe("Fjord LBP - Sell - shares for exact assets", () => {
         .rpc();
     });
 
-    it("should be able to sell project tokens (shares) for exact collateral tokens (assets) when a user is whitelisted", async () => {
+    it("should be able to sell exact project tokens (shares) for collateral tokens (assets) when a user is whitelisted", async () => {
       const {
         userAssetBalance: userAssetBalanceBefore,
         poolAssetBalance: poolAssetBalanceBefore,
@@ -568,19 +661,21 @@ describe("Fjord LBP - Sell - shares for exact assets", () => {
         assetTokenMint,
         user: testUserA.publicKey,
         ownerConfigPda,
+        creator: creator.publicKey,
       });
+
+      // Number of project tokens to sell (Shares)
+      const sharesIn = userPoolAccountBefore.purchasedShares.div(BN(2));
 
       const merkleProof = generateMerkleProof(
         whitelistedAddresses,
         testUserA.publicKey.toBase58()
       );
 
-      const assetsToSell = BN("100000000");
-
-      const maxSharesIn = await program.methods
-        .previewSharesIn(
-          // Assets to sell (Collateral)
-          assetsToSell
+      const minAssetsOut = await program.methods
+        .previewAssetsOut(
+          // Shares to sell (Collateral)
+          sharesIn
         )
         .accounts({
           assetTokenMint,
@@ -591,11 +686,11 @@ describe("Fjord LBP - Sell - shares for exact assets", () => {
         })
         .signers([creator])
         .simulate()
-        .then((data) => data.events[0].data.sharesIn as BigNumber);
+        .then((data) => data.events[0].data.assetsOut as BigNumber);
 
       // Sell project token
       await program.methods
-        .swapSharesForExactAssets(assetsToSell, maxSharesIn, merkleProof, null)
+        .swapExactSharesForAssets(sharesIn, minAssetsOut, merkleProof, null)
         .accounts({
           assetTokenMint,
           shareTokenMint,
@@ -626,31 +721,30 @@ describe("Fjord LBP - Sell - shares for exact assets", () => {
         assetTokenMint,
         user: testUserA.publicKey,
         ownerConfigPda,
+        creator: creator.publicKey,
       });
 
       expect(userPoolAccountAfter.purchasedShares.toString()).to.eq(
-        userPoolAccountBefore.purchasedShares.sub(maxSharesIn).toString()
+        userPoolAccountBefore.purchasedShares.sub(sharesIn).toString()
       );
       expect(userAssetBalanceAfter.toString()).to.eq(
-        userAssetBalanceBefore.add(assetsToSell).toString()
+        userAssetBalanceBefore.add(minAssetsOut).toString()
       );
-
-      expect(poolAfter.totalSwapFeesShare.toNumber()).to.be.closeTo(
+      expect(poolAfter.totalSwapFeesShare.toString()).to.eq(
         poolBefore.totalSwapFeesShare
-          .add(maxSharesIn.mul(BN(swapFee)).div(BN(MAX_FEE_BASIS_POINTS)))
-          .toNumber(),
-        120000 // 0.99% error margin
+          .add(sharesIn.mul(BN(swapFee)).div(BN(MAX_FEE_BASIS_POINTS)))
+          .toString()
       );
       expect(poolAfter.totalPurchased.toString()).to.eq(
-        poolBefore.totalPurchased.sub(maxSharesIn).toString()
+        poolBefore.totalPurchased.sub(sharesIn).toString()
       );
       expect(poolAssetBalanceAfter.toString()).to.eq(
-        poolAssetBalanceBefore.sub(assetsToSell).toString()
+        poolAssetBalanceBefore.sub(minAssetsOut).toString()
       );
     });
   });
 
-  describe("Failure cases - merkle root whitelist present", async () => {
+  describe("Failure cases - merkle proof present", async () => {
     beforeEach(async () => {
       const sharesAmount = initialProjectTokenBalanceCreator;
       const assetsAmount = initialCollateralTokenBalanceCreator;
@@ -745,22 +839,25 @@ describe("Fjord LBP - Sell - shares for exact assets", () => {
         .rpc();
     });
     it("Should not be able to sell when the whitelist is not passed as a param", async () => {
-      const { userPoolPda } = await getAllAccountState({
-        program,
-        poolPda,
-        bankRunClient,
-        shareTokenMint,
-        assetTokenMint,
-        user: testUserA.publicKey,
-        ownerConfigPda,
-      });
+      const { userPoolPda, userPoolAccount: userPoolAccountBefore } =
+        await getAllAccountState({
+          program,
+          poolPda,
+          bankRunClient,
+          shareTokenMint,
+          assetTokenMint,
+          user: testUserA.publicKey,
+          ownerConfigPda,
+          creator: creator.publicKey,
+        });
 
-      const assetsToSell = BN("100000000");
+      // Number of project tokens to sell (Shares)
+      const sharesIn = userPoolAccountBefore.purchasedShares.div(BN(2));
 
-      const maxSharesIn = await program.methods
-        .previewSharesIn(
-          // Assets to sell (Collateral)
-          assetsToSell
+      const minAssetsOut = await program.methods
+        .previewAssetsOut(
+          // Shares to sell (Collateral)
+          sharesIn
         )
         .accounts({
           assetTokenMint,
@@ -771,13 +868,12 @@ describe("Fjord LBP - Sell - shares for exact assets", () => {
         })
         .signers([creator])
         .simulate()
-        .then((data) => data.events[0].data.sharesIn as BigNumber);
+        .then((data) => data.events[0].data.assetsOut as BigNumber);
 
       // Sell project token
       await expect(
-        // Sell project token
         program.methods
-          .swapSharesForExactAssets(assetsToSell, maxSharesIn, null, null)
+          .swapExactSharesForAssets(sharesIn, minAssetsOut, null, null) // No merkle proof passed as a param
           .accounts({
             assetTokenMint,
             shareTokenMint,
@@ -888,7 +984,7 @@ describe("Fjord LBP - Sell - shares for exact assets", () => {
 
       await expect(
         program.methods
-          .swapSharesForExactAssets(BN(1), BN(1), null, null)
+          .swapExactSharesForAssets(BN(1), BN(1), null, null)
           .accounts({
             assetTokenMint,
             shareTokenMint,
@@ -914,7 +1010,7 @@ describe("Fjord LBP - Sell - shares for exact assets", () => {
 
       await expect(
         program.methods
-          .swapSharesForExactAssets(BN(1), BN(1), null, null)
+          .swapExactSharesForAssets(BN(1), BN(1), null, null)
           .accounts({
             assetTokenMint,
             shareTokenMint,

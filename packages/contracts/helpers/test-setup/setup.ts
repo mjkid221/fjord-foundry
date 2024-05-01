@@ -29,6 +29,8 @@ export const setup = async ({
   bankRunClient,
   decimalsTokenA = 9,
   decimalsTokenB = 9,
+  supplyTokenA = 1000000,
+  supplyTokenB = 1000000,
 }: {
   payer: Keypair;
   testUser?: Keypair;
@@ -36,6 +38,8 @@ export const setup = async ({
   bankRunClient?: BanksClient;
   decimalsTokenA?: number;
   decimalsTokenB?: number;
+  supplyTokenA?: number;
+  supplyTokenB?: number;
 }) => {
   // Deploys two tokens for testing. Token A and Token B.
   const {
@@ -48,6 +52,7 @@ export const setup = async ({
     testUser,
     bankRunClient,
     decimals: decimalsTokenA,
+    amount: supplyTokenA,
   });
 
   const {
@@ -60,6 +65,7 @@ export const setup = async ({
     testUser,
     bankRunClient,
     decimals: decimalsTokenB,
+    amount: supplyTokenB,
   });
 
   return {

@@ -1,10 +1,10 @@
 use anchor_lang::prelude::*;
-use anchor_spl::token::{self, Token, TokenAccount, Transfer};
+use anchor_spl::token::{Token, TokenAccount};
 
 use crate::{
     math::{calculate_fee, preview_assets_out, preview_shares_in},
-    safe_math, standard_checks, LiquidityBootstrappingPool, OwnerConfig, PoolError,
-    PreviewAmountArgs, Sell, SwapTokens, UserStateInPool,
+    safe_math, standard_checks, transfer_tokens_from, LiquidityBootstrappingPool, OwnerConfig,
+    PoolError, PreviewAmountArgs, Sell, SwapTokens, UserStateInPool,
 };
 
 /// Swap a specific number of shares for a maximum amount of assets.
@@ -160,25 +160,19 @@ fn _swap_shares_for_assets<'info>(
     user_state_in_pool.purchased_shares -= shares_in;
     pool.total_purchased = total_purchased_before - shares_in;
 
-    // Transfer assets from pool to user
-    let asset_transfer_instruction = Transfer {
-        from: pool_asset_token_account.to_account_info(),
-        to: user_asset_token_account.to_account_info(),
-        authority: pool.to_account_info(),
-    };
-    let seeds = &[
-        pool.share_token.as_ref(),
-        pool.asset_token.as_ref(),
-        pool.creator.as_ref(),
-        &[pool.bump],
-    ];
-    let signer_seeds = &[&seeds[..]];
-    let asset_cpi_ctx = CpiContext::new_with_signer(
+    transfer_tokens_from(
         token_program.to_account_info(),
-        asset_transfer_instruction,
-        signer_seeds,
-    );
-    token::transfer(asset_cpi_ctx, assets_out)?;
+        pool_asset_token_account.to_account_info(),
+        user_asset_token_account.to_account_info(),
+        pool.to_account_info(),
+        &[
+            pool.share_token.as_ref(),
+            pool.asset_token.as_ref(),
+            pool.creator.as_ref(),
+            &[pool.bump],
+        ],
+        assets_out,
+    )?;
 
     emit!(Sell {
         user: user.key(),

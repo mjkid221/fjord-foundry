@@ -1,10 +1,16 @@
 use anchor_spl::token_2022::spl_token_2022::extension::transfer_fee::MAX_FEE_BASIS_POINTS;
 
-pub struct ComputedReservesAndWeights {
-    pub asset_reserve: u64,
-    pub share_reserve: u64,
-    pub asset_weight: u64,
-    pub share_weight: u64,
+const DECIMAL_SCALING: u64 = 5;
+const SCALED_DECIMALS: u64 = 10_u64.pow(DECIMAL_SCALING as u32);
+pub mod structs {
+    use anchor_lang::prelude::*;
+    #[derive(AnchorDeserialize, AnchorSerialize, Clone)]
+    pub struct ComputedReservesAndWeights {
+        pub asset_reserve: u64,
+        pub share_reserve: u64,
+        pub asset_weight: u64,
+        pub share_weight: u64,
+    }
 }
 
 pub struct ScaledReserves {
@@ -36,10 +42,10 @@ pub struct PreviewAmountArgs {
 }
 
 pub mod math {
-
+    use self::structs::ComputedReservesAndWeights;
     use super::*;
     use crate::{
-        div_wad, get_amount_in, get_amount_out, mul_wad,
+        get_amount_in, get_amount_out, mul_div,
         safe_math::{div, mul, safe_add, safe_sub},
         safe_pow, weighted_math_lib, PreviewAmountArgs, SafeMathError,
     };
@@ -54,7 +60,6 @@ pub mod math {
             asset_reserve_scaled,
             share_reserve_scaled,
         } = _get_scaled_reserves_and_weights(&args)?;
-
         let assets_in_scaled = _scale_token(args.asset_token_decimal, assets_in, true)?;
         let mut shares_out = get_amount_out(
             assets_in_scaled,
@@ -64,11 +69,10 @@ pub mod math {
             share_weight,
         )?;
 
-        if div_wad(assets_in_scaled, shares_out)? > args.max_share_price {
-            shares_out = mul_wad(assets_in_scaled, args.max_share_price)?;
+        if mul_div(assets_in_scaled, SCALED_DECIMALS, shares_out)? > args.max_share_price {
+            shares_out = mul_div(assets_in_scaled, args.max_share_price, SCALED_DECIMALS)?;
         }
         shares_out = _scale_token(args.share_token_decimal, shares_out, false)?;
-
         Ok(shares_out)
     }
 
@@ -82,7 +86,6 @@ pub mod math {
             asset_reserve_scaled,
             share_reserve_scaled,
         } = _get_scaled_reserves_and_weights(&args)?;
-
         let shares_out_scaled = _scale_token(args.share_token_decimal, shares_out, true)?;
         let mut assets_in = get_amount_in(
             shares_out_scaled,
@@ -91,9 +94,8 @@ pub mod math {
             asset_weight,
             share_weight,
         )?;
-
-        if div_wad(assets_in, shares_out_scaled)? > args.max_share_price {
-            assets_in = div_wad(shares_out_scaled, args.max_share_price)?;
+        if mul_div(assets_in, SCALED_DECIMALS, shares_out_scaled)? > args.max_share_price {
+            assets_in = mul_div(shares_out_scaled, SCALED_DECIMALS, args.max_share_price)?;
         }
         assets_in = _scale_token(args.asset_token_decimal, assets_in, false)?;
         Ok(assets_in)
@@ -120,8 +122,8 @@ pub mod math {
             asset_weight,
         )?;
 
-        if div_wad(assets_out_scaled, shares_in)? > args.max_share_price {
-            shares_in = div_wad(assets_out_scaled, args.max_share_price)?;
+        if mul_div(assets_out_scaled, SCALED_DECIMALS, shares_in)? > args.max_share_price {
+            shares_in = mul_div(assets_out_scaled, SCALED_DECIMALS, args.max_share_price)?;
         }
 
         shares_in = _scale_token(args.share_token_decimal, shares_in, false)?;
@@ -148,8 +150,8 @@ pub mod math {
             asset_weight,
         )?;
 
-        if div_wad(assets_out, shares_in_scaled)? > args.max_share_price {
-            assets_out = mul_wad(shares_in_scaled, args.max_share_price)?;
+        if mul_div(assets_out, SCALED_DECIMALS, shares_in_scaled)? > args.max_share_price {
+            assets_out = mul_div(shares_in_scaled, args.max_share_price, SCALED_DECIMALS)?;
         }
         assets_out = _scale_token(args.asset_token_decimal, assets_out, false)?;
         Ok(assets_out)
@@ -183,7 +185,7 @@ pub mod math {
         })
     }
 
-    fn compute_reserves_and_weights(
+    pub fn compute_reserves_and_weights(
         args: &PreviewAmountArgs,
     ) -> Result<ComputedReservesAndWeights, SafeMathError> {
         let PreviewAmountArgs {
@@ -246,17 +248,19 @@ pub mod math {
         let mut scaled_amount = amount;
         let token_decimals_u64 = u64::from(token_decimals);
 
-        let dec_diff = if token_decimals_u64 < 9 {
-            9 - token_decimals_u64
+        let dec_diff = if token_decimals_u64 < DECIMAL_SCALING {
+            DECIMAL_SCALING - token_decimals_u64
         } else {
-            token_decimals_u64 - 9
+            token_decimals_u64 - DECIMAL_SCALING
         };
 
         // Determine whether to multiply or divide based on `scale_before` flag
-        if (token_decimals_u64 < 9 && scale_before) || (token_decimals_u64 > 9 && !scale_before) {
+        if (token_decimals_u64 < DECIMAL_SCALING && scale_before)
+            || (token_decimals_u64 > DECIMAL_SCALING && !scale_before)
+        {
             scaled_amount = mul(scaled_amount, safe_pow(10u64, dec_diff as u32)?)?;
-        } else if (token_decimals_u64 < 9 && !scale_before)
-            || (token_decimals_u64 > 9 && scale_before)
+        } else if (token_decimals_u64 < DECIMAL_SCALING && !scale_before)
+            || (token_decimals_u64 > DECIMAL_SCALING && scale_before)
         {
             scaled_amount = div(scaled_amount, safe_pow(10u64, dec_diff as u32)?)?;
         }
@@ -265,6 +269,6 @@ pub mod math {
     }
 
     pub fn calculate_fee(amount: u64, fee: u16) -> u64 {
-        amount * u64::from(fee) / u64::from(MAX_FEE_BASIS_POINTS)
+        (u128::from(amount) * u128::from(fee) / u128::from(MAX_FEE_BASIS_POINTS)) as u64
     }
 }

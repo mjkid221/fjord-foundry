@@ -9,7 +9,7 @@ pub struct OwnerConfig {
     // We store our bump seed as a form of optimization
 
     // Fee settings
-    pub fee_recipient: Pubkey,
+    pub treasury: Pubkey,
     pub platform_fee: u16,
     pub referral_fee: u16,
     pub swap_fee: u16,

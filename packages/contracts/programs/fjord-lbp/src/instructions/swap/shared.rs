@@ -49,7 +49,6 @@ pub struct SwapTokens<'info> {
     pub user_share_token_account: Box<Account<'info, TokenAccount>>,
     // Global pool config
     #[account(
-      mut, 
       seeds = ["owner_config".as_bytes()],
       bump = config.bump
     )]

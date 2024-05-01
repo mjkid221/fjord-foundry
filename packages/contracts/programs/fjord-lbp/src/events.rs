@@ -31,13 +31,19 @@ pub struct Sell {
     pub swap_fee: u64,
 }
 
-// Emitted when the fee settings are updated
 #[event]
-pub struct FeeSet {
-    pub fee_recipient: Pubkey,
-    pub platform_fee: u16,
-    pub referral_fee: u16,
-    pub swap_fee: u16,
+pub struct Close {
+    // The amount of assets transferred out during the pool closure
+    pub assets: u64,
+    pub platform_fees: u64,
+    pub swap_fees_asset: u64,
+    pub swap_fees_share: u64,
+}
+
+#[event]
+pub struct Redeem {
+    pub caller: Pubkey,
+    pub shares: u64,
 }
 
 // For Read-only contexts
@@ -59,4 +65,12 @@ pub struct PreviewSharesIn {
 #[event]
 pub struct PreviewSharesOut {
     pub shares_out: u64,
+}
+
+#[event]
+pub struct ReservesAndWeights {
+    pub asset_reserve: u64,
+    pub share_reserve: u64,
+    pub asset_weight: u64,
+    pub share_weight: u64,
 }

@@ -61,6 +61,10 @@ describe("Fjord LBP - Buy `swapExactAssetsForShares`", () => {
 
   // Address of the deployed pool
   let poolPda: PublicKey;
+  const treasuryPda: PublicKey = PublicKey.findProgramAddressSync(
+    [Buffer.from("treasury")],
+    lbpProgramId
+  )[0];
 
   // A fixed account that holds the owner configuration of all the pools (e.g. fees)
   let ownerConfigPda: PublicKey;
@@ -118,6 +122,8 @@ describe("Fjord LBP - Buy `swapExactAssetsForShares`", () => {
     // Bankrun runs a fresh instance of the network which doesn't come with a valid program_data account that's needed in initializeOwnerConfig().
     // So we must first start the anchor with our program, then initialize the owner config, then start the bankrun client with the ported over account.
     const ownerConfigAcc = await connection.getAccountInfo(ownerConfigPda);
+    const treasuryAcc = await connection.getAccountInfo(treasuryPda);
+
     bankRunCtx = await startAnchor(
       "",
       [],
@@ -125,6 +131,10 @@ describe("Fjord LBP - Buy `swapExactAssetsForShares`", () => {
         {
           address: ownerConfigPda,
           info: ownerConfigAcc!,
+        },
+        {
+          address: treasuryPda,
+          info: treasuryAcc!,
         },
       ]
     );
@@ -1962,9 +1972,7 @@ describe("Fjord LBP - Buy `swapExactAssetsForShares`", () => {
         .simulate()
         .then((data) => data.events[0].data.sharesOut as BigNumber);
 
-      const largerSharesOutNumber = BN(
-        (expectedSharesOut.toNumber() * 1.05).toString()
-      );
+      const largerSharesOutNumber = BN(expectedSharesOut.toNumber() * 1.05);
 
       await expect(
         program.methods

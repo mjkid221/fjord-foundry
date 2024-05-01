@@ -17,6 +17,8 @@ pub enum PoolError {
     InvalidAssetValue,
     #[msg("Max Fee Exceeded")]
     MaxFeeExceeded,
+    #[msg("Fee percentages must add up to 100% (10000)")]
+    InvalidPercentageSum,
     #[msg("Max allowed assets in exceeded")]
     AssetsInExceeded,
     #[msg("Max allowed shares out exceeded")]
@@ -49,6 +51,16 @@ pub enum PoolError {
     InsufficientShares,
     #[msg("There are insuffcient assets to transfer in your account")]
     InsufficientAssets,
+    #[msg("The pool is paused")]
+    Paused,
+    #[msg("The fee recipient and percentages must match in length")]
+    InvalidFeeRecipients,
+    #[msg("The fee recipient must be writable")]
+    InvalidFeeRecipientWritable,
+    #[msg("Supplied account must match the pool creator pubkey")]
+    InvalidCreator,
+    #[msg("Invalid swap fee recipient")]
+    InvalidSwapFeeRecipient,
 }
 
 // Access Control Errors
@@ -56,6 +68,8 @@ pub enum PoolError {
 pub enum AccessControlError {
     #[msg("Only owner can call this function")]
     Unauthorized,
+    #[msg("Only the program upgrade authority can call this function")]
+    NotUpgradeAuthority,
 }
 
 #[error_code]
@@ -76,4 +90,6 @@ pub enum SafeMathError {
     AmountInTooLarge,
     #[msg("WeightedMathLib: amount_out exceeds MAX_PERCENTAGE_OUT")]
     AmountOutTooLarge,
+    #[msg("WeightedMathLib: Logarithm undefined")]
+    LogarithmUndefined,
 }
