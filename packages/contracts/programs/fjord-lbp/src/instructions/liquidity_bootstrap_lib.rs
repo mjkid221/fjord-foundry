@@ -203,7 +203,7 @@ pub mod math {
             share_token_decimal: _,
             max_share_price: _,
         } = *args;
-        let asset_reserve: u64 = safe_sub(assets, virtual_assets)?;
+        let asset_reserve: u64 = safe_add(assets, virtual_assets)?;
         let share_reserve: u64 = safe_sub(safe_add(shares, virtual_shares)?, total_purchased)?;
         let total_seconds = sale_end_time - sale_start_time;
 
