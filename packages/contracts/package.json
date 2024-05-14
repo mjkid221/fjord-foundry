@@ -11,7 +11,8 @@
     "compile": "anchor build",
     "clean": "anchor clean",
     "test": "yarn transfer-anchor-config && anchor test",
-    "deploy": "anchor deploy"
+    "deploy": "anchor deploy",
+    "run:initialize-owner-config": "ts-node ./scripts/initialize-owner-config.ts"
   },
   "dependencies": {
     "@coral-xyz/anchor": "^0.29.0",
