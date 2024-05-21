@@ -14,7 +14,7 @@ pub use state::*;
 pub use utils::*;
 
 // Program Id for the Fjord LBP program. This is the address this program will be deployed to.
-declare_id!("HK6KFuWu9ZzEaiKy16LDcaQ2u1G1NAhib7pvNxzA3jKr");
+declare_id!("7UTvQUzE1iThaXhXDg1FsVoqcv3MBAgwUCW7PEKzNbPH");
 
 #[program]
 pub mod fjord_lbp {
