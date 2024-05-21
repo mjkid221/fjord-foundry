@@ -49,6 +49,7 @@ pub mod fjord_lbp {
     #[allow(clippy::too_many_arguments)]
     pub fn initialize_pool(
         ctx: Context<InitializePool>,
+        salt: String,
         assets: u64,
         shares: u64,
         virtual_assets: u64,
@@ -67,6 +68,7 @@ pub mod fjord_lbp {
     ) -> Result<()> {
         initialize_pool::create_pool(
             ctx,
+            salt,
             assets,
             shares,
             virtual_assets,

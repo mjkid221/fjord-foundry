@@ -8,7 +8,7 @@ use anchor_spl::token::{Mint, Token};
 pub struct OnlyPoolCreator<'info> {
     #[account(
       mut,
-      seeds = [share_token_mint.key().as_ref(), asset_token_mint.key().as_ref(), creator.key().as_ref()], 
+      seeds = [share_token_mint.key().as_ref(), asset_token_mint.key().as_ref(), creator.key().as_ref(), pool.salt.as_bytes()], 
       bump
     )]
     pub pool: Account<'info, LiquidityBootstrappingPool>,

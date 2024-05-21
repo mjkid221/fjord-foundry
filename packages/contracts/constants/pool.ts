@@ -22,6 +22,13 @@ const DEFAULT_VESTING_END_BN = DEFAULT_VESTING_CLIFF_BN.add(
 );
 
 /**
+ * Generates a random salt.
+ * @dev Note: This is for testing purposes only.
+ */
+export const generateRandomSalt = () =>
+  Number(new Date().getTime() / 1000).toString();
+
+/**
  * !NOTE For testing
  */
 const testMerkleWhitelistedAddresses = [

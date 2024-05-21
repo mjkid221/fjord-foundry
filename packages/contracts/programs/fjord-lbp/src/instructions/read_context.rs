@@ -9,7 +9,7 @@ pub struct ReturnPreviewContext<'info> {
   pub asset_token_mint: Account<'info, Mint>,
   pub share_token_mint: Account<'info, Mint>,
   #[account(
-    seeds = [share_token_mint.key().as_ref(), asset_token_mint.key().as_ref(), pool.creator.key().as_ref()], 
+    seeds = [share_token_mint.key().as_ref(), asset_token_mint.key().as_ref(), pool.creator.key().as_ref(), pool.salt.as_bytes()], 
     bump = pool.bump
   )]
   pub pool: Account<'info, LiquidityBootstrappingPool>,

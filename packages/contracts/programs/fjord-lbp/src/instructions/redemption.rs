@@ -22,7 +22,7 @@ pub struct ClosePool<'info> {
     // The pool --------------------------------------------------------
     #[account(
       mut,
-      seeds = [share_token_mint.key().as_ref(), asset_token_mint.key().as_ref(), pool.creator.key().as_ref()], 
+      seeds = [share_token_mint.key().as_ref(), asset_token_mint.key().as_ref(), pool.creator.key().as_ref(), pool.salt.as_bytes()], 
       bump = pool.bump
     )]
     pub pool: Box<Account<'info, LiquidityBootstrappingPool>>,
@@ -114,7 +114,7 @@ pub struct RedeemTokens<'info> {
   pub share_token_mint: Account<'info, Mint>,
   // The pool --------------------------------------------------------
   #[account(
-    seeds = [share_token_mint.key().as_ref(), asset_token_mint.key().as_ref(), pool.creator.key().as_ref()], 
+    seeds = [share_token_mint.key().as_ref(), asset_token_mint.key().as_ref(), pool.creator.key().as_ref(), pool.salt.as_bytes()], 
     bump = pool.bump
   )]
   pub pool: Box<Account<'info, LiquidityBootstrappingPool>>,
@@ -190,6 +190,7 @@ pub fn close_pool<'info>(ctx: Context<'_, '_, '_, 'info, ClosePool<'info>>) -> R
                 pool.share_token.as_ref(),
                 pool.asset_token.as_ref(),
                 pool.creator.as_ref(),
+                pool.salt.as_bytes(),
                 &[pool.bump],
             ],
             platform_fees + pool.total_swap_fees_asset,
@@ -205,6 +206,7 @@ pub fn close_pool<'info>(ctx: Context<'_, '_, '_, 'info, ClosePool<'info>>) -> R
                 pool.share_token.as_ref(),
                 pool.asset_token.as_ref(),
                 pool.creator.as_ref(),
+                pool.salt.as_bytes(),
                 &[pool.bump],
             ],
             pool.total_swap_fees_share,
@@ -267,6 +269,7 @@ pub fn close_pool<'info>(ctx: Context<'_, '_, '_, 'info, ClosePool<'info>>) -> R
                 pool.share_token.as_ref(),
                 pool.asset_token.as_ref(),
                 pool.creator.as_ref(),
+                pool.salt.as_bytes(),
                 &[pool.bump],
             ],
             total_assets_minus_fees,
@@ -288,6 +291,7 @@ pub fn close_pool<'info>(ctx: Context<'_, '_, '_, 'info, ClosePool<'info>>) -> R
                 pool.share_token.as_ref(),
                 pool.asset_token.as_ref(),
                 pool.creator.as_ref(),
+                pool.salt.as_bytes(),
                 &[pool.bump],
             ],
             unsold_shares,
@@ -323,6 +327,7 @@ pub fn redeem(ctx: Context<RedeemTokens>, referred: bool) -> Result<()> {
                 ctx.accounts.pool.share_token.as_ref(),
                 ctx.accounts.pool.asset_token.as_ref(),
                 ctx.accounts.pool.creator.as_ref(),
+                ctx.accounts.pool.salt.as_bytes(),
                 &[ctx.accounts.pool.bump],
             ],
             // Fall back to the remaining shares if there are not enough shares in the pool due to slippage/rounding errors/etc. Could be unlikely, but better to be safe.
@@ -351,6 +356,7 @@ pub fn redeem(ctx: Context<RedeemTokens>, referred: bool) -> Result<()> {
                 ctx.accounts.pool.share_token.as_ref(),
                 ctx.accounts.pool.asset_token.as_ref(),
                 ctx.accounts.pool.creator.as_ref(),
+                ctx.accounts.pool.salt.as_bytes(),
                 &[ctx.accounts.pool.bump],
             ],
             // Fall back to the remaining assets if there are not enough assets in the pool due to slippage/rounding errors/etc.

@@ -169,6 +169,7 @@ fn _swap_shares_for_assets<'info>(
             pool.share_token.as_ref(),
             pool.asset_token.as_ref(),
             pool.creator.as_ref(),
+            pool.salt.as_bytes(),
             &[pool.bump],
         ],
         assets_out,
