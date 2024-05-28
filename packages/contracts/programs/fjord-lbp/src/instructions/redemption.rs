@@ -6,7 +6,7 @@ use anchor_spl::token::{Mint, Token, TokenAccount};
 
 use crate::math::calculate_fee;
 use crate::{
-  transfer_tokens_from, Close, FeeMapping, LiquidityBootstrappingPool, OwnerConfig, PoolError, Redeem, Treasury, UserStateInPool
+  safe_math, transfer_tokens_from, Close, FeeMapping, LiquidityBootstrappingPool, OwnerConfig, PoolError, Redeem, Treasury, UserStateInPool
 };
 
 pub struct FeeRecipient<'a> {
@@ -173,9 +173,9 @@ pub fn close_pool<'info>(ctx: Context<'_, '_, '_, 'info, ClosePool<'info>>) -> R
         return Err(PoolError::ClosingDisallowed.into());
     }
     pool.closed = true;
-    let total_assets = ctx.accounts.pool_asset_token_account.amount - pool.total_swap_fees_asset;
+    let total_assets = safe_math::safe_sub(ctx.accounts.pool_asset_token_account.amount, pool.total_swap_fees_asset)?;
     let platform_fees = calculate_fee(total_assets, ctx.accounts.owner_config.platform_fee);
-    let total_assets_minus_fees = total_assets - platform_fees - pool.total_referred;
+    let total_assets_minus_fees = safe_math::safe_sub(safe_math::safe_sub(total_assets, platform_fees)?, pool.total_referred)?;
 
     if total_assets != 0 {
         // Transfer asset and share to the treasury
@@ -192,7 +192,7 @@ pub fn close_pool<'info>(ctx: Context<'_, '_, '_, 'info, ClosePool<'info>>) -> R
                 pool.creator.as_ref(),
                 &[pool.bump],
             ],
-            platform_fees + pool.total_swap_fees_asset,
+            safe_math::safe_add(platform_fees, pool.total_swap_fees_asset)?,
         )?;
         transfer_tokens_from(
             ctx.accounts.token_program.to_account_info(),
