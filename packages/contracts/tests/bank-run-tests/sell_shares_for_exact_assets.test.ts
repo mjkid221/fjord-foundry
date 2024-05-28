@@ -30,6 +30,7 @@ import {
   skipBlockTimestamp,
 } from "../../helpers";
 import { FjordLbp, IDL } from "../../target/types/fjord_lbp";
+import { ComputedReservesAndWeights } from "../../types";
 
 const MOCK_PK = new anchor.web3.PublicKey(
   "BPFLoaderUpgradeab1e11111111111111111111111"
@@ -468,6 +469,94 @@ describe("Fjord LBP - Sell - shares for exact assets", () => {
       expect(referrerPoolAccount.referredAssets.toString()).to.eq(
         BN(0).toString()
       );
+    });
+
+    it("should update reserves and weights", async () => {
+      const { userPoolPda } = await getAllAccountState({
+        program,
+        poolPda,
+        bankRunClient,
+        shareTokenMint,
+        assetTokenMint,
+        user: testUserA.publicKey,
+        ownerConfigPda,
+        creator: creator.publicKey,
+      });
+
+      const assetsToSell = BN("100000000");
+
+      await skipBlockTimestamp(bankRunCtx, 1000);
+
+      const maxSharesIn = await program.methods
+        .previewSharesIn(
+          // Assets to sell (Collateral)
+          assetsToSell
+        )
+        .accounts({
+          assetTokenMint,
+          shareTokenMint,
+          pool: poolPda,
+          poolAssetTokenAccount,
+          poolShareTokenAccount,
+        })
+        .signers([creator])
+        .simulate()
+        .then((data) => data.events[0].data.sharesIn as BigNumber);
+
+      const statePre = await program.methods
+        .reservesAndWeights()
+        .accounts({
+          assetTokenMint,
+          shareTokenMint,
+          pool: poolPda,
+          poolAssetTokenAccount,
+          poolShareTokenAccount,
+        })
+        .signers([creator])
+        .simulate()
+        .then((data) => data.events[0].data as ComputedReservesAndWeights);
+
+      // Sell project token
+      await program.methods
+        .swapSharesForExactAssets(assetsToSell, maxSharesIn, null, null)
+        .accounts({
+          assetTokenMint,
+          shareTokenMint,
+          user: testUserA.publicKey,
+          pool: poolPda,
+          poolAssetTokenAccount,
+          poolShareTokenAccount,
+          userAssetTokenAccount: assetTokenMintUserAccount,
+          userShareTokenAccount: shareTokenMintUserAccount,
+          config: ownerConfigPda,
+          referrerStateInPool: null,
+          userStateInPool: userPoolPda,
+        })
+        .signers([testUserA])
+        .rpc();
+
+      await skipBlockTimestamp(bankRunCtx, 1000); // takes time for the interpolated weights to update
+
+      const statePost = await program.methods
+        .reservesAndWeights()
+        .accounts({
+          assetTokenMint,
+          shareTokenMint,
+          pool: poolPda,
+          poolAssetTokenAccount,
+          poolShareTokenAccount,
+        })
+        .signers([creator])
+        .simulate()
+        .then((data) => data.events[0].data as ComputedReservesAndWeights);
+
+      // Asset reserve should decrease, share reserve should increase
+      expect(statePre.assetReserve.gt(statePost.assetReserve)).to.eq(true);
+      expect(statePre.shareReserve.lt(statePost.shareReserve)).to.eq(true);
+      // Should maintain total weight of 100%
+      expect(
+        statePost.assetWeight.add(statePost.shareWeight).eq(BN(10000))
+      ).to.eq(true);
     });
   });
 

@@ -34,6 +34,7 @@ import {
   skipBlockTimestamp,
 } from "../../helpers";
 import { FjordLbp, IDL } from "../../target/types/fjord_lbp";
+import { ComputedReservesAndWeights } from "../../types";
 
 const MOCK_PK = new anchor.web3.PublicKey(
   "BPFLoaderUpgradeab1e11111111111111111111111"
@@ -836,6 +837,112 @@ describe("Fjord LBP - Buy `swapExactAssetsForShares`", () => {
         Number(initialUserCollateralTokenBalance.toString()) -
           Number(largerAssetsInNumber.toString())
       );
+    });
+    it("should update reserves and weights", async () => {
+      // Skip time by 1100 seconds
+      await skipBlockTimestamp(bankRunCtx, 1100);
+
+      const initialUserCollateralTokenBalance = await getAccountBalance(
+        bankRunClient,
+        testUserA.publicKey,
+        assetTokenMint
+      );
+
+      // Get user's pool account
+      const userPoolPda = findProgramAddressSync(
+        [testUserA.publicKey.toBuffer(), poolPda.toBuffer()],
+        program.programId
+      )[0];
+
+      const referrer: PublicKey | null = null;
+      const merkleProof = generateMerkleProof(
+        whitelistedAddresses,
+        testUserA.publicKey.toBase58()
+      );
+      const assetAmountIn = initialUserCollateralTokenBalance.div(BN(2));
+
+      // Get expected shares out by reading a view function's emitted event.
+      const expectedSharesOut = await program.methods
+        .previewSharesOut(
+          // Assets In (Collateral)
+          assetAmountIn
+        )
+        .accounts({
+          assetTokenMint,
+          shareTokenMint,
+          pool: poolPda,
+          poolAssetTokenAccount,
+          poolShareTokenAccount,
+        })
+        .signers([creator])
+        .simulate()
+        .then((data) => data.events[0].data.sharesOut as BigNumber);
+
+      const statePre = await program.methods
+        .reservesAndWeights()
+        .accounts({
+          assetTokenMint,
+          shareTokenMint,
+          pool: poolPda,
+          poolAssetTokenAccount,
+          poolShareTokenAccount,
+        })
+        .signers([creator])
+        .simulate()
+        .then((data) => data.events[0].data as ComputedReservesAndWeights);
+
+      await program.methods
+        .swapExactAssetsForShares(
+          // Assets In (Collateral)
+          assetAmountIn,
+          // Minimum shares out
+          expectedSharesOut,
+          // Merkle proof can be 'null' if there are no proofs
+          merkleProof,
+          // Referrer can be null if there are no referrers
+          referrer
+        )
+        .accounts({
+          assetTokenMint,
+          shareTokenMint,
+          user: testUserA.publicKey,
+          pool: poolPda,
+          poolAssetTokenAccount,
+          poolShareTokenAccount,
+          userAssetTokenAccount: assetTokenMintUserAccount,
+          userShareTokenAccount: shareTokenMintUserAccount,
+          config: ownerConfigPda,
+          referrerStateInPool: referrer,
+          userStateInPool: userPoolPda,
+        })
+        .signers([testUserA])
+        .rpc();
+
+      await skipBlockTimestamp(bankRunCtx, 1000); // takes time for the interpolated weights to update
+
+      const statePost = await program.methods
+        .reservesAndWeights()
+        .accounts({
+          assetTokenMint,
+          shareTokenMint,
+          pool: poolPda,
+          poolAssetTokenAccount,
+          poolShareTokenAccount,
+        })
+        .signers([creator])
+        .simulate()
+        .then((data) => data.events[0].data as ComputedReservesAndWeights);
+
+      // Asset reserve should increase, share reserve should decrease
+      expect(statePre.assetReserve.lt(statePost.assetReserve)).to.eq(true);
+      expect(statePre.shareReserve.gt(statePost.shareReserve)).to.eq(true);
+      // Asset weight should increase, share weight should decrease
+      expect(statePre.assetWeight.lt(statePost.assetWeight)).to.eq(true);
+      expect(statePre.shareWeight.gt(statePost.shareWeight)).to.eq(true);
+      // Should maintain total weight of 100%
+      expect(
+        statePost.assetWeight.add(statePost.shareWeight).eq(BN(10000))
+      ).to.eq(true);
     });
   });
   describe("Buy Failure Cases", () => {
