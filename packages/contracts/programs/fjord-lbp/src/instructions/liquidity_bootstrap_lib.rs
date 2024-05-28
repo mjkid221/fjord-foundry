@@ -217,6 +217,11 @@ pub mod math {
         )?;
         let total_seconds = sale_end_time - sale_start_time;
 
+        log::sol_log("asset reserve");
+        log::sol_log(&asset_reserve.to_string());
+        log::sol_log("share reserve");
+        log::sol_log(&share_reserve.to_string());
+
         let mut seconds_elapsed = 0;
         if current_time > sale_start_time {
             seconds_elapsed = current_time - sale_start_time;

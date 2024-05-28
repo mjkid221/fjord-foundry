@@ -501,22 +501,6 @@ describe("Fjord LBP - Buy `swapExactAssetsForShares`", () => {
         assetTokenMint
       );
 
-      const exp2 = await program.methods
-        .previewSharesOut(
-          // Assets In (Collateral)
-          assetAmountIn
-        )
-        .accounts({
-          assetTokenMint,
-          shareTokenMint,
-          pool: poolPda,
-          poolAssetTokenAccount,
-          poolShareTokenAccount,
-        })
-        .signers([creator])
-        .simulate()
-        .then((data) => data.events[0].data.sharesOut as BigNumber);
-
       const swapsFeesAsset = assetAmountIn
         .mul(BN(globalPoolConfig.swapFee))
         .div(BN(MAX_FEE_BASIS_POINTS));
@@ -527,31 +511,10 @@ describe("Fjord LBP - Buy `swapExactAssetsForShares`", () => {
         totalSwapFeesAsset: pool.totalSwapFeesAsset.toString(),
         totalReferredFees: pool.totalSwapFeesShare.toString(),
         assetAmountIn: assetAmountIn.toString(),
-        exp1: expectedSharesOut.toString(),
-        exp2: exp2.toString(),
+        expectedSharesOut: expectedSharesOut.toString(),
         swapsFeesAsset: swapsFeesAsset.toString(),
         difference: 87600599000 - 87601037000,
       });
-      /**
-       * BEFORE
-       * {
-       *   totalPurchased: '87600599000',
-       *   totalSwapFeesAsset: '5000000000',
-       *   referredAssets: '5000000000',
-       *   poolCollateralTokenBalanceAfter: '1000500000000000',
-       *   userCollateralTokenBalanceAfter: '500000000000',
-       *   purchasedShares: '87600599000'
-       * }
-       * AFTER
-       * {
-       *   totalPurchased: '87601037000',
-       *   totalSwapFeesAsset: '5000000000',
-       *   referredAssets: '5000000000',
-       *   poolCollateralTokenBalanceAfter: '1000500000000000',
-       *   userCollateralTokenBalanceAfter: '500000000000',
-       *   purchasedShares: '87601037000'
-       * }
-       */
 
       expect(pool.totalPurchased.toString()).to.eq(
         expectedSharesOut.toString()
