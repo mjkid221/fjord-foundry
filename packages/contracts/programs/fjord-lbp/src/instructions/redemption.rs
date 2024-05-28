@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use anchor_lang::prelude::*;
 use anchor_spl::associated_token::{AssociatedToken, get_associated_token_address};
@@ -350,23 +350,27 @@ fn retrieve_valid_keys<'a>(a: Vec<FeeMapping>, b: &[AccountInfo<'a>], token_mint
         .map(|recipient| (get_associated_token_address(&recipient.user, token_mint), recipient.percentage))
         .collect();
 
-    // Check that all accounts are writable
+    let mut seen_keys: HashSet<Pubkey> = HashSet::with_capacity(b.len());
+    let mut filtered_b: Vec<FeeRecipient<'a>> = Vec::with_capacity(b.len());
+
+    // Filter `b` to find AccountInfo whose key matches any of the ATAs and map them to FeeRecipient
     for account_info in b {
         if !account_info.is_writable {
             return Err(PoolError::InvalidFeeRecipientWritable.into());
         }
-    }
 
-    // Filter `b` to find AccountInfo whose key matches any of the ATAs and map them to FeeRecipient
-    let filtered_b: Vec<FeeRecipient<'a>> = b.iter()
-        .filter_map(|account_info| {
-            ata_to_fee.get(account_info.key)
-                .map(|&fee_percentage| FeeRecipient {
-                    account_info: account_info.clone(),
-                    fee_percentage,
-                })
-        })
-        .collect();
+        // Check if the account is in the ATA to fee mapping and detect duplicates
+        if let Some(&fee_percentage) = ata_to_fee.get(account_info.key) {
+            if !seen_keys.insert(*account_info.key) {
+                return Err(PoolError::DuplicateFeeRecipient.into());
+            }
+
+            filtered_b.push(FeeRecipient {
+                account_info: account_info.clone(),
+                fee_percentage,
+            });
+        }
+    }
 
     // Ensure the length matches to prevent invalid configurations
     if a.len() != filtered_b.len() {
