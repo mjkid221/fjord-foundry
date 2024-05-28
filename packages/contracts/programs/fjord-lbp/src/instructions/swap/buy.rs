@@ -45,6 +45,8 @@ pub fn swap_exact_assets_for_shares(
             sale_end_time: pool.sale_end_time,
             start_weight_basis_points: pool.start_weight_basis_points,
             end_weight_basis_points: pool.end_weight_basis_points,
+            total_swap_fees_asset: pool.total_swap_fees_asset,
+            total_swap_fees_share: pool.total_swap_fees_share,
         },
         safe_math::safe_sub(assets_in, swap_fees)?,
     )?;
@@ -108,6 +110,8 @@ pub fn swap_assets_for_exact_shares(
             sale_end_time: pool.sale_end_time,
             start_weight_basis_points: pool.start_weight_basis_points,
             end_weight_basis_points: pool.end_weight_basis_points,
+            total_swap_fees_asset: pool.total_swap_fees_asset,
+            total_swap_fees_share: pool.total_swap_fees_share,
         },
         shares_out,
     )?;
@@ -154,7 +158,9 @@ fn _swap_assets_for_shares<'info>(
     swap_fees: u64,
     referrer_state_in_pool: &mut Option<Account<'info, UserStateInPool>>,
 ) -> Result<()> {
-    if assets + assets_in - swap_fees >= pool.max_assets_in {
+    if safe_math::safe_sub(safe_math::safe_add(assets, assets_in)?, swap_fees)?
+        >= pool.max_assets_in
+    {
         return Err(PoolError::AssetsInExceeded.into());
     }
 
@@ -168,7 +174,7 @@ fn _swap_assets_for_shares<'info>(
         CpiContext::new(token_program.to_account_info(), asset_transfer_instruction);
     token::transfer(asset_cpi_ctx, assets_in)?;
 
-    let total_purchased_after: u64 = pool.total_purchased + shares_out;
+    let total_purchased_after: u64 = safe_math::safe_add(pool.total_purchased, shares_out)?;
     if (total_purchased_after >= pool.max_shares_out) || (total_purchased_after >= shares) {
         return Err(PoolError::SharesOutExceeded.into());
     }

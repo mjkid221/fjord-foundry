@@ -41,6 +41,8 @@ pub fn swap_shares_for_exact_assets(
             sale_end_time: pool.sale_end_time,
             start_weight_basis_points: pool.start_weight_basis_points,
             end_weight_basis_points: pool.end_weight_basis_points,
+            total_swap_fees_asset: pool.total_swap_fees_asset,
+            total_swap_fees_share: pool.total_swap_fees_share,
         },
         assets_out,
     )?;
@@ -106,6 +108,8 @@ pub fn swap_exact_shares_for_assets(
             sale_end_time: pool.sale_end_time,
             start_weight_basis_points: pool.start_weight_basis_points,
             end_weight_basis_points: pool.end_weight_basis_points,
+            total_swap_fees_asset: pool.total_swap_fees_asset,
+            total_swap_fees_share: pool.total_swap_fees_share,
         },
         safe_math::safe_sub(shares_in, swap_fees)?,
     )?;

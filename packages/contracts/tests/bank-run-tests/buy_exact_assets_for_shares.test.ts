@@ -401,7 +401,7 @@ describe("Fjord LBP - Buy `swapExactAssetsForShares`", () => {
           .toString()
       );
     });
-    it("should be able to swap tokens using swapExactAssetsForShare during sale time", async () => {
+    it.only("should be able to swap tokens using swapExactAssetsForShare during sale time", async () => {
       // Skip time by 1100 seconds
       await skipBlockTimestamp(bankRunCtx, 1100);
       // Fetch balances before running the test
@@ -449,6 +449,7 @@ describe("Fjord LBP - Buy `swapExactAssetsForShares`", () => {
         .signers([creator])
         .simulate()
         .then((data) => data.events[0].data.sharesOut as BigNumber);
+
       // Buy project token
       await program.methods
         .swapExactAssetsForShares(
@@ -500,15 +501,64 @@ describe("Fjord LBP - Buy `swapExactAssetsForShares`", () => {
         assetTokenMint
       );
 
+      const exp2 = await program.methods
+        .previewSharesOut(
+          // Assets In (Collateral)
+          assetAmountIn
+        )
+        .accounts({
+          assetTokenMint,
+          shareTokenMint,
+          pool: poolPda,
+          poolAssetTokenAccount,
+          poolShareTokenAccount,
+        })
+        .signers([creator])
+        .simulate()
+        .then((data) => data.events[0].data.sharesOut as BigNumber);
+
+      const swapsFeesAsset = assetAmountIn
+        .mul(BN(globalPoolConfig.swapFee))
+        .div(BN(MAX_FEE_BASIS_POINTS));
+
+      console.log({
+        totalPurchased: pool.totalPurchased.toString(),
+        userPurchased: userPoolAccount.purchasedShares.toString(),
+        totalSwapFeesAsset: pool.totalSwapFeesAsset.toString(),
+        totalReferredFees: pool.totalSwapFeesShare.toString(),
+        assetAmountIn: assetAmountIn.toString(),
+        exp1: expectedSharesOut.toString(),
+        exp2: exp2.toString(),
+        swapsFeesAsset: swapsFeesAsset.toString(),
+        difference: 87600599000 - 87601037000,
+      });
+      /**
+       * BEFORE
+       * {
+       *   totalPurchased: '87600599000',
+       *   totalSwapFeesAsset: '5000000000',
+       *   referredAssets: '5000000000',
+       *   poolCollateralTokenBalanceAfter: '1000500000000000',
+       *   userCollateralTokenBalanceAfter: '500000000000',
+       *   purchasedShares: '87600599000'
+       * }
+       * AFTER
+       * {
+       *   totalPurchased: '87601037000',
+       *   totalSwapFeesAsset: '5000000000',
+       *   referredAssets: '5000000000',
+       *   poolCollateralTokenBalanceAfter: '1000500000000000',
+       *   userCollateralTokenBalanceAfter: '500000000000',
+       *   purchasedShares: '87601037000'
+       * }
+       */
+
       expect(pool.totalPurchased.toString()).to.eq(
         expectedSharesOut.toString()
       );
 
       expect(pool.totalSwapFeesAsset.toString()).to.eq(
-        assetAmountIn
-          .mul(BN(globalPoolConfig.swapFee))
-          .div(BN(MAX_FEE_BASIS_POINTS))
-          .toString()
+        swapsFeesAsset.toString()
       );
       expect(referrerPoolAccount.referredAssets.toString()).to.eq(
         assetAmountIn

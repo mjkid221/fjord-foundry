@@ -177,6 +177,8 @@ pub mod fjord_lbp {
                 sale_end_time: ctx.accounts.pool.sale_end_time,
                 start_weight_basis_points: ctx.accounts.pool.start_weight_basis_points,
                 end_weight_basis_points: ctx.accounts.pool.end_weight_basis_points,
+                total_swap_fees_asset: ctx.accounts.pool.total_swap_fees_asset,
+                total_swap_fees_share: ctx.accounts.pool.total_swap_fees_share,
             },
             shares_out,
         )?;
@@ -204,6 +206,8 @@ pub mod fjord_lbp {
                 sale_end_time: ctx.accounts.pool.sale_end_time,
                 start_weight_basis_points: ctx.accounts.pool.start_weight_basis_points,
                 end_weight_basis_points: ctx.accounts.pool.end_weight_basis_points,
+                total_swap_fees_asset: ctx.accounts.pool.total_swap_fees_asset,
+                total_swap_fees_share: ctx.accounts.pool.total_swap_fees_share,
             },
             assets_out,
         )?;
@@ -231,6 +235,8 @@ pub mod fjord_lbp {
                 sale_end_time: ctx.accounts.pool.sale_end_time,
                 start_weight_basis_points: ctx.accounts.pool.start_weight_basis_points,
                 end_weight_basis_points: ctx.accounts.pool.end_weight_basis_points,
+                total_swap_fees_asset: ctx.accounts.pool.total_swap_fees_asset,
+                total_swap_fees_share: ctx.accounts.pool.total_swap_fees_share,
             },
             safe_math::safe_sub(
                 assets_in,
@@ -257,6 +263,8 @@ pub mod fjord_lbp {
                 sale_end_time: ctx.accounts.pool.sale_end_time,
                 start_weight_basis_points: ctx.accounts.pool.start_weight_basis_points,
                 end_weight_basis_points: ctx.accounts.pool.end_weight_basis_points,
+                total_swap_fees_asset: ctx.accounts.pool.total_swap_fees_asset,
+                total_swap_fees_share: ctx.accounts.pool.total_swap_fees_share,
             },
             safe_math::safe_sub(
                 shares_in,
@@ -284,6 +292,8 @@ pub mod fjord_lbp {
             sale_end_time: ctx.accounts.pool.sale_end_time,
             start_weight_basis_points: ctx.accounts.pool.start_weight_basis_points,
             end_weight_basis_points: ctx.accounts.pool.end_weight_basis_points,
+            total_swap_fees_asset: ctx.accounts.pool.total_swap_fees_asset,
+            total_swap_fees_share: ctx.accounts.pool.total_swap_fees_share,
         })?;
         let ComputedReservesAndWeights {
             asset_reserve,

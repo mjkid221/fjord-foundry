@@ -39,9 +39,13 @@ pub struct PreviewAmountArgs {
     pub sale_end_time: i64,
     pub start_weight_basis_points: u16,
     pub end_weight_basis_points: u16,
+    pub total_swap_fees_asset: u64,
+    pub total_swap_fees_share: u64,
 }
 
 pub mod math {
+    use solana_program::log;
+
     use self::structs::ComputedReservesAndWeights;
     use super::*;
     use crate::{
@@ -202,9 +206,15 @@ pub mod math {
             asset_token_decimal: _,
             share_token_decimal: _,
             max_share_price: _,
+            total_swap_fees_asset,
+            total_swap_fees_share,
         } = *args;
-        let asset_reserve: u64 = safe_add(assets, virtual_assets)?;
-        let share_reserve: u64 = safe_sub(safe_add(shares, virtual_shares)?, total_purchased)?;
+        let asset_reserve: u64 =
+            safe_sub(safe_add(assets, virtual_assets)?, total_swap_fees_asset)?;
+        let share_reserve: u64 = safe_sub(
+            safe_sub(safe_add(shares, virtual_shares)?, total_purchased)?,
+            total_swap_fees_share,
+        )?;
         let total_seconds = sale_end_time - sale_start_time;
 
         let mut seconds_elapsed = 0;
@@ -217,6 +227,10 @@ pub mod math {
             seconds_elapsed.try_into().unwrap(),
             total_seconds.try_into().unwrap(),
         )?;
+
+        // log asset weight
+        log::sol_log("Asset weight");
+        log::sol_log(&asset_weight.to_string());
 
         let share_weight = MAX_FEE_BASIS_POINTS as u64 - asset_weight;
 
