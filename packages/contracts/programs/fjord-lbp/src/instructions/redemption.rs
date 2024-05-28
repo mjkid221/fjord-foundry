@@ -178,50 +178,20 @@ pub fn close_pool<'info>(ctx: Context<'_, '_, '_, 'info, ClosePool<'info>>) -> R
     let total_assets_minus_fees = total_assets - platform_fees - pool.total_referred;
 
     if total_assets != 0 {
-        // Transfer asset and share to the treasury
-        transfer_tokens_from(
-            ctx.accounts.token_program.to_account_info(),
-            ctx.accounts.pool_asset_token_account.to_account_info(),
-            ctx.accounts
-                .treasury_asset_token_account
-                .to_account_info(),
-            pool.to_account_info(),
-            &[
-                pool.share_token.as_ref(),
-                pool.asset_token.as_ref(),
-                pool.creator.as_ref(),
-                &[pool.bump],
-            ],
-            platform_fees + pool.total_swap_fees_asset,
-        )?;
-        transfer_tokens_from(
-            ctx.accounts.token_program.to_account_info(),
-            ctx.accounts.pool_share_token_account.to_account_info(),
-            ctx.accounts
-                .treasury_share_token_account
-                .to_account_info(),
-            pool.to_account_info(),
-            &[
-                pool.share_token.as_ref(),
-                pool.asset_token.as_ref(),
-                pool.creator.as_ref(),
-                &[pool.bump],
-            ],
-            pool.total_swap_fees_share,
-        )?;
-
-        // distribute treasury fees to recipients and swap fee recipient
+        // Transfer platform fees and swap fees directly to the respective recipients
         let fee_recipients_asset_token = retrieve_valid_keys(treasury.fee_recipients.clone(), ctx.remaining_accounts, &ctx.accounts.asset_token_mint.key())?;
         fee_recipients_asset_token.iter().for_each(|recipient| {
             let fees = calculate_fee(platform_fees, recipient.fee_percentage);
             transfer_tokens_from(
                 ctx.accounts.token_program.to_account_info(),
-                ctx.accounts.treasury_asset_token_account.to_account_info(),
+                ctx.accounts.pool_asset_token_account.to_account_info(),
                 recipient.account_info.to_account_info(),
-                treasury.to_account_info(),
+                pool.to_account_info(),
                 &[
-                    "treasury".as_bytes(),
-                    &[ctx.bumps.treasury],
+                    pool.share_token.as_ref(),
+                    pool.asset_token.as_ref(),
+                    pool.creator.as_ref(),
+                    &[pool.bump],
                 ],
                 fees,
             ).unwrap();
@@ -230,14 +200,16 @@ pub fn close_pool<'info>(ctx: Context<'_, '_, '_, 'info, ClosePool<'info>>) -> R
         // Transfer asset to swap fee recipient
         transfer_tokens_from(
             ctx.accounts.token_program.to_account_info(),
-            ctx.accounts.treasury_asset_token_account.to_account_info(),
+            ctx.accounts.pool_asset_token_account.to_account_info(),
             ctx.accounts
                 .swap_fee_recipient_asset_token_account
                 .to_account_info(),
-                treasury.to_account_info(),
+            pool.to_account_info(),
             &[
-                "treasury".as_bytes(),
-                &[ctx.bumps.treasury],
+                pool.share_token.as_ref(),
+                pool.asset_token.as_ref(),
+                pool.creator.as_ref(),
+                &[pool.bump],
             ],
             pool.total_swap_fees_asset,
         )?;
@@ -245,19 +217,21 @@ pub fn close_pool<'info>(ctx: Context<'_, '_, '_, 'info, ClosePool<'info>>) -> R
         // Transfer share to swap fee recipient
         transfer_tokens_from(
             ctx.accounts.token_program.to_account_info(),
-            ctx.accounts.treasury_share_token_account.to_account_info(),
+            ctx.accounts.pool_share_token_account.to_account_info(),
             ctx.accounts
                 .swap_fee_recipient_share_token_account
                 .to_account_info(),
-                treasury.to_account_info(),
+            pool.to_account_info(),
             &[
-                "treasury".as_bytes(),
-                &[ctx.bumps.treasury],
+                pool.share_token.as_ref(),
+                pool.asset_token.as_ref(),
+                pool.creator.as_ref(),
+                &[pool.bump],
             ],
             pool.total_swap_fees_share,
         )?;
 
-        // Transfer asset to pool creator/manager
+        // Transfer remaining assets to pool creator/manager
         transfer_tokens_from(
             ctx.accounts.token_program.to_account_info(),
             ctx.accounts.pool_asset_token_account.to_account_info(),
@@ -291,7 +265,7 @@ pub fn close_pool<'info>(ctx: Context<'_, '_, '_, 'info, ClosePool<'info>>) -> R
                 &[pool.bump],
             ],
             unsold_shares,
-        )?
+        )?;
     }
 
     emit!(Close {
@@ -303,6 +277,7 @@ pub fn close_pool<'info>(ctx: Context<'_, '_, '_, 'info, ClosePool<'info>>) -> R
 
     Ok(())
 }
+
 
 
 pub fn redeem(ctx: Context<RedeemTokens>, referred: bool) -> Result<()> {
