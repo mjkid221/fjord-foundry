@@ -1,6 +1,6 @@
 use anchor_spl::token_2022::spl_token_2022::extension::transfer_fee::MAX_FEE_BASIS_POINTS;
 
-const DECIMAL_SCALING: u64 = 5;
+const DECIMAL_SCALING: u64 = 8;
 const SCALED_DECIMALS: u64 = 10_u64.pow(DECIMAL_SCALING as u32);
 pub mod structs {
     use anchor_lang::prelude::*;
