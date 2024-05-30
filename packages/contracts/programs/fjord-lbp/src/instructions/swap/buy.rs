@@ -28,7 +28,7 @@ pub fn swap_exact_assets_for_shares(
     let pool_share_token_account = &mut ctx.accounts.pool_share_token_account;
 
     let swap_fees = calculate_fee(assets_in, ctx.accounts.config.swap_fee);
-    pool.total_swap_fees_asset += swap_fees;
+    pool.total_swap_fees_asset = safe_math::safe_add(pool.total_swap_fees_asset, swap_fees)?;
 
     let shares_out = preview_shares_out(
         PreviewAmountArgs {
@@ -112,8 +112,8 @@ pub fn swap_assets_for_exact_shares(
         shares_out,
     )?;
     let swap_fees = calculate_fee(assets_in, ctx.accounts.config.swap_fee);
-    assets_in += swap_fees;
-    pool.total_swap_fees_asset += swap_fees;
+    assets_in = safe_math::safe_add(assets_in, swap_fees)?;
+    pool.total_swap_fees_asset = safe_math::safe_add(pool.total_swap_fees_asset, swap_fees)?;
 
     if assets_in > max_assets_in {
         return Err(PoolError::SlippageExceeded.into());
@@ -173,13 +173,15 @@ fn _swap_assets_for_shares<'info>(
         return Err(PoolError::SharesOutExceeded.into());
     }
     pool.total_purchased = total_purchased_after;
-    user_state_in_pool.purchased_shares += shares_out;
+    user_state_in_pool.purchased_shares =
+        safe_math::safe_add(user_state_in_pool.purchased_shares, shares_out)?;
 
     match referrer_state_in_pool.as_mut() {
         Some(referrer_state) if global_pool_config.referral_fee != 0 => {
             let assets_referred = calculate_fee(assets_in, global_pool_config.referral_fee);
-            pool.total_referred += assets_referred;
-            referrer_state.referred_assets += assets_referred;
+            pool.total_referred = safe_math::safe_add(pool.total_referred, assets_referred)?;
+            referrer_state.referred_assets =
+                safe_math::safe_add(referrer_state.referred_assets, assets_referred)?;
         }
         _ => {}
     }
