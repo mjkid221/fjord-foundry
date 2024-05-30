@@ -52,6 +52,8 @@ pub mod setter {
         if platform_fee.is_some() && platform_fee.unwrap() > MAX_FEE_BASIS_POINTS
             || referral_fee.is_some() && referral_fee.unwrap() > MAX_FEE_BASIS_POINTS
             || swap_fee.is_some() && swap_fee.unwrap() > MAX_FEE_BASIS_POINTS
+            || platform_fee.unwrap_or(0) + referral_fee.unwrap_or(0) + swap_fee.unwrap_or(0)
+                > MAX_FEE_BASIS_POINTS
         {
             return Err(PoolError::MaxFeeExceeded.into());
         }

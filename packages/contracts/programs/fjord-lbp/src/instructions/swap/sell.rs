@@ -45,8 +45,8 @@ pub fn swap_shares_for_exact_assets(
         assets_out,
     )?;
     let swap_fees = calculate_fee(shares_in, ctx.accounts.config.swap_fee);
-    shares_in += swap_fees;
-    pool.total_swap_fees_share += swap_fees;
+    shares_in = safe_math::safe_add(shares_in, swap_fees)?;
+    pool.total_swap_fees_share = safe_math::safe_add(pool.total_swap_fees_share, swap_fees)?;
 
     if shares_in > max_shares_in {
         return Err(PoolError::SlippageExceeded.into());
@@ -89,7 +89,7 @@ pub fn swap_exact_shares_for_assets(
     let pool_share_token_account = &mut ctx.accounts.pool_share_token_account;
 
     let swap_fees = calculate_fee(shares_in, ctx.accounts.config.swap_fee);
-    pool.total_swap_fees_share += swap_fees;
+    pool.total_swap_fees_share = safe_math::safe_add(pool.total_swap_fees_share, swap_fees)?;
 
     let assets_out = preview_assets_out(
         PreviewAmountArgs {
@@ -157,8 +157,9 @@ fn _swap_shares_for_assets<'info>(
         return Err(PoolError::SharesOutExceeded.into());
     }
 
-    user_state_in_pool.purchased_shares -= shares_in;
-    pool.total_purchased = total_purchased_before - shares_in;
+    user_state_in_pool.purchased_shares =
+        safe_math::safe_sub(user_state_in_pool.purchased_shares, shares_in)?;
+    pool.total_purchased = safe_math::safe_sub(total_purchased_before, shares_in)?;
 
     transfer_tokens_from(
         token_program.to_account_info(),

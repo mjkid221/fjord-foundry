@@ -1,6 +1,6 @@
 use anchor_spl::token_2022::spl_token_2022::extension::transfer_fee::MAX_FEE_BASIS_POINTS;
 
-const DECIMAL_SCALING: u64 = 5;
+const DECIMAL_SCALING: u64 = 8;
 const SCALED_DECIMALS: u64 = 10_u64.pow(DECIMAL_SCALING as u32);
 pub mod structs {
     use anchor_lang::prelude::*;
@@ -203,7 +203,7 @@ pub mod math {
             share_token_decimal: _,
             max_share_price: _,
         } = *args;
-        let asset_reserve: u64 = safe_sub(assets, virtual_assets)?;
+        let asset_reserve: u64 = safe_add(assets, virtual_assets)?;
         let share_reserve: u64 = safe_sub(safe_add(shares, virtual_shares)?, total_purchased)?;
         let total_seconds = sale_end_time - sale_start_time;
 

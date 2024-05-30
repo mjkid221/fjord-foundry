@@ -180,7 +180,10 @@ pub mod fjord_lbp {
             },
             shares_out,
         )?;
-        assets_in += math::calculate_fee(assets_in, ctx.accounts.config.swap_fee);
+        assets_in = safe_math::safe_add(
+            assets_in,
+            math::calculate_fee(assets_in, ctx.accounts.config.swap_fee),
+        )?;
         emit!(PreviewAssetsIn { assets_in });
         Ok(assets_in)
     }
@@ -204,7 +207,10 @@ pub mod fjord_lbp {
             },
             assets_out,
         )?;
-        shares_in += math::calculate_fee(shares_in, ctx.accounts.config.swap_fee);
+        shares_in = safe_math::safe_add(
+            shares_in,
+            math::calculate_fee(shares_in, ctx.accounts.config.swap_fee),
+        )?;
         emit!(PreviewSharesIn { shares_in });
         Ok(shares_in)
     }
