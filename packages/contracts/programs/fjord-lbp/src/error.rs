@@ -61,6 +61,8 @@ pub enum PoolError {
     InvalidCreator,
     #[msg("Invalid swap fee recipient")]
     InvalidSwapFeeRecipient,
+    #[msg("Duplicate fee recipient")]
+    DuplicateFeeRecipient,
 }
 
 // Access Control Errors

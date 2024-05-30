@@ -2321,6 +2321,11 @@ export type FjordLbp = {
       code: 6028;
       name: "InvalidSwapFeeRecipient";
       msg: "Invalid swap fee recipient";
+    },
+    {
+      code: 6029;
+      name: "DuplicateFeeRecipient";
+      msg: "Duplicate fee recipient";
     }
   ];
 };
@@ -4648,6 +4653,11 @@ export const IDL: FjordLbp = {
       code: 6028,
       name: "InvalidSwapFeeRecipient",
       msg: "Invalid swap fee recipient",
+    },
+    {
+      code: 6029,
+      name: "DuplicateFeeRecipient",
+      msg: "Duplicate fee recipient",
     },
   ],
 };
