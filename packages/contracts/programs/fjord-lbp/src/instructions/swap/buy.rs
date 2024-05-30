@@ -31,8 +31,6 @@ pub fn swap_exact_assets_for_shares(
     let pool_share_token_account = &mut ctx.accounts.pool_share_token_account;
 
     let swap_fees = calculate_fee(assets_in, ctx.accounts.config.swap_fee);
-    pool.total_swap_fees_asset = safe_math::safe_add(pool.total_swap_fees_asset, swap_fees)?;
-
     let shares_out = preview_shares_out(
         PreviewAmountArgs {
             assets: pool_asset_token_account.amount,
@@ -48,9 +46,12 @@ pub fn swap_exact_assets_for_shares(
             sale_end_time: pool.sale_end_time,
             start_weight_basis_points: pool.start_weight_basis_points,
             end_weight_basis_points: pool.end_weight_basis_points,
+            total_swap_fees_asset: pool.total_swap_fees_asset,
+            total_swap_fees_share: pool.total_swap_fees_share,
         },
         safe_math::safe_sub(assets_in, swap_fees)?,
     )?;
+    pool.total_swap_fees_asset = safe_math::safe_add(pool.total_swap_fees_asset, swap_fees)?;
 
     if shares_out < min_shares_out {
         return Err(PoolError::SlippageExceeded.into());
@@ -114,6 +115,8 @@ pub fn swap_assets_for_exact_shares(
             sale_end_time: pool.sale_end_time,
             start_weight_basis_points: pool.start_weight_basis_points,
             end_weight_basis_points: pool.end_weight_basis_points,
+            total_swap_fees_asset: pool.total_swap_fees_asset,
+            total_swap_fees_share: pool.total_swap_fees_share,
         },
         shares_out,
     )?;
@@ -160,7 +163,9 @@ fn _swap_assets_for_shares<'info>(
     swap_fees: u64,
     referrer_state_in_pool: &mut Option<Account<'info, UserStateInPool>>,
 ) -> Result<()> {
-    if assets + assets_in - swap_fees >= pool.max_assets_in {
+    if safe_math::safe_sub(safe_math::safe_add(assets, assets_in)?, swap_fees)?
+        >= pool.max_assets_in
+    {
         return Err(PoolError::AssetsInExceeded.into());
     }
 
