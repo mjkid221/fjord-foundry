@@ -2097,5 +2097,58 @@ describe("Fjord LBP - Buy `swapAssetsForExactShares`", () => {
           .rpc()
       ).to.be.rejectedWith("SlippageExceeded");
     });
+
+    it("should not be able to swap tokens if the max assets in is 0", async () => {
+      await skipBlockTimestamp(bankRunCtx, 1100);
+
+      // Get user's pool account
+      const userPoolPda = findProgramAddressSync(
+        [testUserA.publicKey.toBuffer(), poolPda.toBuffer()],
+        program.programId
+      )[0];
+
+      const referrer: PublicKey | null = null;
+      const merkleProof = generateMerkleProof(
+        whitelistedAddresses,
+        testUserA.publicKey.toBase58()
+      );
+
+      const poolBeforeTransaction =
+        await program.account.liquidityBootstrappingPool.fetch(poolPda);
+
+      const { maxSharesOut } = poolBeforeTransaction;
+
+      const sharesAmountOut = maxSharesOut.div(BN("1000000000000000"));
+
+      // Buy project token with the smaller expected assets in
+      await expect(
+        program.methods
+          .swapAssetsForExactShares(
+            // shares out
+            sharesAmountOut,
+            // Minimum assets in
+            BN(0),
+            // Merkle proof can be 'null' if there are no proofs
+            merkleProof,
+            // Referrer can be null if there are no referrers
+            referrer
+          )
+          .accounts({
+            assetTokenMint,
+            shareTokenMint,
+            user: testUserA.publicKey,
+            pool: poolPda,
+            poolAssetTokenAccount,
+            poolShareTokenAccount,
+            userAssetTokenAccount: assetTokenMintUserAccount,
+            userShareTokenAccount: shareTokenMintUserAccount,
+            config: ownerConfigPda,
+            referrerStateInPool: referrer,
+            userStateInPool: userPoolPda,
+          })
+          .signers([testUserA])
+          .rpc()
+      ).to.be.rejectedWith("ZeroSlippage");
+    });
   });
 });

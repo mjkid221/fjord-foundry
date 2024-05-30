@@ -2110,5 +2110,57 @@ describe("Fjord LBP - Buy `swapExactAssetsForShares`", () => {
           .rpc()
       ).to.be.rejectedWith("SlippageExceeded");
     });
+    it("should not be able to swap tokens if min shares out is 0", async () => {
+      await skipBlockTimestamp(bankRunCtx, 1100);
+
+      // Fetch balances before running the test
+      const initialUserCollateralTokenBalance = await getAccountBalance(
+        bankRunClient,
+        testUserA.publicKey,
+        assetTokenMint
+      );
+
+      // Get user's pool account
+      const userPoolPda = findProgramAddressSync(
+        [testUserA.publicKey.toBuffer(), poolPda.toBuffer()],
+        program.programId
+      )[0];
+
+      const referrer: PublicKey | null = null;
+      const merkleProof = generateMerkleProof(
+        whitelistedAddresses,
+        testUserA.publicKey.toBase58()
+      );
+      const assetAmountIn = initialUserCollateralTokenBalance.div(BN(2));
+
+      await expect(
+        program.methods
+          .swapExactAssetsForShares(
+            // Assets In (Collateral)
+            assetAmountIn,
+            // Minimum shares out
+            BN(0),
+            // Merkle proof can be 'null' if there are no proofs
+            merkleProof,
+            // Referrer can be null if there are no referrers
+            referrer
+          )
+          .accounts({
+            assetTokenMint,
+            shareTokenMint,
+            user: testUserA.publicKey,
+            pool: poolPda,
+            poolAssetTokenAccount,
+            poolShareTokenAccount,
+            userAssetTokenAccount: assetTokenMintUserAccount,
+            userShareTokenAccount: shareTokenMintUserAccount,
+            config: ownerConfigPda,
+            referrerStateInPool: referrer,
+            userStateInPool: userPoolPda,
+          })
+          .signers([testUserA])
+          .rpc()
+      ).to.be.rejectedWith("ZeroSlippage");
+    });
   });
 });

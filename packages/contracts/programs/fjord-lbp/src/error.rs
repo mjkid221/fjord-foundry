@@ -63,6 +63,8 @@ pub enum PoolError {
     InvalidSwapFeeRecipient,
     #[msg("Duplicate fee recipient")]
     DuplicateFeeRecipient,
+    #[msg("Zero Slippage")]
+    ZeroSlippage,
 }
 
 // Access Control Errors

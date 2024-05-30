@@ -2326,6 +2326,11 @@ export type FjordLbp = {
       code: 6029;
       name: "DuplicateFeeRecipient";
       msg: "Duplicate fee recipient";
+    },
+    {
+      code: 6030;
+      name: "ZeroSlippage";
+      msg: "Zero Slippage";
     }
   ];
 };
@@ -4658,6 +4663,11 @@ export const IDL: FjordLbp = {
       code: 6029,
       name: "DuplicateFeeRecipient",
       msg: "Duplicate fee recipient",
+    },
+    {
+      code: 6030,
+      name: "ZeroSlippage",
+      msg: "Zero Slippage",
     },
   ],
 };

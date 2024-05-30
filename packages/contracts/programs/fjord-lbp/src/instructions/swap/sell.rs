@@ -22,6 +22,9 @@ pub fn swap_shares_for_exact_assets(
     merkle_proof: Option<Vec<[u8; 32]>>,
     _referrer: Option<Pubkey>,
 ) -> Result<()> {
+    if max_shares_in == 0 {
+        return Err(PoolError::ZeroSlippage.into());
+    }
     let pool = &mut ctx.accounts.pool;
     let pool_asset_token_account = &mut ctx.accounts.pool_asset_token_account;
     let pool_share_token_account = &mut ctx.accounts.pool_share_token_account;
@@ -84,6 +87,9 @@ pub fn swap_exact_shares_for_assets(
     merkle_proof: Option<Vec<[u8; 32]>>,
     _referrer: Option<Pubkey>,
 ) -> Result<()> {
+    if min_assets_out == 0 {
+        return Err(PoolError::ZeroSlippage.into());
+    }
     let pool = &mut ctx.accounts.pool;
     let pool_asset_token_account = &mut ctx.accounts.pool_asset_token_account;
     let pool_share_token_account = &mut ctx.accounts.pool_share_token_account;
