@@ -2004,6 +2004,12 @@ export type FjordLbp = {
           },
           {
             name: "LogarithmUndefined";
+          },
+          {
+            name: "InvalidSharesIn";
+          },
+          {
+            name: "InvalidAssetsIn";
           }
         ];
       };
@@ -4341,6 +4347,12 @@ export const IDL: FjordLbp = {
           },
           {
             name: "LogarithmUndefined",
+          },
+          {
+            name: "InvalidSharesIn",
+          },
+          {
+            name: "InvalidAssetsIn",
           },
         ],
       },

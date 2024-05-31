@@ -96,4 +96,8 @@ pub enum SafeMathError {
     AmountOutTooLarge,
     #[msg("WeightedMathLib: Logarithm undefined")]
     LogarithmUndefined,
+    #[msg("BootstrapLib: Expected shares in cannot be 0")]
+    InvalidSharesIn,
+    #[msg("BootstrapLib: Expected assets in cannot be 0")]
+    InvalidAssetsIn,
 }

@@ -99,6 +99,9 @@ pub mod math {
         if mul_div(assets_in, SCALED_DECIMALS, shares_out_scaled)? > args.max_share_price {
             assets_in = mul_div(shares_out_scaled, SCALED_DECIMALS, args.max_share_price)?;
         }
+        if assets_in == 0 {
+            return Err(SafeMathError::InvalidAssetsIn);
+        }
         assets_in = _scale_token(args.asset_token_decimal, assets_in, false)?;
         Ok(assets_in)
     }
@@ -126,6 +129,10 @@ pub mod math {
 
         if mul_div(assets_out_scaled, SCALED_DECIMALS, shares_in)? > args.max_share_price {
             shares_in = mul_div(assets_out_scaled, SCALED_DECIMALS, args.max_share_price)?;
+        }
+
+        if shares_in == 0 {
+            return Err(SafeMathError::InvalidSharesIn);
         }
 
         shares_in = _scale_token(args.share_token_decimal, shares_in, false)?;
