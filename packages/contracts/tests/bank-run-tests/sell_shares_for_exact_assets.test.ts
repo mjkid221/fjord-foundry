@@ -558,6 +558,27 @@ describe("Fjord LBP - Sell - shares for exact assets", () => {
         statePost.assetWeight.add(statePost.shareWeight).eq(BN(10000))
       ).to.eq(true);
     });
+
+    it("Should not be able to swap when max shares in is 0", async () => {
+      await expect(
+        program.methods
+          .swapSharesForExactAssets(BN(1), BN(0), null, null)
+          .accounts({
+            assetTokenMint,
+            shareTokenMint,
+            user: testUserA.publicKey,
+            pool: poolPda,
+            poolAssetTokenAccount,
+            poolShareTokenAccount,
+            userAssetTokenAccount: assetTokenMintUserAccount,
+            userShareTokenAccount: shareTokenMintUserAccount,
+            config: ownerConfigPda,
+            referrerStateInPool: null,
+          })
+          .signers([testUserA])
+          .rpc()
+      ).to.be.rejectedWith("ZeroSlippage");
+    });
   });
 
   describe("Success case - merkle proof", async () => {

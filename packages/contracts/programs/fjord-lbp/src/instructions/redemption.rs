@@ -6,7 +6,7 @@ use anchor_spl::token::{Mint, Token, TokenAccount};
 
 use crate::math::calculate_fee;
 use crate::{
-  safe_math, transfer_tokens_from, Close, FeeMapping, LiquidityBootstrappingPool, OwnerConfig, PoolError, Redeem, Treasury, UserStateInPool
+  safe_math, safe_sub, transfer_tokens_from, Close, FeeMapping, LiquidityBootstrappingPool, OwnerConfig, PoolError, Redeem, Treasury, UserStateInPool
 };
 
 pub struct FeeRecipient<'a> {
@@ -286,8 +286,16 @@ pub fn redeem(ctx: Context<RedeemTokens>, referred: bool) -> Result<()> {
     }
     let user_state_in_pool = &mut ctx.accounts.user_state_in_pool;
     let shares = user_state_in_pool.purchased_shares;
-    user_state_in_pool.purchased_shares = 0;
 
+    // Fall back to the remaining shares if there are not enough shares in the pool due to slippage/rounding errors/etc. Could be unlikely, but better to be safe.
+    let user_eligible_shares_to_claim = if ctx.accounts.pool_share_token_account.amount < shares {
+        ctx.accounts.pool_share_token_account.amount
+    } else {
+        shares
+    };
+
+    user_state_in_pool.purchased_shares = safe_sub(shares, user_eligible_shares_to_claim)?;
+    
     if shares != 0 {
         transfer_tokens_from(
             ctx.accounts.token_program.to_account_info(),
@@ -300,23 +308,24 @@ pub fn redeem(ctx: Context<RedeemTokens>, referred: bool) -> Result<()> {
                 ctx.accounts.pool.creator.as_ref(),
                 &[ctx.accounts.pool.bump],
             ],
-            // Fall back to the remaining shares if there are not enough shares in the pool due to slippage/rounding errors/etc. Could be unlikely, but better to be safe.
-            if ctx.accounts.pool_share_token_account.amount < shares {
-                ctx.accounts.pool_share_token_account.amount
-            } else {
-                shares
-            },
+            user_eligible_shares_to_claim
         )?;
 
         emit!(Redeem {
             caller: *ctx.accounts.user.key,
-            shares,
+            shares: user_eligible_shares_to_claim,
         })
     }
     
     if referred && user_state_in_pool.referred_assets != 0 {
         let assets = user_state_in_pool.referred_assets;
-        user_state_in_pool.referred_assets = 0;
+        // Fall back to the remaining assets if there are not enough assets in the pool due to slippage/rounding errors/etc.
+        let referrer_eligible_assets_to_claim = if ctx.accounts.pool_asset_token_account.amount < assets {
+            ctx.accounts.pool_asset_token_account.amount
+        } else {
+            assets
+        };
+        user_state_in_pool.referred_assets = safe_sub(assets, referrer_eligible_assets_to_claim)?;
         transfer_tokens_from(
             ctx.accounts.token_program.to_account_info(),
             ctx.accounts.pool_asset_token_account.to_account_info(),
@@ -328,12 +337,7 @@ pub fn redeem(ctx: Context<RedeemTokens>, referred: bool) -> Result<()> {
                 ctx.accounts.pool.creator.as_ref(),
                 &[ctx.accounts.pool.bump],
             ],
-            // Fall back to the remaining assets if there are not enough assets in the pool due to slippage/rounding errors/etc.
-            if ctx.accounts.pool_asset_token_account.amount < assets {
-                ctx.accounts.pool_asset_token_account.amount
-            } else {
-                assets
-            },
+            referrer_eligible_assets_to_claim
         )?
     }
 

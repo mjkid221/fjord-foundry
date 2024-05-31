@@ -22,6 +22,9 @@ pub fn swap_shares_for_exact_assets(
     merkle_proof: Option<Vec<[u8; 32]>>,
     _referrer: Option<Pubkey>,
 ) -> Result<()> {
+    if max_shares_in == 0 {
+        return Err(PoolError::ZeroSlippage.into());
+    }
     let pool = &mut ctx.accounts.pool;
     let pool_asset_token_account = &mut ctx.accounts.pool_asset_token_account;
     let pool_share_token_account = &mut ctx.accounts.pool_share_token_account;
@@ -41,6 +44,8 @@ pub fn swap_shares_for_exact_assets(
             sale_end_time: pool.sale_end_time,
             start_weight_basis_points: pool.start_weight_basis_points,
             end_weight_basis_points: pool.end_weight_basis_points,
+            total_swap_fees_asset: pool.total_swap_fees_asset,
+            total_swap_fees_share: pool.total_swap_fees_share,
         },
         assets_out,
     )?;
@@ -84,13 +89,14 @@ pub fn swap_exact_shares_for_assets(
     merkle_proof: Option<Vec<[u8; 32]>>,
     _referrer: Option<Pubkey>,
 ) -> Result<()> {
+    if min_assets_out == 0 {
+        return Err(PoolError::ZeroSlippage.into());
+    }
     let pool = &mut ctx.accounts.pool;
     let pool_asset_token_account = &mut ctx.accounts.pool_asset_token_account;
     let pool_share_token_account = &mut ctx.accounts.pool_share_token_account;
 
     let swap_fees = calculate_fee(shares_in, ctx.accounts.config.swap_fee);
-    pool.total_swap_fees_share = safe_math::safe_add(pool.total_swap_fees_share, swap_fees)?;
-
     let assets_out = preview_assets_out(
         PreviewAmountArgs {
             assets: pool_asset_token_account.amount,
@@ -106,9 +112,12 @@ pub fn swap_exact_shares_for_assets(
             sale_end_time: pool.sale_end_time,
             start_weight_basis_points: pool.start_weight_basis_points,
             end_weight_basis_points: pool.end_weight_basis_points,
+            total_swap_fees_asset: pool.total_swap_fees_asset,
+            total_swap_fees_share: pool.total_swap_fees_share,
         },
         safe_math::safe_sub(shares_in, swap_fees)?,
     )?;
+    pool.total_swap_fees_share = safe_math::safe_add(pool.total_swap_fees_share, swap_fees)?;
 
     if assets_out < min_assets_out {
         return Err(PoolError::SlippageExceeded.into());

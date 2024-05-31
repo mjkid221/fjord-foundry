@@ -637,6 +637,44 @@ describe("Fjord LBP - Sell - shares for exact assets", () => {
         statePost.assetWeight.add(statePost.shareWeight).eq(BN(10000))
       ).to.eq(true);
     });
+
+    it("Should not be able to swap if the min assets out is 0", async () => {
+      const { userPoolPda, userPoolAccount: userPoolAccountBefore } =
+        await getAllAccountState({
+          program,
+          poolPda,
+          bankRunClient,
+          shareTokenMint,
+          assetTokenMint,
+          user: testUserA.publicKey,
+          ownerConfigPda,
+          creator: creator.publicKey,
+        });
+
+      // Number of project tokens to sell (Shares)
+      const sharesIn = userPoolAccountBefore.purchasedShares.div(BN(2));
+
+      // Sell project token
+      await expect(
+        program.methods
+          .swapExactSharesForAssets(sharesIn, BN(0), null, null)
+          .accounts({
+            assetTokenMint,
+            shareTokenMint,
+            user: testUserA.publicKey,
+            pool: poolPda,
+            poolAssetTokenAccount,
+            poolShareTokenAccount,
+            userAssetTokenAccount: assetTokenMintUserAccount,
+            userShareTokenAccount: shareTokenMintUserAccount,
+            config: ownerConfigPda,
+            referrerStateInPool: null,
+            userStateInPool: userPoolPda,
+          })
+          .signers([testUserA])
+          .rpc()
+      ).to.be.rejectedWith("ZeroSlippage");
+    });
   });
 
   describe("Success case - merkle proof", async () => {
