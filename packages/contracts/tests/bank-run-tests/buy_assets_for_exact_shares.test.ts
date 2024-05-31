@@ -35,6 +35,7 @@ import {
   skipBlockTimestamp,
 } from "../../helpers";
 import { FjordLbp, IDL } from "../../target/types/fjord_lbp";
+import { ComputedReservesAndWeights } from "../../types";
 
 const MOCK_PK = new anchor.web3.PublicKey(
   "BPFLoaderUpgradeab1e11111111111111111111111"
@@ -786,6 +787,122 @@ describe("Fjord LBP - Buy `swapAssetsForExactShares`", () => {
       expect(userPoolAccount.purchasedShares.toString()).to.eq(
         sharesAmountOut.toString()
       );
+    });
+    it("should update reserves and weights", async () => {
+      // Skip time by 1100 seconds
+      await skipBlockTimestamp(bankRunCtx, 1100);
+
+      // Get user's pool account
+      const userPoolPda = findProgramAddressSync(
+        [testUserA.publicKey.toBuffer(), poolPda.toBuffer()],
+        program.programId
+      )[0];
+      // We compute the referrer's account in the pool if a referrer exists
+      const referrer: PublicKey | null = Keypair.generate().publicKey;
+      const referrerPda = referrer
+        ? findProgramAddressSync(
+            [(referrer as PublicKey).toBuffer(), poolPda.toBuffer()],
+            program.programId
+          )[0]
+        : null;
+
+      const merkleProof = generateMerkleProof(
+        whitelistedAddresses,
+        testUserA.publicKey.toBase58()
+      );
+
+      const pool = await program.account.liquidityBootstrappingPool.fetch(
+        poolPda
+      );
+
+      const { maxSharesOut } = pool;
+
+      const sharesAmountOut = maxSharesOut.div(BN(10000000000));
+
+      const statePre = await program.methods
+        .reservesAndWeights()
+        .accounts({
+          assetTokenMint,
+          shareTokenMint,
+          pool: poolPda,
+          poolAssetTokenAccount,
+          poolShareTokenAccount,
+        })
+        .signers([creator])
+        .simulate()
+        .then((data) => data.events[0].data as ComputedReservesAndWeights);
+
+      // Get expected shares out by reading a view function's emitted event.
+      const expectedAssetsIn = await program.methods
+        .previewAssetsIn(
+          // Shares Out
+          sharesAmountOut
+        )
+        .accounts({
+          assetTokenMint,
+          shareTokenMint,
+          pool: poolPda,
+          poolAssetTokenAccount,
+          poolShareTokenAccount,
+        })
+        .signers([creator])
+        .simulate()
+        .then((data) => data.events[0].data.assetsIn as BigNumber);
+
+      // Buy project token
+      await program.methods
+        .swapAssetsForExactShares(
+          // shares out
+          sharesAmountOut,
+          // Minimum assets in
+          expectedAssetsIn,
+          // Merkle proof can be 'null' if there are no proofs
+          merkleProof,
+          // Referrer can be null if there are no referrers
+          referrer
+        )
+        .accounts({
+          assetTokenMint,
+          shareTokenMint,
+          user: testUserA.publicKey,
+          pool: poolPda,
+          poolAssetTokenAccount,
+          poolShareTokenAccount,
+          userAssetTokenAccount: assetTokenMintUserAccount,
+          userShareTokenAccount: shareTokenMintUserAccount,
+          config: ownerConfigPda,
+          referrerStateInPool: referrerPda,
+          userStateInPool: userPoolPda,
+        })
+
+        .signers([testUserA])
+        .rpc();
+
+      await skipBlockTimestamp(bankRunCtx, 1000); // takes time for the interpolated weights to update
+
+      const statePost = await program.methods
+        .reservesAndWeights()
+        .accounts({
+          assetTokenMint,
+          shareTokenMint,
+          pool: poolPda,
+          poolAssetTokenAccount,
+          poolShareTokenAccount,
+        })
+        .signers([creator])
+        .simulate()
+        .then((data) => data.events[0].data as ComputedReservesAndWeights);
+
+      // Asset reserve should increase, share reserve should decrease
+      expect(statePre.assetReserve.lt(statePost.assetReserve)).to.eq(true);
+      expect(statePre.shareReserve.gt(statePost.shareReserve)).to.eq(true);
+      // Asset weight should increase, share weight should decrease
+      expect(statePre.assetWeight.lt(statePost.assetWeight)).to.eq(true);
+      expect(statePre.shareWeight.gt(statePost.shareWeight)).to.eq(true);
+      // Should maintain total weight of 100%
+      expect(
+        statePost.assetWeight.add(statePost.shareWeight).eq(BN(10000))
+      ).to.eq(true);
     });
   });
   describe("Buy Failure Cases", () => {
@@ -1991,6 +2108,59 @@ describe("Fjord LBP - Buy `swapAssetsForExactShares`", () => {
           .signers([testUserA])
           .rpc()
       ).to.be.rejectedWith("SlippageExceeded");
+    });
+
+    it("should not be able to swap tokens if the max assets in is 0", async () => {
+      await skipBlockTimestamp(bankRunCtx, 1100);
+
+      // Get user's pool account
+      const userPoolPda = findProgramAddressSync(
+        [testUserA.publicKey.toBuffer(), poolPda.toBuffer()],
+        program.programId
+      )[0];
+
+      const referrer: PublicKey | null = null;
+      const merkleProof = generateMerkleProof(
+        whitelistedAddresses,
+        testUserA.publicKey.toBase58()
+      );
+
+      const poolBeforeTransaction =
+        await program.account.liquidityBootstrappingPool.fetch(poolPda);
+
+      const { maxSharesOut } = poolBeforeTransaction;
+
+      const sharesAmountOut = maxSharesOut.div(BN("1000000000000000"));
+
+      // Buy project token with the smaller expected assets in
+      await expect(
+        program.methods
+          .swapAssetsForExactShares(
+            // shares out
+            sharesAmountOut,
+            // Minimum assets in
+            BN(0),
+            // Merkle proof can be 'null' if there are no proofs
+            merkleProof,
+            // Referrer can be null if there are no referrers
+            referrer
+          )
+          .accounts({
+            assetTokenMint,
+            shareTokenMint,
+            user: testUserA.publicKey,
+            pool: poolPda,
+            poolAssetTokenAccount,
+            poolShareTokenAccount,
+            userAssetTokenAccount: assetTokenMintUserAccount,
+            userShareTokenAccount: shareTokenMintUserAccount,
+            config: ownerConfigPda,
+            referrerStateInPool: referrer,
+            userStateInPool: userPoolPda,
+          })
+          .signers([testUserA])
+          .rpc()
+      ).to.be.rejectedWith("ZeroSlippage");
     });
   });
 });

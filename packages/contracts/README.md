@@ -31,4 +31,5 @@ To deploy or upgrade the program:
 To execute the unit tests:
 
 1. `cd` into the project directory.
-2. Run `yarn test`
+2. Create a new local key pair using `solana-keygen new` and place it in `./deployment-keypair/local/id.json`
+3. Run `yarn test`

@@ -179,10 +179,15 @@ pub mod fjord_lbp {
                 sale_end_time: ctx.accounts.pool.sale_end_time,
                 start_weight_basis_points: ctx.accounts.pool.start_weight_basis_points,
                 end_weight_basis_points: ctx.accounts.pool.end_weight_basis_points,
+                total_swap_fees_asset: ctx.accounts.pool.total_swap_fees_asset,
+                total_swap_fees_share: ctx.accounts.pool.total_swap_fees_share,
             },
             shares_out,
         )?;
-        assets_in += math::calculate_fee(assets_in, ctx.accounts.config.swap_fee);
+        assets_in = safe_math::safe_add(
+            assets_in,
+            math::calculate_fee(assets_in, ctx.accounts.config.swap_fee),
+        )?;
         emit!(PreviewAssetsIn { assets_in });
         Ok(assets_in)
     }
@@ -203,10 +208,15 @@ pub mod fjord_lbp {
                 sale_end_time: ctx.accounts.pool.sale_end_time,
                 start_weight_basis_points: ctx.accounts.pool.start_weight_basis_points,
                 end_weight_basis_points: ctx.accounts.pool.end_weight_basis_points,
+                total_swap_fees_asset: ctx.accounts.pool.total_swap_fees_asset,
+                total_swap_fees_share: ctx.accounts.pool.total_swap_fees_share,
             },
             assets_out,
         )?;
-        shares_in += math::calculate_fee(shares_in, ctx.accounts.config.swap_fee);
+        shares_in = safe_math::safe_add(
+            shares_in,
+            math::calculate_fee(shares_in, ctx.accounts.config.swap_fee),
+        )?;
         emit!(PreviewSharesIn { shares_in });
         Ok(shares_in)
     }
@@ -227,6 +237,8 @@ pub mod fjord_lbp {
                 sale_end_time: ctx.accounts.pool.sale_end_time,
                 start_weight_basis_points: ctx.accounts.pool.start_weight_basis_points,
                 end_weight_basis_points: ctx.accounts.pool.end_weight_basis_points,
+                total_swap_fees_asset: ctx.accounts.pool.total_swap_fees_asset,
+                total_swap_fees_share: ctx.accounts.pool.total_swap_fees_share,
             },
             safe_math::safe_sub(
                 assets_in,
@@ -253,6 +265,8 @@ pub mod fjord_lbp {
                 sale_end_time: ctx.accounts.pool.sale_end_time,
                 start_weight_basis_points: ctx.accounts.pool.start_weight_basis_points,
                 end_weight_basis_points: ctx.accounts.pool.end_weight_basis_points,
+                total_swap_fees_asset: ctx.accounts.pool.total_swap_fees_asset,
+                total_swap_fees_share: ctx.accounts.pool.total_swap_fees_share,
             },
             safe_math::safe_sub(
                 shares_in,
@@ -280,6 +294,8 @@ pub mod fjord_lbp {
             sale_end_time: ctx.accounts.pool.sale_end_time,
             start_weight_basis_points: ctx.accounts.pool.start_weight_basis_points,
             end_weight_basis_points: ctx.accounts.pool.end_weight_basis_points,
+            total_swap_fees_asset: ctx.accounts.pool.total_swap_fees_asset,
+            total_swap_fees_share: ctx.accounts.pool.total_swap_fees_share,
         })?;
         let ComputedReservesAndWeights {
             asset_reserve,

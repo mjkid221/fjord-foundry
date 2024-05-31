@@ -951,6 +951,110 @@ describe("Fjord LBP - Redeem", () => {
             .rpc()
         ).to.be.rejectedWith("RedeemingDisallowed");
       });
+
+      it("should not allow duplicate fee recipients", async () => {
+        const { pool, treasury } = await getAllAccountState({
+          program,
+          poolPda,
+          bankRunClient,
+          shareTokenMint,
+          assetTokenMint,
+          user: testUserA.publicKey,
+          ownerConfigPda,
+          creator: creator.publicKey,
+        });
+        // Skip time by 1100 seconds
+        await skipBlockTimestamp(bankRunCtx, pool.saleEndTime.toNumber() + 1);
+
+        // Get fee recipient informations.
+        // !NOTE - There are two types of fee recipients in the treasury.
+        // 1. Swap fee recipient - This is a single user who will receive the swap fees in asset and share token.
+        // 2. Fee recipients - These are the array of users who will receive a set fee (in asset token) based on the percentage set.
+        const { feeRecipients, swapFeeRecipient } = treasury;
+        const [
+          swapFeeRecipientAssetTokenAccount,
+          swapFeeRecipientShareTokenAccount,
+          treasuryAssetTokenAccount,
+          treasuryShareTokenAccount,
+        ] = await Promise.all([
+          getAssociatedTokenAddress(assetTokenMint, swapFeeRecipient),
+          getAssociatedTokenAddress(shareTokenMint, swapFeeRecipient),
+          getAssociatedTokenAddress(assetTokenMint, treasuryPda, true),
+          getAssociatedTokenAddress(shareTokenMint, treasuryPda, true),
+        ]);
+
+        // Add instructions to create asset token accounts for recipient atas if they dont exist
+        const preInstructions = new Transaction();
+        const recipientAccountsSetup: Array<AccountMeta> = [];
+        const promises: Promise<void>[] = [];
+
+        [assetTokenMint].forEach((token) => {
+          feeRecipients.forEach(({ user: recipient }) => {
+            const promise = getAssociatedTokenAddress(
+              token,
+              recipient,
+              true
+            ).then(async (recipientAta) => {
+              try {
+                // This should throw an error if the account doesn't exist
+                await getAccount(connection, recipientAta);
+              } catch {
+                // Add instruction to create one
+                preInstructions.add(
+                  createAssociatedTokenAccountInstruction(
+                    testUserA.publicKey, // fee payer
+                    recipientAta, // recipient's associated token account
+                    recipient, // recipient's public key
+                    token // token mint address
+                  )
+                );
+              }
+              // Add extra recipient accounts to the accounts array for our program to use as a reference
+              recipientAccountsSetup.push({
+                pubkey: recipientAta,
+                isWritable: true,
+                isSigner: false,
+              });
+            });
+            promises.push(promise);
+          });
+        });
+
+        // Wait for all promises to complete
+        await Promise.all(promises);
+
+        recipientAccountsSetup.pop();
+        recipientAccountsSetup.push(recipientAccountsSetup[0]);
+
+        await expect(
+          program.methods
+            .closePool()
+            .accounts({
+              assetTokenMint,
+              shareTokenMint,
+              pool: poolPda,
+              poolAssetTokenAccount,
+              poolShareTokenAccount,
+              treasuryAssetTokenAccount,
+              treasuryShareTokenAccount,
+              treasury: treasuryPda,
+              creatorAssetTokenAccount,
+              creatorShareTokenAccount,
+              ownerConfig: ownerConfigPda,
+              user: testUserA.publicKey,
+              poolCreator: creator.publicKey,
+              swapFeeRecipientAssetTokenAccount,
+              swapFeeRecipientShareTokenAccount,
+              swapFeeRecipient: treasury.swapFeeRecipient,
+            })
+            .signers([testUserA])
+            // Creates the associated token accounts for the recipients if they don't exist
+            .preInstructions(preInstructions.instructions)
+            // Pass all the recipient accounts to the program via remaining accounts
+            .remainingAccounts(recipientAccountsSetup)
+            .rpc()
+        ).to.be.rejectedWith("DuplicateFeeRecipient");
+      });
     });
   });
 });

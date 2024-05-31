@@ -61,6 +61,10 @@ pub enum PoolError {
     InvalidCreator,
     #[msg("Invalid swap fee recipient")]
     InvalidSwapFeeRecipient,
+    #[msg("Duplicate fee recipient")]
+    DuplicateFeeRecipient,
+    #[msg("Zero Slippage")]
+    ZeroSlippage,
 }
 
 // Access Control Errors
@@ -92,4 +96,8 @@ pub enum SafeMathError {
     AmountOutTooLarge,
     #[msg("WeightedMathLib: Logarithm undefined")]
     LogarithmUndefined,
+    #[msg("BootstrapLib: Expected shares in cannot be 0")]
+    InvalidSharesIn,
+    #[msg("BootstrapLib: Expected assets in cannot be 0")]
+    InvalidAssetsIn,
 }

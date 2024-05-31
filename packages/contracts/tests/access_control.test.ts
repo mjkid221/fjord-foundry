@@ -271,6 +271,20 @@ describe("Fjord LBP - Access Controls", () => {
       ).to.be.rejectedWith("MaxFeeExceeded");
     });
 
+    it("Should not be able to set pool fees total to more than 100%", async () => {
+      const newPlatformFee = 5000;
+      const newReferralFee = 5000;
+      const newSwapFee = 5000;
+
+      await expect(
+        program.methods
+          .setFees(newPlatformFee, newReferralFee, newSwapFee)
+          .accounts({ owner: creator.publicKey })
+          .signers([creator])
+          .rpc()
+      ).to.be.rejectedWith("MaxFeeExceeded");
+    });
+
     // This test must come last as it will change the owner
     it("Should be able to nominate a new owner and accept as new owner", async () => {
       // Try using owner only functions

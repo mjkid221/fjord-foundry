@@ -1,6 +1,6 @@
 use anchor_spl::token_2022::spl_token_2022::extension::transfer_fee::MAX_FEE_BASIS_POINTS;
 
-const DECIMAL_SCALING: u64 = 5;
+const DECIMAL_SCALING: u64 = 8;
 const SCALED_DECIMALS: u64 = 10_u64.pow(DECIMAL_SCALING as u32);
 pub mod structs {
     use anchor_lang::prelude::*;
@@ -39,6 +39,8 @@ pub struct PreviewAmountArgs {
     pub sale_end_time: i64,
     pub start_weight_basis_points: u16,
     pub end_weight_basis_points: u16,
+    pub total_swap_fees_asset: u64,
+    pub total_swap_fees_share: u64,
 }
 
 pub mod math {
@@ -97,6 +99,9 @@ pub mod math {
         if mul_div(assets_in, SCALED_DECIMALS, shares_out_scaled)? > args.max_share_price {
             assets_in = mul_div(shares_out_scaled, SCALED_DECIMALS, args.max_share_price)?;
         }
+        if assets_in == 0 {
+            return Err(SafeMathError::InvalidAssetsIn);
+        }
         assets_in = _scale_token(args.asset_token_decimal, assets_in, false)?;
         Ok(assets_in)
     }
@@ -124,6 +129,10 @@ pub mod math {
 
         if mul_div(assets_out_scaled, SCALED_DECIMALS, shares_in)? > args.max_share_price {
             shares_in = mul_div(assets_out_scaled, SCALED_DECIMALS, args.max_share_price)?;
+        }
+
+        if shares_in == 0 {
+            return Err(SafeMathError::InvalidSharesIn);
         }
 
         shares_in = _scale_token(args.share_token_decimal, shares_in, false)?;
@@ -202,9 +211,15 @@ pub mod math {
             asset_token_decimal: _,
             share_token_decimal: _,
             max_share_price: _,
+            total_swap_fees_asset,
+            total_swap_fees_share,
         } = *args;
-        let asset_reserve: u64 = safe_add(assets, virtual_assets)?;
-        let share_reserve: u64 = safe_sub(safe_add(shares, virtual_shares)?, total_purchased)?;
+        let asset_reserve: u64 =
+            safe_sub(safe_add(assets, virtual_assets)?, total_swap_fees_asset)?;
+        let share_reserve: u64 = safe_sub(
+            safe_sub(safe_add(shares, virtual_shares)?, total_purchased)?,
+            total_swap_fees_share,
+        )?;
         let total_seconds = sale_end_time - sale_start_time;
 
         let mut seconds_elapsed = 0;

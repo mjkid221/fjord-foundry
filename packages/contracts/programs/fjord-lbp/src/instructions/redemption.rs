@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use anchor_lang::prelude::*;
 use anchor_spl::associated_token::{AssociatedToken, get_associated_token_address};
@@ -6,7 +6,7 @@ use anchor_spl::token::{Mint, Token, TokenAccount};
 
 use crate::math::calculate_fee;
 use crate::{
-  transfer_tokens_from, Close, FeeMapping, LiquidityBootstrappingPool, OwnerConfig, PoolError, Redeem, Treasury, UserStateInPool
+  safe_math, safe_sub, transfer_tokens_from, Close, FeeMapping, LiquidityBootstrappingPool, OwnerConfig, PoolError, Redeem, Treasury, UserStateInPool
 };
 
 pub struct FeeRecipient<'a> {
@@ -173,57 +173,26 @@ pub fn close_pool<'info>(ctx: Context<'_, '_, '_, 'info, ClosePool<'info>>) -> R
         return Err(PoolError::ClosingDisallowed.into());
     }
     pool.closed = true;
-    let total_assets = ctx.accounts.pool_asset_token_account.amount - pool.total_swap_fees_asset;
+    let total_assets = safe_math::safe_sub(ctx.accounts.pool_asset_token_account.amount, pool.total_swap_fees_asset)?;
     let platform_fees = calculate_fee(total_assets, ctx.accounts.owner_config.platform_fee);
-    let total_assets_minus_fees = total_assets - platform_fees - pool.total_referred;
+    let total_assets_minus_fees = safe_math::safe_sub(safe_math::safe_sub(total_assets, platform_fees)?, pool.total_referred)?;
 
     if total_assets != 0 {
-        // Transfer asset and share to the treasury
-        transfer_tokens_from(
-            ctx.accounts.token_program.to_account_info(),
-            ctx.accounts.pool_asset_token_account.to_account_info(),
-            ctx.accounts
-                .treasury_asset_token_account
-                .to_account_info(),
-            pool.to_account_info(),
-            &[
-                pool.share_token.as_ref(),
-                pool.asset_token.as_ref(),
-                pool.creator.as_ref(),
-                pool.salt.as_bytes(),
-                &[pool.bump],
-            ],
-            platform_fees + pool.total_swap_fees_asset,
-        )?;
-        transfer_tokens_from(
-            ctx.accounts.token_program.to_account_info(),
-            ctx.accounts.pool_share_token_account.to_account_info(),
-            ctx.accounts
-                .treasury_share_token_account
-                .to_account_info(),
-            pool.to_account_info(),
-            &[
-                pool.share_token.as_ref(),
-                pool.asset_token.as_ref(),
-                pool.creator.as_ref(),
-                pool.salt.as_bytes(),
-                &[pool.bump],
-            ],
-            pool.total_swap_fees_share,
-        )?;
-
-        // distribute treasury fees to recipients and swap fee recipient
+        // Transfer platform fees and swap fees directly to the respective recipients
         let fee_recipients_asset_token = retrieve_valid_keys(treasury.fee_recipients.clone(), ctx.remaining_accounts, &ctx.accounts.asset_token_mint.key())?;
         fee_recipients_asset_token.iter().for_each(|recipient| {
             let fees = calculate_fee(platform_fees, recipient.fee_percentage);
             transfer_tokens_from(
                 ctx.accounts.token_program.to_account_info(),
-                ctx.accounts.treasury_asset_token_account.to_account_info(),
+                ctx.accounts.pool_asset_token_account.to_account_info(),
                 recipient.account_info.to_account_info(),
-                treasury.to_account_info(),
+                pool.to_account_info(),
                 &[
-                    "treasury".as_bytes(),
-                    &[ctx.bumps.treasury],
+                    pool.share_token.as_ref(),
+                    pool.asset_token.as_ref(),
+                    pool.creator.as_ref(),
+                    pool.salt.as_bytes(),
+                    &[pool.bump],
                 ],
                 fees,
             ).unwrap();
@@ -232,14 +201,17 @@ pub fn close_pool<'info>(ctx: Context<'_, '_, '_, 'info, ClosePool<'info>>) -> R
         // Transfer asset to swap fee recipient
         transfer_tokens_from(
             ctx.accounts.token_program.to_account_info(),
-            ctx.accounts.treasury_asset_token_account.to_account_info(),
+            ctx.accounts.pool_asset_token_account.to_account_info(),
             ctx.accounts
                 .swap_fee_recipient_asset_token_account
                 .to_account_info(),
-                treasury.to_account_info(),
+            pool.to_account_info(),
             &[
-                "treasury".as_bytes(),
-                &[ctx.bumps.treasury],
+                pool.share_token.as_ref(),
+                pool.asset_token.as_ref(),
+                pool.creator.as_ref(),
+                pool.salt.as_bytes(),
+                &[pool.bump],
             ],
             pool.total_swap_fees_asset,
         )?;
@@ -247,19 +219,22 @@ pub fn close_pool<'info>(ctx: Context<'_, '_, '_, 'info, ClosePool<'info>>) -> R
         // Transfer share to swap fee recipient
         transfer_tokens_from(
             ctx.accounts.token_program.to_account_info(),
-            ctx.accounts.treasury_share_token_account.to_account_info(),
+            ctx.accounts.pool_share_token_account.to_account_info(),
             ctx.accounts
                 .swap_fee_recipient_share_token_account
                 .to_account_info(),
-                treasury.to_account_info(),
+            pool.to_account_info(),
             &[
-                "treasury".as_bytes(),
-                &[ctx.bumps.treasury],
+                pool.share_token.as_ref(),
+                pool.asset_token.as_ref(),
+                pool.creator.as_ref(),
+                pool.salt.as_bytes(),
+                &[pool.bump],
             ],
             pool.total_swap_fees_share,
         )?;
 
-        // Transfer asset to pool creator/manager
+        // Transfer remaining assets to pool creator/manager
         transfer_tokens_from(
             ctx.accounts.token_program.to_account_info(),
             ctx.accounts.pool_asset_token_account.to_account_info(),
@@ -295,7 +270,7 @@ pub fn close_pool<'info>(ctx: Context<'_, '_, '_, 'info, ClosePool<'info>>) -> R
                 &[pool.bump],
             ],
             unsold_shares,
-        )?
+        )?;
     }
 
     emit!(Close {
@@ -309,14 +284,23 @@ pub fn close_pool<'info>(ctx: Context<'_, '_, '_, 'info, ClosePool<'info>>) -> R
 }
 
 
+
 pub fn redeem(ctx: Context<RedeemTokens>, referred: bool) -> Result<()> {
     if !ctx.accounts.pool.closed {
         return Err(PoolError::RedeemingDisallowed.into());
     }
     let user_state_in_pool = &mut ctx.accounts.user_state_in_pool;
     let shares = user_state_in_pool.purchased_shares;
-    user_state_in_pool.purchased_shares = 0;
 
+    // Fall back to the remaining shares if there are not enough shares in the pool due to slippage/rounding errors/etc. Could be unlikely, but better to be safe.
+    let user_eligible_shares_to_claim = if ctx.accounts.pool_share_token_account.amount < shares {
+        ctx.accounts.pool_share_token_account.amount
+    } else {
+        shares
+    };
+
+    user_state_in_pool.purchased_shares = safe_sub(shares, user_eligible_shares_to_claim)?;
+    
     if shares != 0 {
         transfer_tokens_from(
             ctx.accounts.token_program.to_account_info(),
@@ -330,23 +314,24 @@ pub fn redeem(ctx: Context<RedeemTokens>, referred: bool) -> Result<()> {
                 ctx.accounts.pool.salt.as_bytes(),
                 &[ctx.accounts.pool.bump],
             ],
-            // Fall back to the remaining shares if there are not enough shares in the pool due to slippage/rounding errors/etc. Could be unlikely, but better to be safe.
-            if ctx.accounts.pool_share_token_account.amount < shares {
-                ctx.accounts.pool_share_token_account.amount
-            } else {
-                shares
-            },
+            user_eligible_shares_to_claim
         )?;
 
         emit!(Redeem {
             caller: *ctx.accounts.user.key,
-            shares,
+            shares: user_eligible_shares_to_claim,
         })
     }
     
     if referred && user_state_in_pool.referred_assets != 0 {
         let assets = user_state_in_pool.referred_assets;
-        user_state_in_pool.referred_assets = 0;
+        // Fall back to the remaining assets if there are not enough assets in the pool due to slippage/rounding errors/etc.
+        let referrer_eligible_assets_to_claim = if ctx.accounts.pool_asset_token_account.amount < assets {
+            ctx.accounts.pool_asset_token_account.amount
+        } else {
+            assets
+        };
+        user_state_in_pool.referred_assets = safe_sub(assets, referrer_eligible_assets_to_claim)?;
         transfer_tokens_from(
             ctx.accounts.token_program.to_account_info(),
             ctx.accounts.pool_asset_token_account.to_account_info(),
@@ -359,12 +344,7 @@ pub fn redeem(ctx: Context<RedeemTokens>, referred: bool) -> Result<()> {
                 ctx.accounts.pool.salt.as_bytes(),
                 &[ctx.accounts.pool.bump],
             ],
-            // Fall back to the remaining assets if there are not enough assets in the pool due to slippage/rounding errors/etc.
-            if ctx.accounts.pool_asset_token_account.amount < assets {
-                ctx.accounts.pool_asset_token_account.amount
-            } else {
-                assets
-            },
+            referrer_eligible_assets_to_claim
         )?
     }
 
@@ -381,23 +361,27 @@ fn retrieve_valid_keys<'a>(a: Vec<FeeMapping>, b: &[AccountInfo<'a>], token_mint
         .map(|recipient| (get_associated_token_address(&recipient.user, token_mint), recipient.percentage))
         .collect();
 
-    // Check that all accounts are writable
+    let mut seen_keys: HashSet<Pubkey> = HashSet::with_capacity(b.len());
+    let mut filtered_b: Vec<FeeRecipient<'a>> = Vec::with_capacity(b.len());
+
+    // Filter `b` to find AccountInfo whose key matches any of the ATAs and map them to FeeRecipient
     for account_info in b {
         if !account_info.is_writable {
             return Err(PoolError::InvalidFeeRecipientWritable.into());
         }
-    }
 
-    // Filter `b` to find AccountInfo whose key matches any of the ATAs and map them to FeeRecipient
-    let filtered_b: Vec<FeeRecipient<'a>> = b.iter()
-        .filter_map(|account_info| {
-            ata_to_fee.get(account_info.key)
-                .map(|&fee_percentage| FeeRecipient {
-                    account_info: account_info.clone(),
-                    fee_percentage,
-                })
-        })
-        .collect();
+        // Check if the account is in the ATA to fee mapping and detect duplicates
+        if let Some(&fee_percentage) = ata_to_fee.get(account_info.key) {
+            if !seen_keys.insert(*account_info.key) {
+                return Err(PoolError::DuplicateFeeRecipient.into());
+            }
+
+            filtered_b.push(FeeRecipient {
+                account_info: account_info.clone(),
+                fee_percentage,
+            });
+        }
+    }
 
     // Ensure the length matches to prevent invalid configurations
     if a.len() != filtered_b.len() {
