@@ -114,6 +114,11 @@ export type FjordLbp = {
                 kind: "account";
                 type: "publicKey";
                 path: "creator";
+              },
+              {
+                kind: "arg";
+                type: "string";
+                path: "salt";
               }
             ];
           };
@@ -170,6 +175,10 @@ export type FjordLbp = {
         }
       ];
       args: [
+        {
+          name: "salt";
+          type: "string";
+        },
         {
           name: "assets";
           type: "u64";
@@ -270,6 +279,12 @@ export type FjordLbp = {
                 type: "publicKey";
                 account: "LiquidityBootstrappingPool";
                 path: "pool.creator";
+              },
+              {
+                kind: "account";
+                type: "string";
+                account: "LiquidityBootstrappingPool";
+                path: "pool.salt";
               }
             ];
           };
@@ -435,6 +450,12 @@ export type FjordLbp = {
                 type: "publicKey";
                 account: "LiquidityBootstrappingPool";
                 path: "pool.creator";
+              },
+              {
+                kind: "account";
+                type: "string";
+                account: "LiquidityBootstrappingPool";
+                path: "pool.salt";
               }
             ];
           };
@@ -600,6 +621,12 @@ export type FjordLbp = {
                 type: "publicKey";
                 account: "LiquidityBootstrappingPool";
                 path: "pool.creator";
+              },
+              {
+                kind: "account";
+                type: "string";
+                account: "LiquidityBootstrappingPool";
+                path: "pool.salt";
               }
             ];
           };
@@ -765,6 +792,12 @@ export type FjordLbp = {
                 type: "publicKey";
                 account: "LiquidityBootstrappingPool";
                 path: "pool.creator";
+              },
+              {
+                kind: "account";
+                type: "string";
+                account: "LiquidityBootstrappingPool";
+                path: "pool.salt";
               }
             ];
           };
@@ -930,6 +963,12 @@ export type FjordLbp = {
                 type: "publicKey";
                 account: "LiquidityBootstrappingPool";
                 path: "pool.creator";
+              },
+              {
+                kind: "account";
+                type: "string";
+                account: "LiquidityBootstrappingPool";
+                path: "pool.salt";
               }
             ];
           };
@@ -1071,6 +1110,12 @@ export type FjordLbp = {
                 type: "publicKey";
                 account: "LiquidityBootstrappingPool";
                 path: "pool.creator";
+              },
+              {
+                kind: "account";
+                type: "string";
+                account: "LiquidityBootstrappingPool";
+                path: "pool.salt";
               }
             ];
           };
@@ -1179,6 +1224,12 @@ export type FjordLbp = {
                 type: "publicKey";
                 account: "LiquidityBootstrappingPool";
                 path: "pool.creator";
+              },
+              {
+                kind: "account";
+                type: "string";
+                account: "LiquidityBootstrappingPool";
+                path: "pool.salt";
               }
             ];
           };
@@ -1252,6 +1303,12 @@ export type FjordLbp = {
                 type: "publicKey";
                 account: "LiquidityBootstrappingPool";
                 path: "pool.creator";
+              },
+              {
+                kind: "account";
+                type: "string";
+                account: "LiquidityBootstrappingPool";
+                path: "pool.salt";
               }
             ];
           };
@@ -1325,6 +1382,12 @@ export type FjordLbp = {
                 type: "publicKey";
                 account: "LiquidityBootstrappingPool";
                 path: "pool.creator";
+              },
+              {
+                kind: "account";
+                type: "string";
+                account: "LiquidityBootstrappingPool";
+                path: "pool.salt";
               }
             ];
           };
@@ -1398,6 +1461,12 @@ export type FjordLbp = {
                 type: "publicKey";
                 account: "LiquidityBootstrappingPool";
                 path: "pool.creator";
+              },
+              {
+                kind: "account";
+                type: "string";
+                account: "LiquidityBootstrappingPool";
+                path: "pool.salt";
               }
             ];
           };
@@ -1471,6 +1540,12 @@ export type FjordLbp = {
                 type: "publicKey";
                 account: "LiquidityBootstrappingPool";
                 path: "pool.creator";
+              },
+              {
+                kind: "account";
+                type: "string";
+                account: "LiquidityBootstrappingPool";
+                path: "pool.salt";
               }
             ];
           };
@@ -1530,6 +1605,12 @@ export type FjordLbp = {
                 kind: "account";
                 type: "publicKey";
                 path: "creator";
+              },
+              {
+                kind: "account";
+                type: "string";
+                account: "LiquidityBootstrappingPool";
+                path: "pool.salt";
               }
             ];
           };
@@ -1832,6 +1913,10 @@ export type FjordLbp = {
           {
             name: "bump";
             type: "u8";
+          },
+          {
+            name: "salt";
+            type: "string";
           }
         ];
       };
@@ -2458,6 +2543,11 @@ export const IDL: FjordLbp = {
                 type: "publicKey",
                 path: "creator",
               },
+              {
+                kind: "arg",
+                type: "string",
+                path: "salt",
+              },
             ],
           },
         },
@@ -2513,6 +2603,10 @@ export const IDL: FjordLbp = {
         },
       ],
       args: [
+        {
+          name: "salt",
+          type: "string",
+        },
         {
           name: "assets",
           type: "u64",
@@ -2613,6 +2707,12 @@ export const IDL: FjordLbp = {
                 type: "publicKey",
                 account: "LiquidityBootstrappingPool",
                 path: "pool.creator",
+              },
+              {
+                kind: "account",
+                type: "string",
+                account: "LiquidityBootstrappingPool",
+                path: "pool.salt",
               },
             ],
           },
@@ -2779,6 +2879,12 @@ export const IDL: FjordLbp = {
                 account: "LiquidityBootstrappingPool",
                 path: "pool.creator",
               },
+              {
+                kind: "account",
+                type: "string",
+                account: "LiquidityBootstrappingPool",
+                path: "pool.salt",
+              },
             ],
           },
         },
@@ -2943,6 +3049,12 @@ export const IDL: FjordLbp = {
                 type: "publicKey",
                 account: "LiquidityBootstrappingPool",
                 path: "pool.creator",
+              },
+              {
+                kind: "account",
+                type: "string",
+                account: "LiquidityBootstrappingPool",
+                path: "pool.salt",
               },
             ],
           },
@@ -3109,6 +3221,12 @@ export const IDL: FjordLbp = {
                 account: "LiquidityBootstrappingPool",
                 path: "pool.creator",
               },
+              {
+                kind: "account",
+                type: "string",
+                account: "LiquidityBootstrappingPool",
+                path: "pool.salt",
+              },
             ],
           },
         },
@@ -3274,6 +3392,12 @@ export const IDL: FjordLbp = {
                 account: "LiquidityBootstrappingPool",
                 path: "pool.creator",
               },
+              {
+                kind: "account",
+                type: "string",
+                account: "LiquidityBootstrappingPool",
+                path: "pool.salt",
+              },
             ],
           },
         },
@@ -3415,6 +3539,12 @@ export const IDL: FjordLbp = {
                 account: "LiquidityBootstrappingPool",
                 path: "pool.creator",
               },
+              {
+                kind: "account",
+                type: "string",
+                account: "LiquidityBootstrappingPool",
+                path: "pool.salt",
+              },
             ],
           },
         },
@@ -3523,6 +3653,12 @@ export const IDL: FjordLbp = {
                 account: "LiquidityBootstrappingPool",
                 path: "pool.creator",
               },
+              {
+                kind: "account",
+                type: "string",
+                account: "LiquidityBootstrappingPool",
+                path: "pool.salt",
+              },
             ],
           },
         },
@@ -3595,6 +3731,12 @@ export const IDL: FjordLbp = {
                 type: "publicKey",
                 account: "LiquidityBootstrappingPool",
                 path: "pool.creator",
+              },
+              {
+                kind: "account",
+                type: "string",
+                account: "LiquidityBootstrappingPool",
+                path: "pool.salt",
               },
             ],
           },
@@ -3669,6 +3811,12 @@ export const IDL: FjordLbp = {
                 account: "LiquidityBootstrappingPool",
                 path: "pool.creator",
               },
+              {
+                kind: "account",
+                type: "string",
+                account: "LiquidityBootstrappingPool",
+                path: "pool.salt",
+              },
             ],
           },
         },
@@ -3741,6 +3889,12 @@ export const IDL: FjordLbp = {
                 type: "publicKey",
                 account: "LiquidityBootstrappingPool",
                 path: "pool.creator",
+              },
+              {
+                kind: "account",
+                type: "string",
+                account: "LiquidityBootstrappingPool",
+                path: "pool.salt",
               },
             ],
           },
@@ -3815,6 +3969,12 @@ export const IDL: FjordLbp = {
                 account: "LiquidityBootstrappingPool",
                 path: "pool.creator",
               },
+              {
+                kind: "account",
+                type: "string",
+                account: "LiquidityBootstrappingPool",
+                path: "pool.salt",
+              },
             ],
           },
         },
@@ -3873,6 +4033,12 @@ export const IDL: FjordLbp = {
                 kind: "account",
                 type: "publicKey",
                 path: "creator",
+              },
+              {
+                kind: "account",
+                type: "string",
+                account: "LiquidityBootstrappingPool",
+                path: "pool.salt",
               },
             ],
           },
@@ -4175,6 +4341,10 @@ export const IDL: FjordLbp = {
           {
             name: "bump",
             type: "u8",
+          },
+          {
+            name: "salt",
+            type: "string",
           },
         ],
       },

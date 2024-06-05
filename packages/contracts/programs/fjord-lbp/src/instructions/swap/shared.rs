@@ -15,7 +15,7 @@ pub struct SwapTokens<'info> {
     // The pool
     #[account(
       mut,
-      seeds = [share_token_mint.key().as_ref(), asset_token_mint.key().as_ref(), pool.creator.key().as_ref()], 
+      seeds = [share_token_mint.key().as_ref(), asset_token_mint.key().as_ref(), pool.creator.key().as_ref(), pool.salt.as_bytes()], 
       bump = pool.bump
     )]
     pub pool: Box<Account<'info, LiquidityBootstrappingPool>>,

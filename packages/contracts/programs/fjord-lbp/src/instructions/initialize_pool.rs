@@ -7,12 +7,13 @@ use std::fmt::Debug;
 use crate::{LiquidityBootstrappingPool, PoolCreatedEvent, PoolError, ONE_DAY_SECONDS};
 
 #[derive(Accounts)]
+#[instruction(salt: String)]
 pub struct InitializePool<'info> {
     #[account(
         init, 
         payer = creator, 
         space = 8 + size_of::<LiquidityBootstrappingPool>(), 
-        seeds = [share_token_mint.key().as_ref(), asset_token_mint.key().as_ref(), creator.key().as_ref()], 
+        seeds = [share_token_mint.key().as_ref(), asset_token_mint.key().as_ref(), creator.key().as_ref(), salt.as_bytes()], 
         bump
     )]
     pub pool: Account<'info, LiquidityBootstrappingPool>,
@@ -49,6 +50,7 @@ pub struct InitializePool<'info> {
 #[allow(clippy::too_many_arguments)]
 pub fn create_pool(
   ctx: Context<InitializePool>,
+  salt: String,
   assets: u64,
   shares: u64,
   virtual_assets: u64,
@@ -63,7 +65,7 @@ pub fn create_pool(
   vest_cliff: i64,
   vest_end: i64,
   whitelist_merkle_root: [u8; 32],
-  selling_allowed: bool
+  selling_allowed: bool,
 ) -> Result<()> {
   let pool = &mut ctx.accounts.pool;
 
@@ -146,6 +148,7 @@ pub fn create_pool(
   pool.selling_allowed = selling_allowed;
   pool.whitelist_merkle_root = whitelist_merkle_root;
   pool.bump = ctx.bumps.pool;
+  pool.salt = salt;
 
   // Transfer the tokens to the pool
   let asset_transfer_instruction = Transfer {

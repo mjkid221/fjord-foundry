@@ -21,7 +21,7 @@ import chaiAsPromised from "chai-as-promised";
 import { beforeEach } from "mocha";
 import { BanksClient, ProgramTestContext, startAnchor } from "solana-bankrun";
 
-import { BN, BigNumber } from "../../constants";
+import { BN, BigNumber, generateRandomSalt } from "../../constants";
 import {
   createMockOwnerConfig,
   createMockpoolConfig,
@@ -76,7 +76,7 @@ describe("Fjord LBP - Redeem", () => {
   let { connection } = program.provider;
   let bankRunClient: BanksClient;
   let bankRunCtx: ProgramTestContext;
-
+  const randomSalt = generateRandomSalt();
   beforeEach(async () => {
     // Setup
     testUserA = Keypair.generate();
@@ -186,6 +186,7 @@ describe("Fjord LBP - Redeem", () => {
         shareTokenMint.toBuffer(),
         assetTokenMint.toBuffer(),
         creator.publicKey.toBuffer(),
+        Buffer.from(randomSalt),
       ],
       program.programId
     );
@@ -210,6 +211,7 @@ describe("Fjord LBP - Redeem", () => {
       const assetsAmount = initialCollateralTokenBalanceCreator;
 
       const poolParams = createMockpoolConfig({
+        salt: randomSalt,
         assets: assetsAmount,
         shares: sharesAmount,
         maxSharePrice: BN("10000000000000000000"),

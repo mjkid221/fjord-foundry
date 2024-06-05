@@ -11,6 +11,7 @@ import {
   BigNumber,
   PERCENTAGE_BASIS_POINTS,
   testMerkleWhitelistedAddresses,
+  generateRandomSalt,
 } from "../constants";
 import {
   Accounts,
@@ -53,6 +54,7 @@ describe("Fjord LBP - Initialization", () => {
 
   const program = anchor.workspace.FjordLbp as Program<FjordLbp>;
   const { connection } = program.provider;
+  const randomSalt = generateRandomSalt();
 
   beforeEach(async () => {
     ({
@@ -78,6 +80,7 @@ describe("Fjord LBP - Initialization", () => {
         shareTokenMint.toBuffer(),
         assetTokenMint.toBuffer(),
         creator.publicKey.toBuffer(),
+        Buffer.from(randomSalt),
       ],
       program.programId
     );
@@ -122,6 +125,7 @@ describe("Fjord LBP - Initialization", () => {
     const assetsAmount = initialCollateralTokenBalanceCreator;
 
     const {
+      salt,
       virtualAssets,
       virtualShares,
       maxSharePrice,
@@ -136,6 +140,7 @@ describe("Fjord LBP - Initialization", () => {
       whitelistMerkleRoot,
       sellingAllowed,
     } = createMockpoolConfig({
+      salt: randomSalt,
       assets: assetsAmount,
       shares: sharesAmount,
       whitelistMerkleRoot: generateMerkleRoot(testMerkleWhitelistedAddresses),
@@ -152,6 +157,7 @@ describe("Fjord LBP - Initialization", () => {
 
     await program.methods
       .initializePool(
+        salt,
         assetsAmount,
         sharesAmount,
         virtualAssets,
@@ -230,6 +236,7 @@ describe("Fjord LBP - Initialization", () => {
     const assetsAmount = initialCollateralTokenBalanceCreator;
 
     const poolParams = createMockpoolConfig({
+      salt: randomSalt,
       shares: sharesAmount,
       assets: assetsAmount,
       whitelistMerkleRoot: generateMerkleRoot(testMerkleWhitelistedAddresses),
@@ -254,6 +261,7 @@ describe("Fjord LBP - Initialization", () => {
     const sharesAmount = initialProjectTokenBalanceCreator;
 
     const poolParams = createMockpoolConfig({
+      salt: randomSalt,
       shares: sharesAmount,
       assets: sharesAmount,
     });
@@ -280,6 +288,7 @@ describe("Fjord LBP - Initialization", () => {
     // Sale end time is 23 hours from now
     const invalidTime = generateTimestamp(23);
     const poolParams = createMockpoolConfig({
+      salt: randomSalt,
       shares: sharesAmount,
       assets: assetsAmount,
       saleEndTime: BN(invalidTime),
@@ -305,6 +314,7 @@ describe("Fjord LBP - Initialization", () => {
 
     // Create pool with sale period less than a day
     const poolParams = createMockpoolConfig({
+      salt: randomSalt,
       shares: sharesAmount,
       assets: assetsAmount,
       saleStartTime: BN(validStartTime),
@@ -333,6 +343,7 @@ describe("Fjord LBP - Initialization", () => {
 
     // Create pool with invalid vesting end time
     const poolParams = createMockpoolConfig({
+      salt: randomSalt,
       shares: sharesAmount,
       assets: assetsAmount,
       saleStartTime: BN(validStartTime),
@@ -363,6 +374,7 @@ describe("Fjord LBP - Initialization", () => {
 
     // Create pool with sale period less than a day
     const poolParams = createMockpoolConfig({
+      salt: randomSalt,
       shares: sharesAmount,
       assets: assetsAmount,
       saleStartTime: BN(validStartTime),
@@ -393,6 +405,7 @@ describe("Fjord LBP - Initialization", () => {
 
     // Create pool with invalid vesting cliff after vesting end time
     const poolParams = createMockpoolConfig({
+      salt: randomSalt,
       shares: sharesAmount,
       assets: assetsAmount,
       saleStartTime: BN(validStartTime),
@@ -403,6 +416,7 @@ describe("Fjord LBP - Initialization", () => {
 
     // Create pool with vesting cliff at the same time as vesting end time
     const poolParams2 = createMockpoolConfig({
+      salt: randomSalt,
       shares: sharesAmount,
       assets: assetsAmount,
       saleStartTime: BN(validStartTime),
@@ -437,6 +451,7 @@ describe("Fjord LBP - Initialization", () => {
 
     // Create pool with invalid start weight
     const poolParams = createMockpoolConfig({
+      salt: randomSalt,
       shares: sharesAmount,
       assets: assetsAmount,
       startWeightBasisPoints: 0.99 * PERCENTAGE_BASIS_POINTS, // 0.99%
@@ -459,6 +474,7 @@ describe("Fjord LBP - Initialization", () => {
 
     // Create pool with valid start weight
     const poolParams = createMockpoolConfig({
+      salt: randomSalt,
       shares: sharesAmount,
       assets: assetsAmount,
       startWeightBasisPoints: 1 * PERCENTAGE_BASIS_POINTS, // 1%
@@ -489,6 +505,7 @@ describe("Fjord LBP - Initialization", () => {
 
     // Create pool with invalid start weight
     const poolParams = createMockpoolConfig({
+      salt: randomSalt,
       shares: sharesAmount,
       assets: assetsAmount,
       startWeightBasisPoints: -1 * PERCENTAGE_BASIS_POINTS, // -1%
@@ -511,6 +528,7 @@ describe("Fjord LBP - Initialization", () => {
 
     // Create pool with invalid start weight
     const poolParams = createMockpoolConfig({
+      salt: randomSalt,
       shares: sharesAmount,
       assets: assetsAmount,
       startWeightBasisPoints: 99.01 * PERCENTAGE_BASIS_POINTS, // 99.01%
@@ -533,6 +551,7 @@ describe("Fjord LBP - Initialization", () => {
 
     // Create pool with valid start weight of 99%
     const poolParams = createMockpoolConfig({
+      salt: randomSalt,
       shares: sharesAmount,
       assets: assetsAmount,
       startWeightBasisPoints: 99 * PERCENTAGE_BASIS_POINTS, // 99%
@@ -555,6 +574,7 @@ describe("Fjord LBP - Initialization", () => {
 
     // Create pool with invalid end weight
     const poolParams = createMockpoolConfig({
+      salt: randomSalt,
       shares: sharesAmount,
       assets: assetsAmount,
       endWeightBasisPoints: 0.05 * PERCENTAGE_BASIS_POINTS, // 0.05%
@@ -577,6 +597,7 @@ describe("Fjord LBP - Initialization", () => {
 
     // Create pool with invalid end weight
     const poolParams = createMockpoolConfig({
+      salt: randomSalt,
       shares: sharesAmount,
       assets: assetsAmount,
       endWeightBasisPoints: -1 * PERCENTAGE_BASIS_POINTS, // -1%
@@ -599,6 +620,7 @@ describe("Fjord LBP - Initialization", () => {
 
     // Create pool with valid end weight
     const poolParams = createMockpoolConfig({
+      salt: randomSalt,
       shares: sharesAmount,
       assets: assetsAmount,
       endWeightBasisPoints: 1 * PERCENTAGE_BASIS_POINTS, // 1%
@@ -621,6 +643,7 @@ describe("Fjord LBP - Initialization", () => {
 
     // Create pool with invalid end weight
     const poolParams = createMockpoolConfig({
+      salt: randomSalt,
       shares: sharesAmount,
       assets: assetsAmount,
       endWeightBasisPoints: 99.01 * PERCENTAGE_BASIS_POINTS, // 99.01%
@@ -642,6 +665,7 @@ describe("Fjord LBP - Initialization", () => {
 
     // Create pool with valid end weight of 99%
     const poolParams = createMockpoolConfig({
+      salt: randomSalt,
       shares: sharesAmount,
       assets: assetsAmount,
       endWeightBasisPoints: 99 * PERCENTAGE_BASIS_POINTS, // 99%
@@ -663,6 +687,7 @@ describe("Fjord LBP - Initialization", () => {
 
     // Create pool with invalid asset token and virtual assets
     const poolParams = createMockpoolConfig({
+      salt: randomSalt,
       shares: sharesAmount,
       assets: BN(0),
       virtualAssets: BN(0),
@@ -684,6 +709,7 @@ describe("Fjord LBP - Initialization", () => {
 
     // Create pool with invalid asset token and valid virtual assets
     const poolParams = createMockpoolConfig({
+      salt: randomSalt,
       shares: sharesAmount,
       assets: BN(-20000000000000),
       virtualAssets: BN(0),
@@ -711,6 +737,7 @@ describe("Fjord LBP - Initialization", () => {
 
     // Create pool with invalid asset token and valid virtual assets
     const poolParams = createMockpoolConfig({
+      salt: randomSalt,
       shares: sharesAmount,
       assets: BN(0),
       virtualAssets: BN(-20000000000000),
@@ -738,6 +765,7 @@ describe("Fjord LBP - Initialization", () => {
 
     // Create pool with valid asset token and virtual assets
     const poolParams = createMockpoolConfig({
+      salt: randomSalt,
       shares: sharesAmount,
       assets: BN(0),
       virtualAssets: BN(1000000000000),
@@ -758,6 +786,7 @@ describe("Fjord LBP - Initialization", () => {
     const assetsAmount = initialCollateralTokenBalanceCreator;
     // Create pool with invalid share token and virtual shares
     const poolParams = createMockpoolConfig({
+      salt: randomSalt,
       shares: BN(0),
       assets: assetsAmount,
       virtualShares: BN(0),
@@ -779,6 +808,7 @@ describe("Fjord LBP - Initialization", () => {
 
     // Create pool with invalid share token and valid virtual shares
     const poolParams = createMockpoolConfig({
+      salt: randomSalt,
       shares: BN(-100000000),
       assets: assetsAmount,
       virtualShares: BN(0),
@@ -806,6 +836,7 @@ describe("Fjord LBP - Initialization", () => {
 
     // Create pool with valid share token and invalid virtual shares
     const poolParams = createMockpoolConfig({
+      salt: randomSalt,
       shares: BN(0),
       assets: assetsAmount,
       virtualShares: BN(-100000000),
@@ -833,6 +864,7 @@ describe("Fjord LBP - Initialization", () => {
 
     // Create pool with valid share token and virtual shares
     const poolParams = createMockpoolConfig({
+      salt: randomSalt,
       shares: BN(0),
       assets: assetsAmount,
       virtualShares: BN(1000000000000),
@@ -855,6 +887,7 @@ describe("Fjord LBP - Initialization", () => {
 
     // Create pool with undefined share token mint
     const poolParams = createMockpoolConfig({
+      salt: randomSalt,
       shares: sharesAmount,
       assets: assetsAmount,
     });
@@ -876,6 +909,7 @@ describe("Fjord LBP - Initialization", () => {
 
     // Create pool with undefined asset token mint
     const poolParams = createMockpoolConfig({
+      salt: randomSalt,
       shares: sharesAmount,
       assets: assetsAmount,
     });
@@ -900,6 +934,7 @@ describe("Fjord LBP - Initialization", () => {
 
     // Create pool with undefined pool share token account
     const poolParams = createMockpoolConfig({
+      salt: randomSalt,
       shares: sharesAmount,
       assets: assetsAmount,
     });
@@ -923,6 +958,7 @@ describe("Fjord LBP - Initialization", () => {
 
     // Create pool with undefined pool asset token account
     const poolParams = createMockpoolConfig({
+      salt: randomSalt,
       shares: sharesAmount,
       assets: assetsAmount,
     });
@@ -949,6 +985,7 @@ describe("Fjord LBP - Initialization", () => {
 
     // Create pool with undefined creator share token account
     const poolParams = createMockpoolConfig({
+      salt: randomSalt,
       shares: sharesAmount,
       assets: assetsAmount,
     });
@@ -975,6 +1012,7 @@ describe("Fjord LBP - Initialization", () => {
 
     // Create pool with undefined creator asset token account
     const poolParams = createMockpoolConfig({
+      salt: randomSalt,
       shares: sharesAmount,
       assets: assetsAmount,
     });
@@ -1001,6 +1039,7 @@ describe("Fjord LBP - Initialization", () => {
 
     // Create pool with invalid max share price
     const poolParams = createMockpoolConfig({
+      salt: randomSalt,
       shares: sharesAmount,
       assets: assetsAmount,
       maxSharePrice: BN(0),
@@ -1023,6 +1062,7 @@ describe("Fjord LBP - Initialization", () => {
 
     // Create pool with invalid max share price
     const poolParams = createMockpoolConfig({
+      salt: randomSalt,
       shares: sharesAmount,
       assets: assetsAmount,
       maxSharePrice: BN(-100000000),
@@ -1051,6 +1091,7 @@ describe("Fjord LBP - Initialization", () => {
 
     // Create pool with valid max share price
     const poolParams = createMockpoolConfig({
+      salt: randomSalt,
       shares: sharesAmount,
       assets: assetsAmount,
       maxSharePrice: BN(1000000000000),
@@ -1072,6 +1113,7 @@ describe("Fjord LBP - Initialization", () => {
 
     // Create pool with invalid max share price
     const poolParams = createMockpoolConfig({
+      salt: randomSalt,
       shares: sharesAmount,
       assets: assetsAmount,
       maxSharesOut: BN(0),
@@ -1094,6 +1136,7 @@ describe("Fjord LBP - Initialization", () => {
 
     // Create pool with invalid max share price
     const poolParams = createMockpoolConfig({
+      salt: randomSalt,
       shares: sharesAmount,
       assets: assetsAmount,
       maxSharesOut: BN(-3000000000),
@@ -1122,6 +1165,7 @@ describe("Fjord LBP - Initialization", () => {
 
     // Create pool with valid max share price
     const poolParams = createMockpoolConfig({
+      salt: randomSalt,
       shares: sharesAmount,
       assets: assetsAmount,
       maxSharesOut: BN(1000000000),
@@ -1144,6 +1188,8 @@ describe("Fjord LBP - Initialization", () => {
 
     // Create pool with invalid max share price
     const poolParams = createMockpoolConfig({
+      salt: randomSalt,
+
       shares: sharesAmount,
       assets: assetsAmount,
       maxAssetsIn: BN(0),
@@ -1166,6 +1212,7 @@ describe("Fjord LBP - Initialization", () => {
 
     // Create pool with invalid max share price
     const poolParams = createMockpoolConfig({
+      salt: randomSalt,
       shares: sharesAmount,
       assets: assetsAmount,
       maxAssetsIn: BN(-4000000000),
@@ -1194,6 +1241,7 @@ describe("Fjord LBP - Initialization", () => {
 
     // Create pool with valid max share price
     const poolParams = createMockpoolConfig({
+      salt: randomSalt,
       shares: sharesAmount,
       assets: assetsAmount,
       maxAssetsIn: BN(1000000000),
@@ -1213,6 +1261,7 @@ describe("Fjord LBP - Initialization", () => {
   it("Should deploy with edge case values for the pool", async () => {
     // Create pool with edge case values
     const poolParams = createMockpoolConfig({
+      salt: randomSalt,
       shares: BN(1),
       assets: BN(1),
       maxSharePrice: BN(1),
@@ -1257,6 +1306,7 @@ describe("Fjord LBP - Initialization", () => {
 
     // Assuming this config tries to create a pool with more assets and shares than the creator has
     const poolParams = createMockpoolConfig({
+      salt: randomSalt,
       assets: assetsAmount,
       shares: BN(1000000000000001),
     }); // Large amounts assuming insufficient balance
@@ -1275,6 +1325,7 @@ describe("Fjord LBP - Initialization", () => {
     const sharesAmount = initialProjectTokenBalanceCreator;
     // Assuming this config tries to create a pool with more assets and shares than the creator has
     const poolParams = createMockpoolConfig({
+      salt: randomSalt,
       assets: BN(1000000000000001),
       shares: sharesAmount,
     }); // Large amounts assuming insufficient balance

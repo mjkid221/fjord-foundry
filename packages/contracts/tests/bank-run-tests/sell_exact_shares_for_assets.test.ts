@@ -18,7 +18,12 @@ import chaiAsPromised from "chai-as-promised";
 import { beforeEach } from "mocha";
 import { BanksClient, ProgramTestContext, startAnchor } from "solana-bankrun";
 
-import { BN, BigNumber, testMerkleWhitelistedAddresses } from "../../constants";
+import {
+  BN,
+  BigNumber,
+  generateRandomSalt,
+  testMerkleWhitelistedAddresses,
+} from "../../constants";
 import {
   createMockOwnerConfig,
   createMockpoolConfig,
@@ -85,6 +90,7 @@ describe("Fjord LBP - Sell - shares for exact assets", () => {
   let bankRunCtx: ProgramTestContext;
 
   let whitelistedAddresses: string[];
+  const randomSalt = generateRandomSalt();
 
   beforeEach(async () => {
     // Setup
@@ -208,6 +214,7 @@ describe("Fjord LBP - Sell - shares for exact assets", () => {
         shareTokenMint.toBuffer(),
         assetTokenMint.toBuffer(),
         creator.publicKey.toBuffer(),
+        Buffer.from(randomSalt),
       ],
       program.programId
     );
@@ -232,6 +239,7 @@ describe("Fjord LBP - Sell - shares for exact assets", () => {
       const assetsAmount = initialCollateralTokenBalanceCreator;
 
       const poolParams = createMockpoolConfig({
+        salt: randomSalt,
         assets: assetsAmount,
         shares: sharesAmount,
         maxSharePrice: GENERIC_BN,
@@ -683,6 +691,7 @@ describe("Fjord LBP - Sell - shares for exact assets", () => {
       const assetsAmount = initialCollateralTokenBalanceCreator;
 
       const poolParams = createMockpoolConfig({
+        salt: randomSalt,
         assets: assetsAmount,
         shares: sharesAmount,
         whitelistMerkleRoot: generateMerkleRoot(whitelistedAddresses),
@@ -876,6 +885,7 @@ describe("Fjord LBP - Sell - shares for exact assets", () => {
       const assetsAmount = initialCollateralTokenBalanceCreator;
 
       const poolParams = createMockpoolConfig({
+        salt: randomSalt,
         assets: assetsAmount,
         shares: sharesAmount,
         whitelistMerkleRoot: generateMerkleRoot(whitelistedAddresses),
@@ -1025,6 +1035,7 @@ describe("Fjord LBP - Sell - shares for exact assets", () => {
       const assetsAmount = initialCollateralTokenBalanceCreator;
 
       const poolParams = createMockpoolConfig({
+        salt: randomSalt,
         assets: assetsAmount,
         shares: sharesAmount,
         maxSharePrice: BN("1000000000000000000"),

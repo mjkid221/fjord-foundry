@@ -11,6 +11,7 @@ import {
   DEFAULT_SALE_START_TIME_BN,
   DEFAULT_VESTING_CLIFF_BN,
   DEFAULT_VESTING_END_BN,
+  generateRandomSalt,
   PERCENTAGE_BASIS_POINTS,
 } from "../../constants";
 import { IDL, FjordLbp } from "../../target/types/fjord_lbp";
@@ -24,6 +25,7 @@ import { IDL, FjordLbp } from "../../target/types/fjord_lbp";
 export const createMockpoolConfig = (
   requestField?: Partial<FjordLbpStruct<"initializePool">>
 ): FjordLbpStruct<"initializePool"> => ({
+  salt: requestField?.salt || generateRandomSalt(),
   assets: requestField?.assets || new BN(0), // Collateral token
   shares: requestField?.shares || new BN(0), // Project token
   virtualAssets: requestField?.virtualAssets || new BN(0),

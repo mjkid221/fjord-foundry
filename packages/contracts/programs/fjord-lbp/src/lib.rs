@@ -14,7 +14,7 @@ pub use state::*;
 pub use utils::*;
 
 // Program Id for the Fjord LBP program. This is the address this program will be deployed to.
-declare_id!("HK6KFuWu9ZzEaiKy16LDcaQ2u1G1NAhib7pvNxzA3jKr");
+declare_id!("7UTvQUzE1iThaXhXDg1FsVoqcv3MBAgwUCW7PEKzNbPH");
 
 #[program]
 pub mod fjord_lbp {
@@ -49,6 +49,7 @@ pub mod fjord_lbp {
     #[allow(clippy::too_many_arguments)]
     pub fn initialize_pool(
         ctx: Context<InitializePool>,
+        salt: String,
         assets: u64,
         shares: u64,
         virtual_assets: u64,
@@ -67,6 +68,7 @@ pub mod fjord_lbp {
     ) -> Result<()> {
         initialize_pool::create_pool(
             ctx,
+            salt,
             assets,
             shares,
             virtual_assets,

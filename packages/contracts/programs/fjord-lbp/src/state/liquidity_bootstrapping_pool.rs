@@ -51,6 +51,9 @@ pub struct LiquidityBootstrappingPool {
 
     // Bump seed
     pub bump: u8,
+
+    // Salt string
+    pub salt: String,
 }
 
 /// Account storing the information of the user in the liquidity bootstrapping pool

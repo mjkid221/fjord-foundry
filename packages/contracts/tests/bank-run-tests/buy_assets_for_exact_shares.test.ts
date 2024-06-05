@@ -22,6 +22,7 @@ import {
   BN,
   BigNumber,
   PERCENTAGE_BASIS_POINTS,
+  generateRandomSalt,
   testMerkleWhitelistedAddresses,
 } from "../../constants";
 import {
@@ -89,6 +90,7 @@ describe("Fjord LBP - Buy `swapAssetsForExactShares`", () => {
   let bankRunCtx: ProgramTestContext;
 
   let whitelistedAddresses: string[];
+  const randomSalt = generateRandomSalt();
 
   beforeEach(async () => {
     testUserA = Keypair.generate();
@@ -207,6 +209,7 @@ describe("Fjord LBP - Buy `swapAssetsForExactShares`", () => {
         shareTokenMint.toBuffer(),
         assetTokenMint.toBuffer(),
         creator.publicKey.toBuffer(),
+        Buffer.from(randomSalt),
       ],
       program.programId
     );
@@ -230,6 +233,7 @@ describe("Fjord LBP - Buy `swapAssetsForExactShares`", () => {
       ...testMerkleWhitelistedAddresses,
     ];
     const poolParams = createMockpoolConfig({
+      salt: randomSalt,
       assets: assetsAmount,
       shares: sharesAmount,
       startWeightBasisPoints: 1 * PERCENTAGE_BASIS_POINTS,
@@ -278,7 +282,7 @@ describe("Fjord LBP - Buy `swapAssetsForExactShares`", () => {
       );
 
       const sharesAmountOut = BN(1).mul(BN(10 ** 5));
-
+      console.log("Checkpoint 1");
       // Get expected shares out by reading a view function's emitted event.
       const expectedAssetsIn = await program.methods
         .previewAssetsIn(
@@ -599,6 +603,7 @@ describe("Fjord LBP - Buy `swapAssetsForExactShares`", () => {
           shareTokenMint.toBuffer(),
           assetTokenMint.toBuffer(),
           creator.publicKey.toBuffer(),
+          Buffer.from(randomSalt),
         ],
         program.programId
       );
@@ -617,6 +622,7 @@ describe("Fjord LBP - Buy `swapAssetsForExactShares`", () => {
       );
 
       const poolParams = createMockpoolConfig({
+        salt: randomSalt,
         assets: assetsAmount,
         shares: sharesAmount,
         startWeightBasisPoints: 15 * PERCENTAGE_BASIS_POINTS,
@@ -1006,6 +1012,7 @@ describe("Fjord LBP - Buy `swapAssetsForExactShares`", () => {
           shareTokenMint.toBuffer(),
           assetTokenMint.toBuffer(),
           creator.publicKey.toBuffer(),
+          Buffer.from(randomSalt),
         ],
         program.programId
       );
@@ -1024,6 +1031,7 @@ describe("Fjord LBP - Buy `swapAssetsForExactShares`", () => {
       );
 
       const poolParams = createMockpoolConfig({
+        salt: randomSalt,
         assets: assetsAmount,
         shares: sharesAmount,
         startWeightBasisPoints: 15 * PERCENTAGE_BASIS_POINTS,
@@ -1162,6 +1170,7 @@ describe("Fjord LBP - Buy `swapAssetsForExactShares`", () => {
           shareTokenMint.toBuffer(),
           assetTokenMint.toBuffer(),
           creator.publicKey.toBuffer(),
+          Buffer.from(randomSalt),
         ],
         program.programId
       );
@@ -1185,6 +1194,7 @@ describe("Fjord LBP - Buy `swapAssetsForExactShares`", () => {
         ...testMerkleWhitelistedAddresses,
       ];
       const poolParams = createMockpoolConfig({
+        salt: randomSalt,
         assets: assetsAmount,
         shares: sharesAmount,
         startWeightBasisPoints: 15 * PERCENTAGE_BASIS_POINTS,
@@ -1908,6 +1918,7 @@ describe("Fjord LBP - Buy `swapAssetsForExactShares`", () => {
           shareTokenMint.toBuffer(),
           assetTokenMint.toBuffer(),
           creator.publicKey.toBuffer(),
+          Buffer.from(randomSalt),
         ],
         program.programId
       );
@@ -1931,6 +1942,7 @@ describe("Fjord LBP - Buy `swapAssetsForExactShares`", () => {
         ...testMerkleWhitelistedAddresses,
       ];
       const poolParams = createMockpoolConfig({
+        salt: randomSalt,
         assets: assetsAmount,
         shares: sharesAmount,
         startWeightBasisPoints: 15 * PERCENTAGE_BASIS_POINTS,

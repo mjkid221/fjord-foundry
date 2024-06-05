@@ -8,7 +8,7 @@ import { FjordLbpStruct } from "../helpers";
 import { IDL, type FjordLbp } from "../types";
 
 // TODO: Replace this with the program ID of the deployed program.
-const programId = new PublicKey("HK6KFuWu9ZzEaiKy16LDcaQ2u1G1NAhib7pvNxzA3jKr");
+const programId = new PublicKey("7UTvQUzE1iThaXhXDg1FsVoqcv3MBAgwUCW7PEKzNbPH");
 
 // TODO: Replace this with the network you are targeting.
 const network: "mainnet-beta" | "devnet" = "mainnet-beta";
