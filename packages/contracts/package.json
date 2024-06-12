@@ -13,8 +13,8 @@
     "test": "yarn transfer-anchor-config && anchor test",
     "deploy": "anchor deploy",
     "run:initialize-owner-config": "ts-node ./scripts/initialize-owner-config.ts",
-    "deploy:devnet": "solana config set --url devnet && solana program deploy ./target/deploy/fjord_lbp.so --with-compute-unit-price 100000",
-    "deploy:mainnet": "solana config set --url mainnet-beta && solana program deploy ./target/deploy/fjord_lbp.so --with-compute-unit-price 100000"
+    "deploy:devnet": "solana config set --url devnet && solana program deploy ./programs/fjord-lbp/target/deploy/fjord_lbp.so --with-compute-unit-price 100000 --keypair ./deployment-keypair/development/id.json",
+    "deploy:mainnet": "solana config set --url mainnet-beta && solana program deploy ./programs/fjord-lbp/target/deploy/fjord_lbp.so --with-compute-unit-price 100000 --keypair ./deployment-keypair/production/id.json"
   },
   "dependencies": {
     "@coral-xyz/anchor": "0.30.0",
