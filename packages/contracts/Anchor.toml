@@ -1,9 +1,9 @@
 [toolchain]
-anchor_version = "0.29.0" # `anchor-cli` version to use
-solana_version = "1.17.28" # Solana version to use
+anchor_version = "0.30.0" # `anchor-cli` version to use
+solana_version = "1.18.8" # Solana version to use
 
 [features]
-seeds = true
+resolution = true
 skip-lint = false
 
 # Production ----------------------------------------------------------------
@@ -12,13 +12,13 @@ skip-lint = false
 # ---------------------------------------------------------------------------
 
 # Dev -----------------------------------------------------------------------
-# [programs.devnet]
-# fjord_lbp = "7UTvQUzE1iThaXhXDg1FsVoqcv3MBAgwUCW7PEKzNbPH"
+[programs.devnet]
+fjord_lbp = "HSbvUZ5aSBSUteCEmvyspZd85YCy3pgofX7dyLf844iw"
 # ---------------------------------------------------------------------------
 
 # Local ---------------------------------------------------------------------
-[programs.localnet]
-fjord_lbp = "7UTvQUzE1iThaXhXDg1FsVoqcv3MBAgwUCW7PEKzNbPH"
+# [programs.localnet]
+# fjord_lbp = "9rxayE6EkqWvCfdyQ41VHRNPoV97dVKdXDUuQYAqurKh"
 # ---------------------------------------------------------------------------
 
 [registry]
@@ -33,13 +33,13 @@ url = "https://api.apr.dev"
 # ---------------------------------------------------------------------------
 
 # Dev -----------------------------------------------------------------------
-# wallet = "./deployment-keypair/development/id.json"
-# cluster = "Devnet"
+wallet = "./deployment-keypair/development/id.json"
+cluster = "Devnet"
 # ---------------------------------------------------------------------------
 
 # Local ---------------------------------------------------------------------
-wallet = "./deployment-keypair/local/id.json"
-cluster = "Localnet"
+# wallet = "./deployment-keypair/local/id.json"
+# cluster = "Localnet"
 # ---------------------------------------------------------------------------
 
 [workspace]

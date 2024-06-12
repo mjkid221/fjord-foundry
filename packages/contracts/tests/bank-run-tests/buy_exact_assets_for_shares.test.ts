@@ -34,7 +34,8 @@ import {
   setup,
   skipBlockTimestamp,
 } from "../../helpers";
-import { FjordLbp, IDL } from "../../target/types/fjord_lbp";
+import IDL from "../../target/idl/fjord_lbp.json";
+import { FjordLbp } from "../../target/types/fjord_lbp";
 import { ComputedReservesAndWeights } from "../../types";
 
 const MOCK_PK = new anchor.web3.PublicKey(
@@ -107,7 +108,7 @@ describe("Fjord LBP - Buy `swapExactAssetsForShares`", () => {
       // Initialize global pool settings
       const tx = program.methods
         .initializeOwnerConfig(...(Object.values(ownerConfig) as any))
-        .accounts({
+        .accountsPartial({
           program: program.programId,
           programData: programDataAddress,
           authority: creator.publicKey,
@@ -144,7 +145,7 @@ describe("Fjord LBP - Buy `swapExactAssetsForShares`", () => {
     const provider = new BankrunProvider(bankRunCtx);
     bankRunClient = bankRunCtx.banksClient;
 
-    program = new Program<FjordLbp>(IDL, lbpProgramId, provider);
+    program = new Program<FjordLbp>(IDL as any, provider);
     connection = provider.connection;
     creator = bankRunCtx.payer;
 
@@ -242,7 +243,7 @@ describe("Fjord LBP - Buy `swapExactAssetsForShares`", () => {
 
     await program.methods
       .initializePool(...formattedPoolParams)
-      .accounts({
+      .accountsPartial({
         creator: creator.publicKey,
         shareTokenMint,
         assetTokenMint,
@@ -281,7 +282,7 @@ describe("Fjord LBP - Buy `swapExactAssetsForShares`", () => {
           // Assets In (Collateral)
           assetAmountIn
         )
-        .accounts({
+        .accountsPartial({
           assetTokenMint,
           shareTokenMint,
           pool: poolPda,
@@ -303,7 +304,7 @@ describe("Fjord LBP - Buy `swapExactAssetsForShares`", () => {
           // Referrer can be null if there are no referrers
           referrer
         )
-        .accounts({
+        .accountsPartial({
           assetTokenMint,
           shareTokenMint,
           user: testUserA.publicKey,
@@ -355,7 +356,7 @@ describe("Fjord LBP - Buy `swapExactAssetsForShares`", () => {
           // Assets In (Collateral)
           assetAmountIn
         )
-        .accounts({
+        .accountsPartial({
           assetTokenMint,
           shareTokenMint,
           pool: poolPda,
@@ -377,7 +378,7 @@ describe("Fjord LBP - Buy `swapExactAssetsForShares`", () => {
           // Referrer can be null if there are no referrers
           referrer
         )
-        .accounts({
+        .accountsPartial({
           assetTokenMint,
           shareTokenMint,
           user: testUserA.publicKey,
@@ -443,7 +444,7 @@ describe("Fjord LBP - Buy `swapExactAssetsForShares`", () => {
           // Assets In (Collateral)
           assetAmountIn
         )
-        .accounts({
+        .accountsPartial({
           assetTokenMint,
           shareTokenMint,
           pool: poolPda,
@@ -465,7 +466,7 @@ describe("Fjord LBP - Buy `swapExactAssetsForShares`", () => {
           // Referrer can be null if there are no referrers
           referrer
         )
-        .accounts({
+        .accountsPartial({
           assetTokenMint,
           shareTokenMint,
           user: testUserA.publicKey,
@@ -598,7 +599,7 @@ describe("Fjord LBP - Buy `swapExactAssetsForShares`", () => {
 
       await program.methods
         .initializePool(...formattedPoolParams)
-        .accounts({
+        .accountsPartial({
           creator: creator.publicKey,
           shareTokenMint,
           assetTokenMint,
@@ -644,7 +645,7 @@ describe("Fjord LBP - Buy `swapExactAssetsForShares`", () => {
           // Assets In (Collateral)
           assetAmountIn
         )
-        .accounts({
+        .accountsPartial({
           assetTokenMint,
           shareTokenMint,
           pool: poolPda,
@@ -666,7 +667,7 @@ describe("Fjord LBP - Buy `swapExactAssetsForShares`", () => {
           // Referrer can be null if there are no referrers
           referrer
         )
-        .accounts({
+        .accountsPartial({
           assetTokenMint,
           shareTokenMint,
           user: testUserB.publicKey,
@@ -769,7 +770,7 @@ describe("Fjord LBP - Buy `swapExactAssetsForShares`", () => {
           // Assets In (Collateral)
           assetAmountIn
         )
-        .accounts({
+        .accountsPartial({
           assetTokenMint,
           shareTokenMint,
           pool: poolPda,
@@ -795,7 +796,7 @@ describe("Fjord LBP - Buy `swapExactAssetsForShares`", () => {
           // Referrer can be null if there are no referrers
           referrer
         )
-        .accounts({
+        .accountsPartial({
           assetTokenMint,
           shareTokenMint,
           user: testUserA.publicKey,
@@ -873,7 +874,7 @@ describe("Fjord LBP - Buy `swapExactAssetsForShares`", () => {
           // Assets In (Collateral)
           assetAmountIn
         )
-        .accounts({
+        .accountsPartial({
           assetTokenMint,
           shareTokenMint,
           pool: poolPda,
@@ -886,7 +887,7 @@ describe("Fjord LBP - Buy `swapExactAssetsForShares`", () => {
 
       const statePre = await program.methods
         .reservesAndWeights()
-        .accounts({
+        .accountsPartial({
           assetTokenMint,
           shareTokenMint,
           pool: poolPda,
@@ -908,7 +909,7 @@ describe("Fjord LBP - Buy `swapExactAssetsForShares`", () => {
           // Referrer can be null if there are no referrers
           referrer
         )
-        .accounts({
+        .accountsPartial({
           assetTokenMint,
           shareTokenMint,
           user: testUserA.publicKey,
@@ -928,7 +929,7 @@ describe("Fjord LBP - Buy `swapExactAssetsForShares`", () => {
 
       const statePost = await program.methods
         .reservesAndWeights()
-        .accounts({
+        .accountsPartial({
           assetTokenMint,
           shareTokenMint,
           pool: poolPda,
@@ -982,7 +983,7 @@ describe("Fjord LBP - Buy `swapExactAssetsForShares`", () => {
           // Assets In (Collateral)
           assetAmountIn
         )
-        .accounts({
+        .accountsPartial({
           assetTokenMint,
           shareTokenMint,
           pool: poolPda,
@@ -1005,7 +1006,7 @@ describe("Fjord LBP - Buy `swapExactAssetsForShares`", () => {
             // Referrer can be null if there are no referrers
             referrer
           )
-          .accounts({
+          .accountsPartial({
             assetTokenMint,
             shareTokenMint,
             user: testUserA.publicKey,
@@ -1094,7 +1095,7 @@ describe("Fjord LBP - Buy `swapExactAssetsForShares`", () => {
 
       await program.methods
         .initializePool(...formattedPoolParams)
-        .accounts({
+        .accountsPartial({
           creator: creator.publicKey,
           shareTokenMint,
           assetTokenMint,
@@ -1138,7 +1139,7 @@ describe("Fjord LBP - Buy `swapExactAssetsForShares`", () => {
           // Assets In (Collateral)
           assetAmountIn
         )
-        .accounts({
+        .accountsPartial({
           assetTokenMint,
           shareTokenMint,
           pool: poolPda,
@@ -1161,7 +1162,7 @@ describe("Fjord LBP - Buy `swapExactAssetsForShares`", () => {
             // Referrer can be null if
             referrer
           )
-          .accounts({
+          .accountsPartial({
             assetTokenMint,
             shareTokenMint,
             user: testUserB.publicKey,
@@ -1252,7 +1253,7 @@ describe("Fjord LBP - Buy `swapExactAssetsForShares`", () => {
 
       await program.methods
         .initializePool(...formattedPoolParams)
-        .accounts({
+        .accountsPartial({
           creator: creator.publicKey,
           shareTokenMint,
           assetTokenMint,
@@ -1294,7 +1295,7 @@ describe("Fjord LBP - Buy `swapExactAssetsForShares`", () => {
           // Assets In (Collateral)
           assetAmountIn
         )
-        .accounts({
+        .accountsPartial({
           assetTokenMint,
           shareTokenMint,
           pool: poolPda,
@@ -1317,7 +1318,7 @@ describe("Fjord LBP - Buy `swapExactAssetsForShares`", () => {
             // Referrer can be null if there are no referrers
             referrer
           )
-          .accounts({
+          .accountsPartial({
             assetTokenMint,
             shareTokenMint,
             user: testUserA.publicKey,
@@ -1359,7 +1360,7 @@ describe("Fjord LBP - Buy `swapExactAssetsForShares`", () => {
           // Assets In (Collateral)
           assetAmountIn
         )
-        .accounts({
+        .accountsPartial({
           assetTokenMint,
           shareTokenMint,
           pool: poolPda,
@@ -1382,7 +1383,7 @@ describe("Fjord LBP - Buy `swapExactAssetsForShares`", () => {
             // Referrer can be null if there are no referrers
             referrer
           )
-          .accounts({
+          .accountsPartial({
             assetTokenMint,
             shareTokenMint,
             user: testUserA.publicKey,
@@ -1424,7 +1425,7 @@ describe("Fjord LBP - Buy `swapExactAssetsForShares`", () => {
           // Assets In (Collateral)
           assetAmountIn
         )
-        .accounts({
+        .accountsPartial({
           assetTokenMint,
           shareTokenMint,
           pool: poolPda,
@@ -1447,7 +1448,7 @@ describe("Fjord LBP - Buy `swapExactAssetsForShares`", () => {
             // Referrer can be null if there are no referrers
             referrer
           )
-          .accounts({
+          .accountsPartial({
             assetTokenMint,
             shareTokenMint,
             user: testUserA.publicKey,
@@ -1477,7 +1478,7 @@ describe("Fjord LBP - Buy `swapExactAssetsForShares`", () => {
             // Referrer can be null if there are no referrers
             referrer
           )
-          .accounts({
+          .accountsPartial({
             assetTokenMint,
             shareTokenMint,
             user: testUserA.publicKey,
@@ -1521,7 +1522,7 @@ describe("Fjord LBP - Buy `swapExactAssetsForShares`", () => {
           // Assets In (Collateral)
           assetAmountIn
         )
-        .accounts({
+        .accountsPartial({
           assetTokenMint,
           shareTokenMint,
           pool: poolPda,
@@ -1544,7 +1545,7 @@ describe("Fjord LBP - Buy `swapExactAssetsForShares`", () => {
             // Referrer can be null if there are no referrers
             referrer
           )
-          .accounts({
+          .accountsPartial({
             assetTokenMint,
             shareTokenMint,
             user: testUserB.publicKey,
@@ -1588,7 +1589,7 @@ describe("Fjord LBP - Buy `swapExactAssetsForShares`", () => {
           // Assets In (Collateral)
           assetAmountIn
         )
-        .accounts({
+        .accountsPartial({
           assetTokenMint,
           shareTokenMint,
           pool: poolPda,
@@ -1611,7 +1612,7 @@ describe("Fjord LBP - Buy `swapExactAssetsForShares`", () => {
             // Referrer can be null if there are no referrers
             referrer
           )
-          .accounts({
+          .accountsPartial({
             assetTokenMint,
             shareTokenMint,
             user: testUserA.publicKey,
@@ -1655,7 +1656,7 @@ describe("Fjord LBP - Buy `swapExactAssetsForShares`", () => {
           // Assets In (Collateral)
           assetAmountIn
         )
-        .accounts({
+        .accountsPartial({
           assetTokenMint,
           shareTokenMint,
           pool: poolPda,
@@ -1678,7 +1679,7 @@ describe("Fjord LBP - Buy `swapExactAssetsForShares`", () => {
             // Referrer can be null if there are no referrers
             referrer
           )
-          .accounts({
+          .accountsPartial({
             assetTokenMint,
             shareTokenMint,
             user: testUserA.publicKey,
@@ -1722,7 +1723,7 @@ describe("Fjord LBP - Buy `swapExactAssetsForShares`", () => {
           // Assets In (Collateral)
           assetAmountIn
         )
-        .accounts({
+        .accountsPartial({
           assetTokenMint,
           shareTokenMint,
           pool: poolPda,
@@ -1745,7 +1746,7 @@ describe("Fjord LBP - Buy `swapExactAssetsForShares`", () => {
             // Referrer can be null if there are no referrers
             referrer
           )
-          .accounts({
+          .accountsPartial({
             assetTokenMint,
             shareTokenMint,
             user: testUserA.publicKey,
@@ -1789,7 +1790,7 @@ describe("Fjord LBP - Buy `swapExactAssetsForShares`", () => {
           // Assets In (Collateral)
           assetAmountIn
         )
-        .accounts({
+        .accountsPartial({
           assetTokenMint,
           shareTokenMint,
           pool: poolPda,
@@ -1812,7 +1813,7 @@ describe("Fjord LBP - Buy `swapExactAssetsForShares`", () => {
             // Referrer can be null if there are no referrers
             referrer
           )
-          .accounts({
+          .accountsPartial({
             assetTokenMint,
             shareTokenMint,
             user: testUserA.publicKey,
@@ -1856,7 +1857,7 @@ describe("Fjord LBP - Buy `swapExactAssetsForShares`", () => {
           // Assets In (Collateral)
           assetAmountIn
         )
-        .accounts({
+        .accountsPartial({
           assetTokenMint,
           shareTokenMint,
           pool: poolPda,
@@ -1879,7 +1880,7 @@ describe("Fjord LBP - Buy `swapExactAssetsForShares`", () => {
             // Referrer can be null if there are no referrers
             referrer
           )
-          .accounts({
+          .accountsPartial({
             assetTokenMint,
             shareTokenMint,
             user: testUserA.publicKey,
@@ -1970,7 +1971,7 @@ describe("Fjord LBP - Buy `swapExactAssetsForShares`", () => {
 
       await program.methods
         .initializePool(...formattedPoolParams)
-        .accounts({
+        .accountsPartial({
           creator: creator.publicKey,
           shareTokenMint,
           assetTokenMint,
@@ -2010,7 +2011,7 @@ describe("Fjord LBP - Buy `swapExactAssetsForShares`", () => {
           // Assets In (Collateral)
           assetAmountIn
         )
-        .accounts({
+        .accountsPartial({
           assetTokenMint,
           shareTokenMint,
           pool: poolPda,
@@ -2033,7 +2034,7 @@ describe("Fjord LBP - Buy `swapExactAssetsForShares`", () => {
             // Referrer can be null if there are no referrers
             referrer
           )
-          .accounts({
+          .accountsPartial({
             assetTokenMint,
             shareTokenMint,
             user: testUserA.publicKey,
@@ -2080,7 +2081,7 @@ describe("Fjord LBP - Buy `swapExactAssetsForShares`", () => {
           // Assets In (Collateral)
           assetAmountIn
         )
-        .accounts({
+        .accountsPartial({
           assetTokenMint,
           shareTokenMint,
           pool: poolPda,
@@ -2105,7 +2106,7 @@ describe("Fjord LBP - Buy `swapExactAssetsForShares`", () => {
             // Referrer can be null if there are no referrers
             referrer
           )
-          .accounts({
+          .accountsPartial({
             assetTokenMint,
             shareTokenMint,
             user: testUserA.publicKey,
@@ -2157,7 +2158,7 @@ describe("Fjord LBP - Buy `swapExactAssetsForShares`", () => {
             // Referrer can be null if there are no referrers
             referrer
           )
-          .accounts({
+          .accountsPartial({
             assetTokenMint,
             shareTokenMint,
             user: testUserA.publicKey,

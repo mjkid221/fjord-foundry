@@ -4,14 +4,14 @@ import { AnchorProvider, Program, Wallet } from "@coral-xyz/anchor";
 import { findProgramAddressSync } from "@project-serum/anchor/dist/cjs/utils/pubkey";
 import { Connection, Keypair, PublicKey, clusterApiUrl } from "@solana/web3.js";
 
-import { FjordLbpStruct } from "../helpers";
-import { IDL, type FjordLbp } from "../types";
+import FjordLbpIdl from "../target/idl/fjord_lbp.json";
+import type { FjordLbp } from "../types/fjord_lbp";
 
 // TODO: Replace this with the program ID of the deployed program.
-const programId = new PublicKey("7UTvQUzE1iThaXhXDg1FsVoqcv3MBAgwUCW7PEKzNbPH");
+const programId = new PublicKey("HSbvUZ5aSBSUteCEmvyspZd85YCy3pgofX7dyLf844iw");
 
 // TODO: Replace this with the network you are targeting.
-const network: "mainnet-beta" | "devnet" = "mainnet-beta";
+const network: "mainnet-beta" | "devnet" = "devnet";
 
 // !Note: In order to run this script, the keypair must be the upgrade authority (the one that deployed the program).
 const keypairPath = `./deployment-keypair/${
@@ -24,7 +24,7 @@ const keypairPath = `./deployment-keypair/${
 /**
  * TODO: Please replace all the values below.
  */
-const ownerConfig: FjordLbpStruct<"initializeOwnerConfig"> = {
+const ownerConfig = {
   /** Owner address * */
   ownerKey: new PublicKey(
     /** Replace key */ "AMT6SgVe6qyyeapGBy5bCJaiqjjrDTVEU9zY8VfZSKjo"
@@ -69,7 +69,7 @@ async function main() {
   const connection = new Connection(clusterApiUrl(network));
   const provider = new AnchorProvider(connection, new Wallet(keypair), {});
 
-  const program = new Program<FjordLbp>(IDL, programId, provider);
+  const program = new Program<FjordLbp>(FjordLbpIdl as FjordLbp, provider);
   const params = Object.values(ownerConfig) as any;
 
   const programDataAddress = findProgramAddressSync(
@@ -81,7 +81,7 @@ async function main() {
 
   const tx = await program.methods
     .initializeOwnerConfig(...params)
-    .accounts({
+    .accountsPartial({
       program: programId,
       programData: programDataAddress,
     })

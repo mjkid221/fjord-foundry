@@ -16,7 +16,7 @@ pub struct InitializePool<'info> {
         seeds = [share_token_mint.key().as_ref(), asset_token_mint.key().as_ref(), creator.key().as_ref(), salt.as_bytes()], 
         bump
     )]
-    pub pool: Account<'info, LiquidityBootstrappingPool>,
+    pub pool: Box<Account<'info, LiquidityBootstrappingPool>>,
     // Token mint
     pub asset_token_mint: Account<'info, Mint>,
     pub share_token_mint: Account<'info, Mint>,
@@ -27,19 +27,19 @@ pub struct InitializePool<'info> {
         associated_token::mint = share_token_mint,
         associated_token::authority = pool
     )]
-    pub pool_share_token_account: Account<'info, TokenAccount>,
+    pub pool_share_token_account: Box<Account<'info, TokenAccount>>,
     #[account(
         init,
         payer = creator, 
         associated_token::mint = asset_token_mint,
         associated_token::authority = pool
     )]
-    pub pool_asset_token_account: Account<'info, TokenAccount>,
+    pub pool_asset_token_account: Box<Account<'info, TokenAccount>>,
     // User token account
     #[account(mut, associated_token::mint = asset_token_mint, associated_token::authority = creator)]
-    pub creator_asset_token_account: Account<'info, TokenAccount>,
+    pub creator_asset_token_account: Box<Account<'info, TokenAccount>>,
     #[account(mut, associated_token::mint = share_token_mint, associated_token::authority = creator)]
-    pub creator_share_token_account: Account<'info, TokenAccount>,
+    pub creator_share_token_account: Box<Account<'info, TokenAccount>>,
     #[account(mut)]
     pub creator: Signer<'info>,  // Creator of the pool
     pub associated_token_program: Program<'info, AssociatedToken>,

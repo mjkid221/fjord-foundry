@@ -12,10 +12,12 @@
     "clean": "anchor clean",
     "test": "yarn transfer-anchor-config && anchor test",
     "deploy": "anchor deploy",
-    "run:initialize-owner-config": "ts-node ./scripts/initialize-owner-config.ts"
+    "run:initialize-owner-config": "ts-node ./scripts/initialize-owner-config.ts",
+    "deploy:devnet": "solana config set --url devnet && solana program deploy ./target/deploy/fjord_lbp.so --with-compute-unit-price 100000",
+    "deploy:mainnet": "solana config set --url mainnet-beta && solana program deploy ./target/deploy/fjord_lbp.so --with-compute-unit-price 100000"
   },
   "dependencies": {
-    "@coral-xyz/anchor": "^0.29.0",
+    "@coral-xyz/anchor": "0.30.0",
     "@metaplex-foundation/js": "^0.20.1",
     "@project-serum/anchor": "^0.26.0",
     "@solana/spl-token": "^0.3.8",

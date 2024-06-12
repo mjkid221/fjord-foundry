@@ -149,7 +149,7 @@ describe("Fjord LBP - Initialization", () => {
     // We need to subscribe to the events manually unlike Ethereum's hardhat
     const events: any[] = [];
     const poolCreationEventListener = program.addEventListener(
-      "PoolCreatedEvent",
+      "poolCreatedEvent",
       (event) => {
         events.push(event);
       }
@@ -174,7 +174,7 @@ describe("Fjord LBP - Initialization", () => {
         whitelistMerkleRoot,
         sellingAllowed
       )
-      .accounts(accounts)
+      .accountsPartial(accounts)
       .rpc();
 
     const pool = await program.account.liquidityBootstrappingPool.fetch(
@@ -245,14 +245,14 @@ describe("Fjord LBP - Initialization", () => {
     const formattedPoolParams = formatPoolParams(poolParams);
     await program.methods
       .initializePool(...formattedPoolParams)
-      .accounts(accounts)
+      .accountsPartial(accounts)
       .rpc();
 
     // Initialize again. It should fail with a program error 0x0 which is a native check in the program
     await expect(
       program.methods
         .initializePool(...formattedPoolParams)
-        .accounts(accounts)
+        .accountsPartial(accounts)
         .rpc()
     ).to.be.rejectedWith("custom program error: 0x0");
   });
@@ -271,7 +271,7 @@ describe("Fjord LBP - Initialization", () => {
     await expect(
       program.methods
         .initializePool(...formattedPoolParams)
-        .accounts({
+        .accountsPartial({
           ...accounts,
           shareTokenMint: assetTokenMint,
           poolShareTokenAccount: poolAssetTokenAccount,
@@ -300,7 +300,7 @@ describe("Fjord LBP - Initialization", () => {
     await expect(
       program.methods
         .initializePool(...formattedPoolParams)
-        .accounts(accounts)
+        .accountsPartial(accounts)
         .rpc()
     ).to.be.rejectedWith("SalePeriodLow");
   });
@@ -327,7 +327,7 @@ describe("Fjord LBP - Initialization", () => {
     await expect(
       program.methods
         .initializePool(...formattedPoolParams)
-        .accounts(accounts)
+        .accountsPartial(accounts)
         .rpc()
     ).to.be.rejectedWith("SalePeriodLow");
   });
@@ -358,7 +358,7 @@ describe("Fjord LBP - Initialization", () => {
     await expect(
       program.methods
         .initializePool(...formattedPoolParams)
-        .accounts(accounts)
+        .accountsPartial(accounts)
         .rpc()
     ).to.be.rejectedWith("InvalidVestEnd");
   });
@@ -389,7 +389,7 @@ describe("Fjord LBP - Initialization", () => {
     await expect(
       program.methods
         .initializePool(...formattedPoolParams)
-        .accounts(accounts)
+        .accountsPartial(accounts)
         .rpc()
     ).to.be.rejectedWith("InvalidVestCliff");
   });
@@ -432,7 +432,7 @@ describe("Fjord LBP - Initialization", () => {
     await expect(
       program.methods
         .initializePool(...formattedPoolParams)
-        .accounts(accounts)
+        .accountsPartial(accounts)
         .rpc()
     ).to.be.rejectedWith("InvalidVestEnd");
 
@@ -440,7 +440,7 @@ describe("Fjord LBP - Initialization", () => {
     await expect(
       program.methods
         .initializePool(...formattedPoolParams2)
-        .accounts(accounts)
+        .accountsPartial(accounts)
         .rpc()
     ).to.be.rejectedWith("InvalidVestEnd");
   });
@@ -463,7 +463,7 @@ describe("Fjord LBP - Initialization", () => {
     await expect(
       program.methods
         .initializePool(...formattedPoolParams)
-        .accounts(accounts)
+        .accountsPartial(accounts)
         .rpc()
     ).to.be.rejectedWith("InvalidWeightConfig");
   });
@@ -486,7 +486,7 @@ describe("Fjord LBP - Initialization", () => {
     await expect(
       program.methods
         .initializePool(...formattedPoolParams)
-        .accounts({
+        .accountsPartial({
           creator: creator.publicKey,
           shareTokenMint,
           assetTokenMint,
@@ -517,7 +517,7 @@ describe("Fjord LBP - Initialization", () => {
     await expect(
       program.methods
         .initializePool(...formattedPoolParams)
-        .accounts(accounts)
+        .accountsPartial(accounts)
         .rpc()
     ).to.be.rejectedWith(/out of range/i);
   });
@@ -540,7 +540,7 @@ describe("Fjord LBP - Initialization", () => {
     await expect(
       program.methods
         .initializePool(...formattedPoolParams)
-        .accounts(accounts)
+        .accountsPartial(accounts)
         .rpc()
     ).to.be.rejectedWith("InvalidWeightConfig");
   });
@@ -563,7 +563,7 @@ describe("Fjord LBP - Initialization", () => {
     await expect(
       program.methods
         .initializePool(...formattedPoolParams)
-        .accounts(accounts)
+        .accountsPartial(accounts)
         .rpc()
     ).to.be.fulfilled;
   });
@@ -586,7 +586,7 @@ describe("Fjord LBP - Initialization", () => {
     await expect(
       program.methods
         .initializePool(...formattedPoolParams)
-        .accounts(accounts)
+        .accountsPartial(accounts)
         .rpc()
     ).to.be.rejectedWith("InvalidWeightConfig");
   });
@@ -609,7 +609,7 @@ describe("Fjord LBP - Initialization", () => {
     await expect(
       program.methods
         .initializePool(...formattedPoolParams)
-        .accounts(accounts)
+        .accountsPartial(accounts)
         .rpc()
     ).to.be.rejectedWith(/out of range/i);
   });
@@ -632,7 +632,7 @@ describe("Fjord LBP - Initialization", () => {
     await expect(
       program.methods
         .initializePool(...formattedPoolParams)
-        .accounts(accounts)
+        .accountsPartial(accounts)
         .rpc()
     ).to.be.fulfilled;
   });
@@ -654,7 +654,7 @@ describe("Fjord LBP - Initialization", () => {
     await expect(
       program.methods
         .initializePool(...formattedPoolParams)
-        .accounts(accounts)
+        .accountsPartial(accounts)
         .rpc()
     ).to.be.rejectedWith("InvalidWeightConfig");
   });
@@ -677,7 +677,7 @@ describe("Fjord LBP - Initialization", () => {
     await expect(
       program.methods
         .initializePool(...formattedPoolParams)
-        .accounts(accounts)
+        .accountsPartial(accounts)
         .rpc()
     ).to.be.fulfilled;
   });
@@ -699,7 +699,7 @@ describe("Fjord LBP - Initialization", () => {
     await expect(
       program.methods
         .initializePool(...formattedPoolParams)
-        .accounts(accounts)
+        .accountsPartial(accounts)
         .rpc()
     ).to.be.rejectedWith("InvalidAssetValue");
   });
@@ -721,7 +721,7 @@ describe("Fjord LBP - Initialization", () => {
     await expect(
       program.methods
         .initializePool(...formattedPoolParams)
-        .accounts(accounts)
+        .accountsPartial(accounts)
         .rpc()
     ).to.be.fulfilled;
 
@@ -749,7 +749,7 @@ describe("Fjord LBP - Initialization", () => {
     await expect(
       program.methods
         .initializePool(...formattedPoolParams)
-        .accounts(accounts)
+        .accountsPartial(accounts)
         .rpc()
     ).to.be.fulfilled;
 
@@ -777,7 +777,7 @@ describe("Fjord LBP - Initialization", () => {
     await expect(
       program.methods
         .initializePool(...formattedPoolParams)
-        .accounts(accounts)
+        .accountsPartial(accounts)
         .rpc()
     ).to.be.fulfilled;
   });
@@ -798,7 +798,7 @@ describe("Fjord LBP - Initialization", () => {
     await expect(
       program.methods
         .initializePool(...formattedPoolParams)
-        .accounts(accounts)
+        .accountsPartial(accounts)
         .rpc()
     ).to.be.rejectedWith("InvalidShareValue");
   });
@@ -820,7 +820,7 @@ describe("Fjord LBP - Initialization", () => {
     await expect(
       program.methods
         .initializePool(...formattedPoolParams)
-        .accounts(accounts)
+        .accountsPartial(accounts)
         .rpc()
     ).to.be.fulfilled;
 
@@ -848,7 +848,7 @@ describe("Fjord LBP - Initialization", () => {
     await expect(
       program.methods
         .initializePool(...formattedPoolParams)
-        .accounts(accounts)
+        .accountsPartial(accounts)
         .rpc()
     ).to.be.fulfilled;
 
@@ -876,7 +876,7 @@ describe("Fjord LBP - Initialization", () => {
     await expect(
       program.methods
         .initializePool(...formattedPoolParams)
-        .accounts(accounts)
+        .accountsPartial(accounts)
         .rpc()
     ).to.be.fulfilled;
   });
@@ -898,7 +898,7 @@ describe("Fjord LBP - Initialization", () => {
     await expect(
       program.methods
         .initializePool(...formattedPoolParams)
-        .accounts({ ...accounts, shareTokenMint: undefined })
+        .accountsPartial({ ...accounts, shareTokenMint: undefined })
         .rpc()
     ).to.be.rejectedWith("Invalid arguments: pool not provided.");
   });
@@ -920,7 +920,7 @@ describe("Fjord LBP - Initialization", () => {
     await expect(
       program.methods
         .initializePool(...formattedPoolParams)
-        .accounts({
+        .accountsPartial({
           ...accounts,
           assetTokenMint: undefined,
         })
@@ -945,7 +945,7 @@ describe("Fjord LBP - Initialization", () => {
     await expect(
       program.methods
         .initializePool(...formattedPoolParams)
-        .accounts({ ...accounts, poolShareTokenAccount: undefined })
+        .accountsPartial({ ...accounts, poolShareTokenAccount: undefined })
         .rpc()
     ).to.be.rejectedWith(
       "Invalid arguments: poolShareTokenAccount not provided."
@@ -969,7 +969,7 @@ describe("Fjord LBP - Initialization", () => {
     await expect(
       program.methods
         .initializePool(...formattedPoolParams)
-        .accounts({
+        .accountsPartial({
           ...accounts,
           poolAssetTokenAccount: undefined,
         })
@@ -996,7 +996,7 @@ describe("Fjord LBP - Initialization", () => {
     await expect(
       program.methods
         .initializePool(...formattedPoolParams)
-        .accounts({
+        .accountsPartial({
           ...accounts,
           creatorShareTokenAccount: undefined,
         })
@@ -1023,7 +1023,7 @@ describe("Fjord LBP - Initialization", () => {
     await expect(
       program.methods
         .initializePool(...formattedPoolParams)
-        .accounts({
+        .accountsPartial({
           ...accounts,
           creatorAssetTokenAccount: undefined,
         })
@@ -1051,7 +1051,7 @@ describe("Fjord LBP - Initialization", () => {
     await expect(
       program.methods
         .initializePool(...formattedPoolParams)
-        .accounts(accounts)
+        .accountsPartial(accounts)
         .rpc()
     ).to.be.rejectedWith("InvalidSharePrice");
   });
@@ -1074,7 +1074,7 @@ describe("Fjord LBP - Initialization", () => {
     await expect(
       program.methods
         .initializePool(...formattedPoolParams)
-        .accounts(accounts)
+        .accountsPartial(accounts)
         .rpc()
     ).to.be.fulfilled;
 
@@ -1102,7 +1102,7 @@ describe("Fjord LBP - Initialization", () => {
     await expect(
       program.methods
         .initializePool(...formattedPoolParams)
-        .accounts(accounts)
+        .accountsPartial(accounts)
         .rpc()
     ).to.be.fulfilled;
   });
@@ -1125,7 +1125,7 @@ describe("Fjord LBP - Initialization", () => {
     await expect(
       program.methods
         .initializePool(...formattedPoolParams)
-        .accounts(accounts)
+        .accountsPartial(accounts)
         .rpc()
     ).to.be.rejectedWith("InvalidMaxSharesOut");
   });
@@ -1148,7 +1148,7 @@ describe("Fjord LBP - Initialization", () => {
     await expect(
       program.methods
         .initializePool(...formattedPoolParams)
-        .accounts(accounts)
+        .accountsPartial(accounts)
         .rpc()
     ).to.be.fulfilled;
 
@@ -1177,7 +1177,7 @@ describe("Fjord LBP - Initialization", () => {
     await expect(
       program.methods
         .initializePool(...formattedPoolParams)
-        .accounts(accounts)
+        .accountsPartial(accounts)
         .rpc()
     ).to.be.fulfilled;
   });
@@ -1201,7 +1201,7 @@ describe("Fjord LBP - Initialization", () => {
     await expect(
       program.methods
         .initializePool(...formattedPoolParams)
-        .accounts(accounts)
+        .accountsPartial(accounts)
         .rpc()
     ).to.be.rejected;
   });
@@ -1224,7 +1224,7 @@ describe("Fjord LBP - Initialization", () => {
     await expect(
       program.methods
         .initializePool(...formattedPoolParams)
-        .accounts(accounts)
+        .accountsPartial(accounts)
         .rpc()
     ).to.be.fulfilled;
 
@@ -1253,7 +1253,7 @@ describe("Fjord LBP - Initialization", () => {
     await expect(
       program.methods
         .initializePool(...formattedPoolParams)
-        .accounts(accounts)
+        .accountsPartial(accounts)
         .rpc()
     ).to.be.fulfilled;
   });
@@ -1283,7 +1283,7 @@ describe("Fjord LBP - Initialization", () => {
     await expect(
       program.methods
         .initializePool(...formattedPoolParams)
-        .accounts(accounts)
+        .accountsPartial(accounts)
         .rpc()
     ).to.be.fulfilled;
 
@@ -1316,7 +1316,7 @@ describe("Fjord LBP - Initialization", () => {
     await expect(
       program.methods
         .initializePool(...formattedPoolParams)
-        .accounts(accounts)
+        .accountsPartial(accounts)
         .rpc()
     ).to.be.rejectedWith("InsufficientShares");
   });
@@ -1335,7 +1335,7 @@ describe("Fjord LBP - Initialization", () => {
     await expect(
       program.methods
         .initializePool(...formattedPoolParams)
-        .accounts(accounts)
+        .accountsPartial(accounts)
         .rpc()
     ).to.be.rejectedWith("InsufficientAssets");
   });

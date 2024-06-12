@@ -25,7 +25,7 @@ export const getAllAccountState = async ({
     program.programId
   )[0],
 }: {
-  program: Program<FjordLbp>;
+  program: any | Program<FjordLbp>;
   poolPda: PublicKey;
   bankRunClient: BanksClient;
   shareTokenMint: PublicKey;

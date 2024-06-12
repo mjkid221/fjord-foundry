@@ -53,7 +53,7 @@ describe("Fjord LBP - Access Controls", () => {
       await expect(
         program.methods
           .initializeOwnerConfig(...params)
-          .accounts({
+          .accountsPartial({
             program: program.programId,
             programData: programDataAddress,
             authority: testUserA.publicKey,
@@ -78,7 +78,7 @@ describe("Fjord LBP - Access Controls", () => {
         .initializeOwnerConfig(
           ...(Object.values(ownerInitializationParams) as any)
         )
-        .accounts({
+        .accountsPartial({
           program: program.programId,
           programData: programDataAddress,
         })
@@ -96,7 +96,7 @@ describe("Fjord LBP - Access Controls", () => {
       await expect(
         program.methods
           .nominateNewOwner(testUserA.publicKey)
-          .accounts({
+          .accountsPartial({
             owner: testUserA.publicKey,
           })
           .signers([testUserA])
@@ -108,7 +108,7 @@ describe("Fjord LBP - Access Controls", () => {
       await expect(
         program.methods
           .acceptNewOwner()
-          .accounts({ newOwner: testUserA.publicKey })
+          .accountsPartial({ newOwner: testUserA.publicKey })
           .signers([testUserA])
           .rpc()
       ).to.be.rejectedWith("Unauthorized");
@@ -129,7 +129,7 @@ describe("Fjord LBP - Access Controls", () => {
           newFeeRecipients,
           newFeesPercentages
         )
-        .accounts({ owner: creator.publicKey, treasury: treasuryPda })
+        .accountsPartial({ owner: creator.publicKey, treasury: treasuryPda })
         .signers([creator])
         .rpc();
 
@@ -160,7 +160,7 @@ describe("Fjord LBP - Access Controls", () => {
             newFeeRecipients,
             newFeesPercentages
           )
-          .accounts({ owner: creator.publicKey, treasury: treasuryPda })
+          .accountsPartial({ owner: creator.publicKey, treasury: treasuryPda })
           .signers([creator])
           .rpc()
       ).to.be.rejectedWith("InvalidFeeRecipients.");
@@ -182,7 +182,10 @@ describe("Fjord LBP - Access Controls", () => {
             newFeeRecipients,
             newFeesPercentages
           )
-          .accounts({ owner: testUserA.publicKey, treasury: treasuryPda })
+          .accountsPartial({
+            owner: testUserA.publicKey,
+            treasury: treasuryPda,
+          })
           .signers([testUserA])
           .rpc()
       ).to.be.rejectedWith("Unauthorized");
@@ -204,7 +207,7 @@ describe("Fjord LBP - Access Controls", () => {
             newFeeRecipients,
             newFeesPercentages
           )
-          .accounts({ owner: creator.publicKey, treasury: treasuryPda })
+          .accountsPartial({ owner: creator.publicKey, treasury: treasuryPda })
           .signers([creator])
           .rpc()
       ).to.be.rejectedWith("MaxFeeExceeded");
@@ -217,7 +220,7 @@ describe("Fjord LBP - Access Controls", () => {
 
       await program.methods
         .setFees(newPlatformFee, newReferralFee, newSwapFee)
-        .accounts({ owner: creator.publicKey })
+        .accountsPartial({ owner: creator.publicKey })
         .signers([creator])
         .rpc();
 
@@ -237,7 +240,7 @@ describe("Fjord LBP - Access Controls", () => {
       await expect(
         program.methods
           .setFees(newPlatformFee, newReferralFee, newSwapFee)
-          .accounts({ owner: testUserA.publicKey })
+          .accountsPartial({ owner: testUserA.publicKey })
           .signers([testUserA])
           .rpc()
       ).to.be.rejectedWith("Unauthorized");
@@ -249,7 +252,7 @@ describe("Fjord LBP - Access Controls", () => {
       await expect(
         program.methods
           .setFees(invalidFee, null, null)
-          .accounts({ owner: creator.publicKey })
+          .accountsPartial({ owner: creator.publicKey })
           .signers([creator])
           .rpc()
       ).to.be.rejectedWith("MaxFeeExceeded");
@@ -257,7 +260,7 @@ describe("Fjord LBP - Access Controls", () => {
       await expect(
         program.methods
           .setFees(null, invalidFee, null)
-          .accounts({ owner: creator.publicKey })
+          .accountsPartial({ owner: creator.publicKey })
           .signers([creator])
           .rpc()
       ).to.be.rejectedWith("MaxFeeExceeded");
@@ -265,7 +268,7 @@ describe("Fjord LBP - Access Controls", () => {
       await expect(
         program.methods
           .setFees(null, null, invalidFee)
-          .accounts({ owner: creator.publicKey })
+          .accountsPartial({ owner: creator.publicKey })
           .signers([creator])
           .rpc()
       ).to.be.rejectedWith("MaxFeeExceeded");
@@ -279,7 +282,7 @@ describe("Fjord LBP - Access Controls", () => {
       await expect(
         program.methods
           .setFees(newPlatformFee, newReferralFee, newSwapFee)
-          .accounts({ owner: creator.publicKey })
+          .accountsPartial({ owner: creator.publicKey })
           .signers([creator])
           .rpc()
       ).to.be.rejectedWith("MaxFeeExceeded");
@@ -291,7 +294,7 @@ describe("Fjord LBP - Access Controls", () => {
       await expect(
         program.methods
           .setFees(200, null, null)
-          .accounts({ owner: testUserA.publicKey })
+          .accountsPartial({ owner: testUserA.publicKey })
           .signers([testUserA])
           .rpc()
       ).to.be.rejectedWith("Unauthorized");
@@ -299,7 +302,7 @@ describe("Fjord LBP - Access Controls", () => {
       // This will put the testUserA as a pending owner
       await program.methods
         .nominateNewOwner(testUserA.publicKey)
-        .accounts({})
+        .accountsPartial({})
         .rpc();
 
       const ownerConfig = await program.account.ownerConfig.fetch(configPda);
@@ -315,7 +318,7 @@ describe("Fjord LBP - Access Controls", () => {
       // This will accept the pending owner
       await program.methods
         .acceptNewOwner()
-        .accounts({ newOwner: testUserA.publicKey })
+        .accountsPartial({ newOwner: testUserA.publicKey })
         .signers([testUserA])
         .rpc();
 
@@ -328,7 +331,7 @@ describe("Fjord LBP - Access Controls", () => {
       const newPlatformFee = 200;
       await program.methods
         .setFees(newPlatformFee, null, null)
-        .accounts({ owner: testUserA.publicKey })
+        .accountsPartial({ owner: testUserA.publicKey })
         .signers([testUserA])
         .rpc();
 

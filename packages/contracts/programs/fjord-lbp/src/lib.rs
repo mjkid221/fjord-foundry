@@ -9,17 +9,17 @@ pub mod utils;
 pub use constants::*;
 pub use error::*;
 pub use events::*;
+use instructions::structs::ComputedReservesAndWeights;
 pub use instructions::*;
 pub use state::*;
 pub use utils::*;
 
 // Program Id for the Fjord LBP program. This is the address this program will be deployed to.
-declare_id!("7UTvQUzE1iThaXhXDg1FsVoqcv3MBAgwUCW7PEKzNbPH");
+declare_id!("HSbvUZ5aSBSUteCEmvyspZd85YCy3pgofX7dyLf844iw");
 
 #[program]
 pub mod fjord_lbp {
     use super::*;
-    use instructions::structs::ComputedReservesAndWeights;
 
     // Initializer --------------------------------------------------------
     #[allow(clippy::too_many_arguments)]

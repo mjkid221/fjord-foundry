@@ -34,7 +34,8 @@ import {
   setup,
   skipBlockTimestamp,
 } from "../../helpers";
-import { FjordLbp, IDL } from "../../target/types/fjord_lbp";
+import IDL from "../../target/idl/fjord_lbp.json";
+import { FjordLbp } from "../../target/types/fjord_lbp";
 import { ComputedReservesAndWeights } from "../../types";
 
 const MOCK_PK = new anchor.web3.PublicKey(
@@ -112,7 +113,7 @@ describe("Fjord LBP - Sell - shares for exact assets", () => {
       // Initialize global pool settings
       const tx = program.methods
         .initializeOwnerConfig(...(Object.values(ownerConfig) as any))
-        .accounts({
+        .accountsPartial({
           program: program.programId,
           programData: programDataAddress,
           authority: creator.publicKey,
@@ -155,7 +156,7 @@ describe("Fjord LBP - Sell - shares for exact assets", () => {
     const provider = new BankrunProvider(bankRunCtx);
     bankRunClient = bankRunCtx.banksClient;
 
-    program = new Program<FjordLbp>(IDL, lbpProgramId, provider);
+    program = new Program<FjordLbp>(IDL as any, provider);
     connection = provider.connection;
     creator = bankRunCtx.payer;
 
@@ -251,7 +252,7 @@ describe("Fjord LBP - Sell - shares for exact assets", () => {
 
       await program.methods
         .initializePool(...formattedPoolParams)
-        .accounts({
+        .accountsPartial({
           creator: creator.publicKey,
           shareTokenMint,
           assetTokenMint,
@@ -286,7 +287,7 @@ describe("Fjord LBP - Sell - shares for exact assets", () => {
           // Assets In (Collateral)
           assetAmountIn
         )
-        .accounts({
+        .accountsPartial({
           assetTokenMint,
           shareTokenMint,
           pool: poolPda,
@@ -300,7 +301,7 @@ describe("Fjord LBP - Sell - shares for exact assets", () => {
       // Buy project token
       await program.methods
         .swapExactAssetsForShares(assetAmountIn, expectedSharesOut, null, null)
-        .accounts({
+        .accountsPartial({
           assetTokenMint,
           shareTokenMint,
           user: testUserA.publicKey,
@@ -342,7 +343,7 @@ describe("Fjord LBP - Sell - shares for exact assets", () => {
           // Assets to sell (Collateral)
           assetsToSell
         )
-        .accounts({
+        .accountsPartial({
           assetTokenMint,
           shareTokenMint,
           pool: poolPda,
@@ -356,7 +357,7 @@ describe("Fjord LBP - Sell - shares for exact assets", () => {
       // Sell project token
       await program.methods
         .swapSharesForExactAssets(assetsToSell, maxSharesIn, null, null)
-        .accounts({
+        .accountsPartial({
           assetTokenMint,
           shareTokenMint,
           user: testUserA.publicKey,
@@ -439,7 +440,7 @@ describe("Fjord LBP - Sell - shares for exact assets", () => {
           // Assets to sell (Collateral)
           assetsToSell
         )
-        .accounts({
+        .accountsPartial({
           assetTokenMint,
           shareTokenMint,
           pool: poolPda,
@@ -453,7 +454,7 @@ describe("Fjord LBP - Sell - shares for exact assets", () => {
       // Sell project token
       await program.methods
         .swapSharesForExactAssets(assetsToSell, maxSharesIn, null, referrer)
-        .accounts({
+        .accountsPartial({
           assetTokenMint,
           shareTokenMint,
           user: testUserA.publicKey,
@@ -499,7 +500,7 @@ describe("Fjord LBP - Sell - shares for exact assets", () => {
           // Assets to sell (Collateral)
           assetsToSell
         )
-        .accounts({
+        .accountsPartial({
           assetTokenMint,
           shareTokenMint,
           pool: poolPda,
@@ -512,7 +513,7 @@ describe("Fjord LBP - Sell - shares for exact assets", () => {
 
       const statePre = await program.methods
         .reservesAndWeights()
-        .accounts({
+        .accountsPartial({
           assetTokenMint,
           shareTokenMint,
           pool: poolPda,
@@ -526,7 +527,7 @@ describe("Fjord LBP - Sell - shares for exact assets", () => {
       // Sell project token
       await program.methods
         .swapSharesForExactAssets(assetsToSell, maxSharesIn, null, null)
-        .accounts({
+        .accountsPartial({
           assetTokenMint,
           shareTokenMint,
           user: testUserA.publicKey,
@@ -546,7 +547,7 @@ describe("Fjord LBP - Sell - shares for exact assets", () => {
 
       const statePost = await program.methods
         .reservesAndWeights()
-        .accounts({
+        .accountsPartial({
           assetTokenMint,
           shareTokenMint,
           pool: poolPda,
@@ -570,7 +571,7 @@ describe("Fjord LBP - Sell - shares for exact assets", () => {
       await expect(
         program.methods
           .swapSharesForExactAssets(BN(1), BN(0), null, null)
-          .accounts({
+          .accountsPartial({
             assetTokenMint,
             shareTokenMint,
             user: testUserA.publicKey,
@@ -608,7 +609,7 @@ describe("Fjord LBP - Sell - shares for exact assets", () => {
 
       await program.methods
         .initializePool(...formattedPoolParams)
-        .accounts({
+        .accountsPartial({
           creator: creator.publicKey,
           shareTokenMint,
           assetTokenMint,
@@ -648,7 +649,7 @@ describe("Fjord LBP - Sell - shares for exact assets", () => {
           // Assets In (Collateral)
           assetAmountIn
         )
-        .accounts({
+        .accountsPartial({
           assetTokenMint,
           shareTokenMint,
           pool: poolPda,
@@ -667,7 +668,7 @@ describe("Fjord LBP - Sell - shares for exact assets", () => {
           merkleProof,
           null
         )
-        .accounts({
+        .accountsPartial({
           assetTokenMint,
           shareTokenMint,
           user: testUserA.publicKey,
@@ -714,7 +715,7 @@ describe("Fjord LBP - Sell - shares for exact assets", () => {
           // Assets to sell (Collateral)
           assetsToSell
         )
-        .accounts({
+        .accountsPartial({
           assetTokenMint,
           shareTokenMint,
           pool: poolPda,
@@ -728,7 +729,7 @@ describe("Fjord LBP - Sell - shares for exact assets", () => {
       // Sell project token
       await program.methods
         .swapSharesForExactAssets(assetsToSell, maxSharesIn, merkleProof, null)
-        .accounts({
+        .accountsPartial({
           assetTokenMint,
           shareTokenMint,
           user: testUserA.publicKey,
@@ -803,7 +804,7 @@ describe("Fjord LBP - Sell - shares for exact assets", () => {
 
       await program.methods
         .initializePool(...formattedPoolParams)
-        .accounts({
+        .accountsPartial({
           creator: creator.publicKey,
           shareTokenMint,
           assetTokenMint,
@@ -843,7 +844,7 @@ describe("Fjord LBP - Sell - shares for exact assets", () => {
           // Assets In (Collateral)
           assetAmountIn
         )
-        .accounts({
+        .accountsPartial({
           assetTokenMint,
           shareTokenMint,
           pool: poolPda,
@@ -862,7 +863,7 @@ describe("Fjord LBP - Sell - shares for exact assets", () => {
           merkleProof,
           null
         )
-        .accounts({
+        .accountsPartial({
           assetTokenMint,
           shareTokenMint,
           user: testUserA.publicKey,
@@ -897,7 +898,7 @@ describe("Fjord LBP - Sell - shares for exact assets", () => {
           // Assets to sell (Collateral)
           assetsToSell
         )
-        .accounts({
+        .accountsPartial({
           assetTokenMint,
           shareTokenMint,
           pool: poolPda,
@@ -913,7 +914,7 @@ describe("Fjord LBP - Sell - shares for exact assets", () => {
         // Sell project token
         program.methods
           .swapSharesForExactAssets(assetsToSell, maxSharesIn, null, null)
-          .accounts({
+          .accountsPartial({
             assetTokenMint,
             shareTokenMint,
             user: testUserA.publicKey,
@@ -951,7 +952,7 @@ describe("Fjord LBP - Sell - shares for exact assets", () => {
 
       await program.methods
         .initializePool(...formattedPoolParams)
-        .accounts({
+        .accountsPartial({
           creator: creator.publicKey,
           shareTokenMint,
           assetTokenMint,
@@ -986,7 +987,7 @@ describe("Fjord LBP - Sell - shares for exact assets", () => {
           // Assets In (Collateral)
           assetAmountIn
         )
-        .accounts({
+        .accountsPartial({
           assetTokenMint,
           shareTokenMint,
           pool: poolPda,
@@ -1000,7 +1001,7 @@ describe("Fjord LBP - Sell - shares for exact assets", () => {
       // Buy some project tokens
       await program.methods
         .swapExactAssetsForShares(assetAmountIn, expectedSharesOut, null, null)
-        .accounts({
+        .accountsPartial({
           assetTokenMint,
           shareTokenMint,
           user: testUserA.publicKey,
@@ -1025,7 +1026,7 @@ describe("Fjord LBP - Sell - shares for exact assets", () => {
       await expect(
         program.methods
           .swapSharesForExactAssets(BN(1), BN(1), null, null)
-          .accounts({
+          .accountsPartial({
             assetTokenMint,
             shareTokenMint,
             user: testUserA.publicKey,
@@ -1051,7 +1052,7 @@ describe("Fjord LBP - Sell - shares for exact assets", () => {
       await expect(
         program.methods
           .swapSharesForExactAssets(BN(1), BN(1), null, null)
-          .accounts({
+          .accountsPartial({
             assetTokenMint,
             shareTokenMint,
             user: testUserA.publicKey,

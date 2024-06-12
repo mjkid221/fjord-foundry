@@ -124,13 +124,13 @@ pub struct RedeemTokens<'info> {
     associated_token::mint = asset_token_mint,
     associated_token::authority = pool
   )]
-  pub pool_asset_token_account: Account<'info, TokenAccount>,
+  pub pool_asset_token_account: Box<Account<'info, TokenAccount>>,
   #[account(
     mut,
     associated_token::mint = share_token_mint,
     associated_token::authority = pool
   )]
-  pub pool_share_token_account: Account<'info, TokenAccount>,
+  pub pool_share_token_account: Box<Account<'info, TokenAccount>>,
   // User token accounts ---------------------------------------------
   #[account(
     init_if_needed,
@@ -138,14 +138,14 @@ pub struct RedeemTokens<'info> {
     associated_token::mint = asset_token_mint, 
     associated_token::authority = user)
   ]
-  pub user_asset_token_account: Account<'info, TokenAccount>,
+  pub user_asset_token_account: Box<Account<'info, TokenAccount>>,
   #[account(
     init_if_needed,
     payer = user,
     associated_token::mint = share_token_mint, 
     associated_token::authority = user)
   ]
-  pub user_share_token_account: Account<'info, TokenAccount>,
+  pub user_share_token_account: Box<Account<'info, TokenAccount>>,
   // The user's state in a pool --------------------------------------
   #[account(
     mut,

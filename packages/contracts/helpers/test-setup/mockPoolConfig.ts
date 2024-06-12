@@ -14,7 +14,7 @@ import {
   generateRandomSalt,
   PERCENTAGE_BASIS_POINTS,
 } from "../../constants";
-import { IDL, FjordLbp } from "../../target/types/fjord_lbp";
+import { FjordLbp } from "../../types/fjord_lbp_old";
 
 /**
  * Create a mock pool config
@@ -95,7 +95,7 @@ type ArgsType<Instruction> = Instruction extends { args: infer Args }
     ? Arg extends { name: infer Name; type: infer Type extends IdlType }
       ? Name extends string
         ? // Decodes types that work in Typescript
-          { [P in Name]: DecodeType<Type, IdlTypes<typeof IDL>> }
+          { [P in Name]: DecodeType<Type, IdlTypes<any>> }
         : never
       : never
     : never

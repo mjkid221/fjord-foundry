@@ -1,9 +1,15 @@
-import { Keypair } from "@solana/web3.js";
+import { Keypair, PublicKey } from "@solana/web3.js";
 
 import { FjordLbpStruct } from "./mockPoolConfig";
 
 export const createMockOwnerConfig = (
-  requestField?: Partial<FjordLbpStruct<"initializeOwnerConfig">>
+  requestField?: Partial<
+    FjordLbpStruct<"initializeOwnerConfig"> & {
+      ownerKey: PublicKey;
+      swapFeeRecipient: PublicKey;
+      feeRecipients: PublicKey;
+    }
+  >
 ) => ({
   ownerKey: requestField?.ownerKey || Keypair.generate().publicKey,
   swapFeeRecipient:

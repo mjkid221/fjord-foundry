@@ -24,7 +24,8 @@ import {
   setup,
   skipBlockTimestamp,
 } from "../../helpers";
-import { FjordLbp, IDL } from "../../target/types/fjord_lbp";
+import IDL from "../../target/idl/fjord_lbp.json";
+import { FjordLbp } from "../../target/types/fjord_lbp";
 
 chai.use(chaiAsPromised);
 
@@ -90,7 +91,7 @@ describe("Fjord LBP - Pool Management", () => {
       // Initialize global pool settings
       const tx = program.methods
         .initializeOwnerConfig(...(Object.values(ownerConfig) as any))
-        .accounts({
+        .accountsPartial({
           program: program.programId,
           programData: programDataAddress,
           authority: creator.publicKey,
@@ -126,7 +127,7 @@ describe("Fjord LBP - Pool Management", () => {
     const provider = new BankrunProvider(bankRunCtx);
     bankRunClient = bankRunCtx.banksClient;
 
-    program = new Program<FjordLbp>(IDL, lbpProgramId, provider);
+    program = new Program<FjordLbp>(IDL as any, provider);
     connection = provider.connection;
     creator = bankRunCtx.payer;
 
@@ -212,7 +213,7 @@ describe("Fjord LBP - Pool Management", () => {
 
     await program.methods
       .initializePool(...formattedPoolParams)
-      .accounts({
+      .accountsPartial({
         creator: creator.publicKey,
         shareTokenMint,
         assetTokenMint,
@@ -245,7 +246,7 @@ describe("Fjord LBP - Pool Management", () => {
 
       await program.methods
         .togglePause()
-        .accounts({
+        .accountsPartial({
           creator: creator.publicKey,
           pool: poolPda,
           assetTokenMint,
@@ -276,7 +277,7 @@ describe("Fjord LBP - Pool Management", () => {
       await expect(
         program.methods
           .swapExactAssetsForShares(BN(10000), BN(10000), null, null)
-          .accounts({
+          .accountsPartial({
             assetTokenMint,
             shareTokenMint,
             user: testUserA.publicKey,
@@ -297,7 +298,7 @@ describe("Fjord LBP - Pool Management", () => {
     it("Should be able to unpause the pool", async () => {
       await program.methods
         .togglePause()
-        .accounts({
+        .accountsPartial({
           creator: creator.publicKey,
           pool: poolPda,
           assetTokenMint,
@@ -321,7 +322,7 @@ describe("Fjord LBP - Pool Management", () => {
 
       await program.methods
         .togglePause()
-        .accounts({
+        .accountsPartial({
           creator: creator.publicKey,
           pool: poolPda,
           assetTokenMint,
@@ -350,7 +351,7 @@ describe("Fjord LBP - Pool Management", () => {
       await expect(
         program.methods
           .togglePause()
-          .accounts({
+          .accountsPartial({
             creator: testUserA.publicKey,
             pool: poolPda,
             assetTokenMint,

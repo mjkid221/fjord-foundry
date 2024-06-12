@@ -30,7 +30,8 @@ import {
   setup,
   skipBlockTimestamp,
 } from "../../helpers";
-import { FjordLbp, IDL } from "../../target/types/fjord_lbp";
+import IDL from "../../target/idl/fjord_lbp.json";
+import { FjordLbp } from "../../target/types/fjord_lbp";
 
 chai.use(chaiAsPromised);
 
@@ -95,7 +96,7 @@ describe("Fjord LBP - Redeem", () => {
       // Initialize global pool settings
       const tx = program.methods
         .initializeOwnerConfig(...(Object.values(ownerConfig) as any))
-        .accounts({
+        .accountsPartial({
           program: program.programId,
           programData: programDataAddress,
           authority: creator.publicKey,
@@ -132,7 +133,7 @@ describe("Fjord LBP - Redeem", () => {
     const provider = new BankrunProvider(bankRunCtx);
     bankRunClient = bankRunCtx.banksClient;
 
-    program = new Program<FjordLbp>(IDL, lbpProgramId, provider);
+    program = new Program<FjordLbp>(IDL as any, provider);
     connection = provider.connection;
     creator = bankRunCtx.payer;
 
@@ -224,7 +225,7 @@ describe("Fjord LBP - Redeem", () => {
 
       await program.methods
         .initializePool(...formattedPoolParams)
-        .accounts({
+        .accountsPartial({
           creator: creator.publicKey,
           shareTokenMint,
           assetTokenMint,
@@ -259,7 +260,7 @@ describe("Fjord LBP - Redeem", () => {
           // Assets In (Collateral)
           assetAmountIn
         )
-        .accounts({
+        .accountsPartial({
           assetTokenMint,
           shareTokenMint,
           pool: poolPda,
@@ -273,7 +274,7 @@ describe("Fjord LBP - Redeem", () => {
       // Buy project token
       await program.methods
         .swapExactAssetsForShares(assetAmountIn, expectedSharesOut, null, null)
-        .accounts({
+        .accountsPartial({
           assetTokenMint,
           shareTokenMint,
           user: testUserA.publicKey,
@@ -309,7 +310,7 @@ describe("Fjord LBP - Redeem", () => {
           // Shares to sell (Collateral)
           sharesIn
         )
-        .accounts({
+        .accountsPartial({
           assetTokenMint,
           shareTokenMint,
           pool: poolPda,
@@ -323,7 +324,7 @@ describe("Fjord LBP - Redeem", () => {
       // Sell project token
       await program.methods
         .swapExactSharesForAssets(sharesIn, minAssetsOut, null, null)
-        .accounts({
+        .accountsPartial({
           assetTokenMint,
           shareTokenMint,
           user: testUserA.publicKey,
@@ -385,15 +386,23 @@ describe("Fjord LBP - Redeem", () => {
 
         // Get all information about fee recipients
         const feeRecipientsAssetBalancesBefore = await Promise.all(
-          feeRecipients.map(async ({ user, percentage }) => ({
-            user,
-            assetTokenBalance: await getAccountBalance(
-              bankRunClient,
+          feeRecipients.map(
+            async ({
               user,
-              assetTokenMint
-            ),
-            percentage,
-          }))
+              percentage,
+            }: {
+              user: PublicKey;
+              percentage: number;
+            }) => ({
+              user,
+              assetTokenBalance: await getAccountBalance(
+                bankRunClient,
+                user,
+                assetTokenMint
+              ),
+              percentage,
+            })
+          )
         );
 
         const totalAssetsInPool = poolAssetBalance.sub(pool.totalSwapFeesAsset);
@@ -410,7 +419,7 @@ describe("Fjord LBP - Redeem", () => {
         const promises: Promise<void>[] = [];
 
         [assetTokenMint].forEach((token) => {
-          feeRecipients.forEach(({ user: recipient }) => {
+          feeRecipients.forEach(({ user: recipient }: { user: PublicKey }) => {
             const promise = getAssociatedTokenAddress(
               token,
               recipient,
@@ -446,7 +455,7 @@ describe("Fjord LBP - Redeem", () => {
 
         await program.methods
           .closePool()
-          .accounts({
+          .accountsPartial({
             assetTokenMint,
             shareTokenMint,
             pool: poolPda,
@@ -489,15 +498,23 @@ describe("Fjord LBP - Redeem", () => {
 
         // Get all fees received by fee recipients
         const feeRecipientsAssetBalancesAfter = await Promise.all(
-          feeRecipients.map(async ({ user, percentage }) => ({
-            user,
-            assetTokenBalance: await getAccountBalance(
-              bankRunClient,
+          feeRecipients.map(
+            async ({
               user,
-              assetTokenMint
-            ),
-            percentage,
-          }))
+              percentage,
+            }: {
+              user: PublicKey;
+              percentage: number;
+            }) => ({
+              user,
+              assetTokenBalance: await getAccountBalance(
+                bankRunClient,
+                user,
+                assetTokenMint
+              ),
+              percentage,
+            })
+          )
         );
         const [
           swapFeeRecipientAssetBalanceAfter,
@@ -593,7 +610,7 @@ describe("Fjord LBP - Redeem", () => {
         const promises: Promise<void>[] = [];
 
         [assetTokenMint].forEach((token) => {
-          feeRecipients.forEach(({ user: recipient }) => {
+          feeRecipients.forEach(({ user: recipient }: { user: PublicKey }) => {
             const promise = getAssociatedTokenAddress(
               token,
               recipient,
@@ -629,7 +646,7 @@ describe("Fjord LBP - Redeem", () => {
 
         await program.methods
           .closePool()
-          .accounts({
+          .accountsPartial({
             assetTokenMint,
             shareTokenMint,
             pool: poolPda,
@@ -658,7 +675,7 @@ describe("Fjord LBP - Redeem", () => {
         const isReferred = true;
         await program.methods
           .redeem(isReferred)
-          .accounts({
+          .accountsPartial({
             assetTokenMint,
             shareTokenMint,
             pool: poolPda,
@@ -732,7 +749,7 @@ describe("Fjord LBP - Redeem", () => {
         const promises: Promise<void>[] = [];
 
         [assetTokenMint].forEach((token) => {
-          feeRecipients.forEach(({ user: recipient }) => {
+          feeRecipients.forEach(({ user: recipient }: { user: PublicKey }) => {
             const promise = getAssociatedTokenAddress(
               token,
               recipient,
@@ -769,7 +786,7 @@ describe("Fjord LBP - Redeem", () => {
         await expect(
           program.methods
             .closePool()
-            .accounts({
+            .accountsPartial({
               assetTokenMint,
               shareTokenMint,
               pool: poolPda,
@@ -830,7 +847,7 @@ describe("Fjord LBP - Redeem", () => {
         const promises: Promise<void>[] = [];
 
         [assetTokenMint].forEach((token) => {
-          feeRecipients.forEach(({ user: recipient }) => {
+          feeRecipients.forEach(({ user: recipient }: { user: PublicKey }) => {
             const promise = getAssociatedTokenAddress(
               token,
               recipient,
@@ -867,7 +884,7 @@ describe("Fjord LBP - Redeem", () => {
         // Close pool
         await program.methods
           .closePool()
-          .accounts({
+          .accountsPartial({
             assetTokenMint,
             shareTokenMint,
             pool: poolPda,
@@ -895,7 +912,7 @@ describe("Fjord LBP - Redeem", () => {
         await expect(
           program.methods
             .closePool()
-            .accounts({
+            .accountsPartial({
               assetTokenMint,
               shareTokenMint,
               pool: poolPda,
@@ -936,7 +953,7 @@ describe("Fjord LBP - Redeem", () => {
         await expect(
           program.methods
             .redeem(false)
-            .accounts({
+            .accountsPartial({
               assetTokenMint,
               shareTokenMint,
               pool: poolPda,
@@ -989,7 +1006,7 @@ describe("Fjord LBP - Redeem", () => {
         const promises: Promise<void>[] = [];
 
         [assetTokenMint].forEach((token) => {
-          feeRecipients.forEach(({ user: recipient }) => {
+          feeRecipients.forEach(({ user: recipient }: { user: PublicKey }) => {
             const promise = getAssociatedTokenAddress(
               token,
               recipient,
@@ -1029,7 +1046,7 @@ describe("Fjord LBP - Redeem", () => {
         await expect(
           program.methods
             .closePool()
-            .accounts({
+            .accountsPartial({
               assetTokenMint,
               shareTokenMint,
               pool: poolPda,
